@@ -18,6 +18,8 @@ namespace TGC.MonoGame.TP
         public const string ContentFolderSounds = "Sounds/";
         public const string ContentFolderSpriteFonts = "SpriteFonts/";
         public const string ContentFolderTextures = "Textures/";
+        public const string ContenidoAutoCombate = "Models/CombatVehicle";
+        public const string ContenidoAutoCarrera = "Models/RacingCarA";
 
         /// <summary>
         ///     Constructor del juego.
@@ -42,6 +44,9 @@ namespace TGC.MonoGame.TP
         private Model Model { get; set; }
         private Effect Effect { get; set; }
         private float Rotation { get; set; }
+
+        private Model CarModel { get; set; }
+        private Model Ciudad {get; set;}
         private Matrix World { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
@@ -84,9 +89,16 @@ namespace TGC.MonoGame.TP
             // Cargo el modelo del logo.
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
 
+            //Ciudad = Content.Load<Model>(ContentFolder3D + "city");
+            
+            //CarModel = Content.Load<Model>(ContentFolder3D+"RacingCarA/RacingCar");
+
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            
+            
+            
 
             // Asigno el efecto que cargue a cada parte del mesh.
             // Un modelo puede tener mas de 1 mesh internamente.
@@ -134,6 +146,10 @@ namespace TGC.MonoGame.TP
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
             GraphicsDevice.Clear(Color.Black);
+
+            //Ciudad.Draw(World, View, Projection);
+
+            //CarModel.Draw(World, View, Projection);
 
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             Effect.Parameters["View"].SetValue(View);
