@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Net.Mime;
+using System.Reflection;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using TGC.MonoGame.TP.Content.Models;
 
 namespace TGC.MonoGame.TP
 {
@@ -46,10 +49,23 @@ namespace TGC.MonoGame.TP
         private float Rotation { get; set; }
 
         private Model CarModel { get; set; }
-        private Model Ciudad {get; set;}
+
+        private CityScene City { get; set; }
+        private Model DeLoreanModel { get; set; }
+
+        private Matrix Scale { get; set; }
         private Matrix World { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
+        private Vector3 CameraPosition = Vector3.UnitZ * 150;
+        private Vector3 CameraForward = Vector3.Forward;
+        private Vector3 CameraTarget = Vector3.Zero;
+        private Vector3 CameraUp = Vector3.Up;
+
+        private float Yaw {get; set;}
+
+        private float Pitch {get; set;}
+        
 
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo.
@@ -67,11 +83,13 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.RasterizerState = rasterizerState;
             // Seria hasta aca.
 
+           
             // Configuramos nuestras matrices de la escena.
             World = Matrix.Identity;
+            Scale = Matrix.CreateScale(0.2f);
             View = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
             Projection =
-                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250);
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 2500);
 
             base.Initialize();
         }
@@ -89,20 +107,20 @@ namespace TGC.MonoGame.TP
             // Cargo el modelo del logo.
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
 
-            //Ciudad = Content.Load<Model>(ContentFolder3D + "city");
+            City = new CityScene(Content);
             
-            //CarModel = Content.Load<Model>(ContentFolder3D+"RacingCarA/RacingCar");
+            CarModel = Content.Load<Model>(ContentFolder3D+"RacingCarA/RacingCar");
+
+           
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
             
-            
-            
 
             // Asigno el efecto que cargue a cada parte del mesh.
             // Un modelo puede tener mas de 1 mesh internamente.
-            foreach (var mesh in Model.Meshes)
+            foreach (var mesh in CarModel.Meshes)
             {
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
                 foreach (var meshPart in mesh.MeshParts)
@@ -110,7 +128,6 @@ namespace TGC.MonoGame.TP
                     meshPart.Effect = Effect;
                 }
             }
-
             base.LoadContent();
         }
 
@@ -124,16 +141,60 @@ namespace TGC.MonoGame.TP
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
-            if (Keyboard.GetState().IsKeyDown(Keys.Escape))
+            var keyboardState = Keyboard.GetState();
+            var mouseState = Mouse.GetState();
+            var cameraSpeed = 500f;
+            var rotationSpeed = 0.02f;
+            
+            // --- Captura de la rotación con las teclas ---
+            if (keyboardState.IsKeyDown(Keys.J))
+                Yaw -= rotationSpeed;  // Rotar hacia la izquierda
+            if (keyboardState.IsKeyDown(Keys.L))
+                Yaw += rotationSpeed;  // Rotar hacia la derecha
+            if (keyboardState.IsKeyDown(Keys.I))
+                Pitch -= rotationSpeed; // Mirar hacia arriba
+            if (keyboardState.IsKeyDown(Keys.K))
+                Pitch += rotationSpeed; // Mirar hacia abajo
+
+            // Limitar la rotación vertical para evitar que la cámara se dé vuelta
+            Pitch = MathHelper.Clamp(Pitch, -MathHelper.PiOver2 + 0.1f, MathHelper.PiOver2 - 0.1f);
+            
+
+                // Calcular la dirección hacia adelante (forward) a partir del yaw y pitch
+            CameraForward = Vector3.Normalize(new Vector3(
+                (float)(Math.Cos(Pitch) * Math.Cos(Yaw)),
+                (float)Math.Sin(Pitch),
+                (float)(Math.Cos(Pitch) * Math.Sin(Yaw))
+            ));
+
+            // También podemos calcular la dirección hacia la derecha (para el movimiento lateral)
+            Vector3 CameraRight = Vector3.Cross(CameraForward, CameraUp);
+
+            if (keyboardState.IsKeyDown(Keys.Escape))
             {
                 //Salgo del juego.
-                Exit();
+                Exit(); 
             }
-            
+             // Input de teclado para mover la cámara
+
+            // --- Captura del movimiento con WASD ---
+            if (keyboardState.IsKeyDown(Keys.W))
+                CameraPosition += CameraForward * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (keyboardState.IsKeyDown(Keys.S))
+                CameraPosition -= CameraForward * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (keyboardState.IsKeyDown(Keys.A))
+                CameraPosition -= CameraRight * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (keyboardState.IsKeyDown(Keys.D))
+                CameraPosition += CameraRight * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
             // Basado en el tiempo que paso se va generando una rotacion.
             Rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
-            World = Matrix.CreateRotationY(Rotation);
+            CameraTarget = CameraPosition + CameraForward;
+
+            View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
+
+            World =Scale *  Matrix.CreateRotationY(Rotation);
 
             base.Update(gameTime);
         }
@@ -145,13 +206,52 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
-            GraphicsDevice.Clear(Color.Black);
+           
 
-            //Ciudad.Draw(World, View, Projection);
+            GraphicsDevice.Clear(Color.White);
 
-            //CarModel.Draw(World, View, Projection);
+           
 
+            Effect.Parameters["View"].SetValue(View);
+            Effect.Parameters["Projection"].SetValue(Projection);
+            
+            var random = new Random(Seed:0);
+            
+            
+            for (int i = 0; i < 200; i++){
+                
+                var scala = random.NextSingle() * random.NextSingle();
+                // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
+                var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());         /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
+                
+                var traslacion = new Vector3(
+                random.NextSingle()*1500f -5f,
+                random.NextSingle(),
+                random.NextSingle()*1500f -5f);
+
+
+
+                foreach (var mesh in CarModel.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(color);
+                    Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * World * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
+
+                    mesh.Draw();
+                }
+            }
+
+            City.Draw(gameTime, View, Projection);
+            /*
+            foreach (var mesh in DeLorianModel.Meshes)
+                {
+                    Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
+                    Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * World);
+
+                    mesh.Draw();
+                }
+            */
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
+            /*
             Effect.Parameters["View"].SetValue(View);
             Effect.Parameters["Projection"].SetValue(Projection);
             Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
@@ -161,6 +261,7 @@ namespace TGC.MonoGame.TP
                 Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * World);
                 mesh.Draw();
             }
+            */
         }
 
         /// <summary>
