@@ -33,6 +33,7 @@ namespace TGC.MonoGame.TP
 
         private CityScene City { get; set; }
         private Cars Cars { get; set; }
+        private Grass Grass { get; set; }
         private Model DeLoreanModel { get; set; }
 
         private Matrix Scale { get; set; }
@@ -111,6 +112,7 @@ namespace TGC.MonoGame.TP
 
             City = new CityScene(Content);
             Cars = new Cars(Content);
+            Grass = new Grass(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
@@ -203,6 +205,8 @@ namespace TGC.MonoGame.TP
             City.Draw(gameTime, View, Projection);
 
             Cars.Draw(gameTime, View, Projection, World);
+
+            Grass.Draw(gameTime, View, Projection, World);
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             /*
             Effect.Parameters["View"].SetValue(View);
