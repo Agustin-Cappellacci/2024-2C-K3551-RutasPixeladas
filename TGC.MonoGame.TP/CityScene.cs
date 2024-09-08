@@ -23,7 +23,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Effect Effect { get; set; }
 
 
-        /// <summary>
+        // <summary>
         /// Creates a City Scene with a content manager to load resources.
         /// </summary>
         /// <param name="content">The Content Manager to load resources</param>
@@ -37,13 +37,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Get the first texture we find
             // The city model only contains a single texture
-            var effect = Model.Meshes.FirstOrDefault().Effects.FirstOrDefault() as BasicEffect;
+            //var effect = Model.Meshes.FirstOrDefault().Effects.FirstOrDefault() as BasicEffect;
             //var texture = effect.Texture;
+            var texture = content.Load<Texture2D>(ContentFolder3D + "scene/tex/Palette"); // Asegúrate de usar la ruta correcta
 
             // Set the Texture to the Effect
-            /* 
+             
             Effect.Parameters["ModelTexture"].SetValue(texture);
-            */
+            
             // Assign the mesh effect
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -70,7 +71,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         }
 
-        /// <summary>
+        // <summary>
         /// Draws the City Scene
         /// </summary>
         /// <param name="gameTime">The Game Time for this frame</param>

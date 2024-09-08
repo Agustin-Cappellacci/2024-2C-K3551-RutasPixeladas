@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Mime;
 using System.Reflection;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -24,6 +25,30 @@ namespace TGC.MonoGame.TP
         public const string ContenidoAutoCombate = "Models/CombatVehicle";
         public const string ContenidoAutoCarrera = "Models/RacingCarA";
 
+        private GraphicsDeviceManager Graphics { get; }
+        private SpriteBatch SpriteBatch { get; set; }
+        private Model Model { get; set; }
+        private Effect Effect { get; set; }
+        private float Rotation { get; set; }
+
+        private CityScene City { get; set; }
+        private Cars Cars { get; set; }
+        private Model DeLoreanModel { get; set; }
+
+        private Matrix Scale { get; set; }
+        private Matrix World { get; set; }
+        private Matrix View { get; set; }
+        private Matrix Projection { get; set; }
+
+        private float Yaw {get; set;}
+
+        private float Pitch {get; set;}
+
+        private Vector3 CameraPosition = Vector3.UnitZ * 150;
+        private Vector3 CameraForward = Vector3.Forward;
+        private Vector3 CameraTarget = Vector3.Zero;
+        private Vector3 CameraUp = Vector3.Up;
+
         /// <summary>
         ///     Constructor del juego.
         /// </summary>
@@ -41,30 +66,6 @@ namespace TGC.MonoGame.TP
             // Hace que el mouse sea visible.
             IsMouseVisible = true;
         }
-
-        private GraphicsDeviceManager Graphics { get; }
-        private SpriteBatch SpriteBatch { get; set; }
-        private Model Model { get; set; }
-        private Effect Effect { get; set; }
-        private float Rotation { get; set; }
-
-        private Model CarModel { get; set; }
-
-        private CityScene City { get; set; }
-        private Model DeLoreanModel { get; set; }
-
-        private Matrix Scale { get; set; }
-        private Matrix World { get; set; }
-        private Matrix View { get; set; }
-        private Matrix Projection { get; set; }
-        private Vector3 CameraPosition = Vector3.UnitZ * 150;
-        private Vector3 CameraForward = Vector3.Forward;
-        private Vector3 CameraTarget = Vector3.Zero;
-        private Vector3 CameraUp = Vector3.Up;
-
-        private float Yaw {get; set;}
-
-        private float Pitch {get; set;}
         
 
         /// <summary>
@@ -81,15 +82,16 @@ namespace TGC.MonoGame.TP
             var rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.BlendState = BlendState.Opaque;
             // Seria hasta aca.
 
            
             // Configuramos nuestras matrices de la escena.
             World = Matrix.Identity;
-            Scale = Matrix.CreateScale(0.2f);
+            Scale = Matrix.CreateScale(1f);
             View = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
             Projection =
-                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 2500);
+                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250000);
 
             base.Initialize();
         }
@@ -108,26 +110,12 @@ namespace TGC.MonoGame.TP
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
 
             City = new CityScene(Content);
-            
-            CarModel = Content.Load<Model>(ContentFolder3D+"RacingCarA/RacingCar");
-
-           
+            Cars = new Cars(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            
 
-            // Asigno el efecto que cargue a cada parte del mesh.
-            // Un modelo puede tener mas de 1 mesh internamente.
-            foreach (var mesh in CarModel.Meshes)
-            {
-                // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
-                foreach (var meshPart in mesh.MeshParts)
-                {
-                    meshPart.Effect = Effect;
-                }
-            }
             base.LoadContent();
         }
 
@@ -194,7 +182,7 @@ namespace TGC.MonoGame.TP
 
             View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
 
-            World =Scale *  Matrix.CreateRotationY(Rotation);
+            World = Scale *  Matrix.CreateRotationY(Rotation);
 
             base.Update(gameTime);
         }
@@ -207,49 +195,14 @@ namespace TGC.MonoGame.TP
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
            
+            Effect.Parameters["View"].SetValue(View);
+            Effect.Parameters["Projection"].SetValue(Projection);
 
             GraphicsDevice.Clear(Color.White);
 
-           
-
-            Effect.Parameters["View"].SetValue(View);
-            Effect.Parameters["Projection"].SetValue(Projection);
-            
-            var random = new Random(Seed:0);
-            
-            
-            for (int i = 0; i < 200; i++){
-                
-                var scala = random.NextSingle() * random.NextSingle();
-                // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
-                var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());         /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
-                
-                var traslacion = new Vector3(
-                random.NextSingle()*1500f -5f,
-                random.NextSingle(),
-                random.NextSingle()*1500f -5f);
-
-
-
-                foreach (var mesh in CarModel.Meshes)
-                {
-                    Effect.Parameters["DiffuseColor"].SetValue(color);
-                    Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * World * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
-
-                    mesh.Draw();
-                }
-            }
-
             City.Draw(gameTime, View, Projection);
-            /*
-            foreach (var mesh in DeLorianModel.Meshes)
-                {
-                    Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
-                    Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * World);
 
-                    mesh.Draw();
-                }
-            */
+            Cars.Draw(gameTime, View, Projection, World);
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             /*
             Effect.Parameters["View"].SetValue(View);
