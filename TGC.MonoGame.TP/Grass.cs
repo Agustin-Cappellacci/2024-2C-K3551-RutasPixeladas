@@ -86,7 +86,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var color = new Vector3(0.6f, 0.3f, 0.01f); //color verde puro
             Effect.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
                 
-            var traslacion = new Vector3(0f, -100f, 0f);
+            var traslacion = new Vector3(0f, -1f, 0f);
 
             var modelMeshesBaseTransforms = new Matrix[Model.Bones.Count];
             Model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);

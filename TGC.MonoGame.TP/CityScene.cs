@@ -180,7 +180,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Ajedrez.CopyAbsoluteBoneTransformsTo(modelChessMeshesBaseTransforms);
 
             // For each mesh in the model,
-            foreach (var mesh in Model.Meshes)
+          /*  foreach (var mesh in Model.Meshes)
             {
                 // Obtain the world matrix for that mesh (relative to the parent)
                 EffectMesa.Parameters["DiffuseColor"].SetValue(new Vector3(0.8f, 0.8f, 0.8f));
@@ -198,7 +198,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     // Draw the mesh
                     mesh.Draw();
                 }*/
-            }
+            //}
 
             foreach (var mesh in Ajedrez.Meshes)
             {
@@ -253,10 +253,13 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var mesh in Cubo.Meshes)
                 {
-                    // Obtain the world matrix for that mesh (relative to the parent)
+                 
                     EffectChess.Parameters["DiffuseColor"].SetValue(color);
                     EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(scala) *  Matrix.CreateTranslation(traslacion));
                     mesh.Draw();
+                    
+                    // Obtain the world matrix for that mesh (relative to the parent)
+                    
                 }
             }
 
