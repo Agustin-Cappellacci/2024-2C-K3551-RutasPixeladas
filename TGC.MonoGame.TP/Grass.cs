@@ -19,6 +19,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private Model Model { get; set; }
         private Effect Effect { get; set; }
 
+        private List<Matrix> WorldMatrices { get; set; }
+
 
         // <summary>
         /// Creates a Car Model with a content manager to load resources.
@@ -27,7 +29,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public Grass (ContentManager content)
         {
             // Load the Car Model
-            Model = content.Load<Model>(ContentFolder3D+"Village/nature/rpgpp_lt_terrain_grass_02");
+            Model = content.Load<Model>(ContentFolder3D+"escenario/Floor");
 
             // Load an effect that will be used to draw the scene
             Effect = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
@@ -42,6 +44,27 @@ namespace TGC.MonoGame.TP.Content.Models
                     meshPart.Effect = Effect;
                 }
             }
+
+
+            WorldMatrices = new List<Matrix>()
+            {
+                Matrix.Identity,
+                Matrix.CreateTranslation(Vector3.Right *75f),
+                Matrix.CreateTranslation(Vector3.Left * 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f),
+                Matrix.CreateTranslation(Vector3.Right * 2f* 75f),
+                Matrix.CreateTranslation(Vector3.Left * 2f* 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f + Vector3.Right * 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f + Vector3.Left * 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f + Vector3.Right * 2f* 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f + Vector3.Left * 2f*75f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Right * 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left * 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Right *2f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left *2f* 75f),
+            };
+
 
         }
 
@@ -58,18 +81,31 @@ namespace TGC.MonoGame.TP.Content.Models
             
             var random = new Random(Seed:0);
 
-            var scala = 2000.0f; // Escala entre 1.0 y 11.0
+            var scala = 10f; // Escala entre 1.0 y 11.0
             // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
-            var color = new Vector3(0.0f, 1.0f, 0.0f); //color verde puro
+            var color = new Vector3(0.6f, 0.3f, 0.01f); //color verde puro
             Effect.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
                 
-            var traslacion = new Vector3(2f, -1f, 1f);
+            var traslacion = new Vector3(0f, -100f, 0f);
+
+            var modelMeshesBaseTransforms = new Matrix[Model.Bones.Count];
+            Model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
 
             foreach (var mesh in Model.Meshes)
-            {
-                Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
+            {   
+                var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+              //  Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
 
-                mesh.Draw();
+            //    mesh.Draw();
+
+                foreach (var worldMatrix in WorldMatrices)
+                {
+                    // We set the main matrices for each mesh to draw
+                    Effect.Parameters["World"].SetValue(meshWorld * worldMatrix * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
+
+                    // Draw the mesh
+                    mesh.Draw();
+                }
             }
         
         }
