@@ -204,7 +204,7 @@ namespace TGC.MonoGame.TP
 
             City.Draw(gameTime, View, Projection);
 
-            Cars.Draw(gameTime, View, Projection, World);
+            Cars.Draw(gameTime, View, Projection);
 
             Grass.Draw(gameTime, View, Projection, World);
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.

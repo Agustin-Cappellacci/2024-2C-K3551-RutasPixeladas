@@ -17,6 +17,8 @@ namespace TGC.MonoGame.TP.Content.Models
         public const string ContentFolderEffects = "Effects/";
 
         private Model Model { get; set; }
+        private Model ChairModel { get; set; }
+        private Model BedModel { get; set; }
         private Effect Effect { get; set; }
 
         private List<Matrix> WorldMatrices { get; set; }
@@ -30,6 +32,8 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             // Load the Car Model
             Model = content.Load<Model>(ContentFolder3D+"escenario/Floor");
+            ChairModel = content.Load<Model>(ContentFolder3D+"Village/props/rpgpp_lt_chair_01a");
+            BedModel = content.Load<Model>(ContentFolder3D+"Cama/bedSingle");
 
             // Load an effect that will be used to draw the scene
             Effect = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
@@ -37,6 +41,24 @@ namespace TGC.MonoGame.TP.Content.Models
             // Assign the mesh effect
             // A model contains a collection of meshes
            foreach (var mesh in Model.Meshes)
+            {
+                // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = Effect;
+                }
+            }
+
+            foreach (var mesh in ChairModel.Meshes)
+            {
+                // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = Effect;
+                }
+            }
+
+            foreach (var mesh in BedModel.Meshes)
             {
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
                 foreach (var meshPart in mesh.MeshParts)
@@ -106,6 +128,40 @@ namespace TGC.MonoGame.TP.Content.Models
                     // Draw the mesh
                     mesh.Draw();
                 }
+            }
+
+            var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
+            ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
+
+            var colorRojo = new Vector3(1.0f, 0.0f, 0.0f); //color rojo puro
+            var traslacionChair = new Vector3(1500f, -8f, -1500f);
+            Effect.Parameters["DiffuseColor"].SetValue(colorRojo); 
+
+            foreach (var mesh in ChairModel.Meshes)
+            {   
+                var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
+              //  Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
+                    // We set the main matrices for each mesh to draw
+                    Effect.Parameters["World"].SetValue(meshWorldChair * Matrix.CreateRotationY(MathHelper.Pi/2) * Matrix.CreateScale(1000f) * Matrix.CreateTranslation(traslacionChair));
+                    // Draw the mesh
+                    mesh.Draw();
+            }
+
+            var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
+            BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
+
+            var colorAzul = new Vector3(0.0f, 0.0f, 1.0f); //color azul puro
+            var traslacionBed = new Vector3(3300f, -6f, -1000f);
+            Effect.Parameters["DiffuseColor"].SetValue(colorAzul); 
+
+            foreach (var mesh in BedModel.Meshes)
+            {   
+                var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
+              //  Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
+                    // We set the main matrices for each mesh to draw
+                    Effect.Parameters["World"].SetValue(meshWorldBed * Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed));
+                    // Draw the mesh
+                    mesh.Draw();
             }
         
         }

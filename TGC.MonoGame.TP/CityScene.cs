@@ -179,6 +179,21 @@ namespace TGC.MonoGame.TP.Content.Models
             var modelChessMeshesBaseTransforms = new Matrix[Ajedrez.Bones.Count];
             Ajedrez.CopyAbsoluteBoneTransformsTo(modelChessMeshesBaseTransforms);
 
+            var modelLegoMeshesBaseTransforms = new Matrix[Lego.Bones.Count];
+            Lego.CopyAbsoluteBoneTransformsTo(modelLegoMeshesBaseTransforms);
+
+            var modelPuenteMeshesBaseTransforms = new Matrix[Puente.Bones.Count];
+            Puente.CopyAbsoluteBoneTransformsTo(modelPuenteMeshesBaseTransforms);
+
+            var modelTorreMeshesBaseTransforms = new Matrix[Torre.Bones.Count];
+            Torre.CopyAbsoluteBoneTransformsTo(modelTorreMeshesBaseTransforms);
+
+            var modelCuboMeshesBaseTransforms = new Matrix[Cubo.Bones.Count];
+            Cubo.CopyAbsoluteBoneTransformsTo(modelCuboMeshesBaseTransforms);
+
+            var modelLegoPJMeshesBaseTransforms = new Matrix[LegoPJ.Bones.Count];
+            LegoPJ.CopyAbsoluteBoneTransformsTo(modelLegoPJMeshesBaseTransforms);
+
             // For each mesh in the model,
           /*  foreach (var mesh in Model.Meshes)
             {
@@ -203,24 +218,28 @@ namespace TGC.MonoGame.TP.Content.Models
             foreach (var mesh in Ajedrez.Meshes)
             {
                 // Obtain the world matrix for that mesh (relative to the parent)
+                var meshWorldAjedrez = modelChessMeshesBaseTransforms[mesh.ParentBone.Index];
+
                 EffectChess.Parameters["DiffuseColor"].SetValue(new Vector3(0f, 0f, 0f));
-                EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(0.2f) *  Matrix.CreateTranslation(-500F, 0F, 800F));
+                EffectChess.Parameters["World"].SetValue(meshWorldAjedrez  * Matrix.CreateScale(0.2f) *  Matrix.CreateTranslation(-1000F, 0F, 1000F));
                 mesh.Draw();
             }
 
             foreach (var mesh in LegoPJ.Meshes)
             {
+                var meshWorldLegoPJ = modelLegoPJMeshesBaseTransforms[mesh.ParentBone.Index];
                 // Obtain the world matrix for that mesh (relative to the parent)
                 EffectChess.Parameters["DiffuseColor"].SetValue(new Vector3(0.9f, 0.9f, 0.9f));
-                EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(0.1f) *  Matrix.CreateTranslation(0F, 0F, 800F));
+                EffectChess.Parameters["World"].SetValue(meshWorldLegoPJ  * Matrix.CreateScale(0.1f) *  Matrix.CreateTranslation(0F, 0F, 800F));
                 mesh.Draw();
             }
 
             foreach (var mesh in Puente.Meshes)
             {
+                var meshWorldPuente = modelPuenteMeshesBaseTransforms[mesh.ParentBone.Index];
                 // Obtain the world matrix for that mesh (relative to the parent)
                 EffectChess.Parameters["DiffuseColor"].SetValue(new Vector3(1f, 0.9f, 0.2f));
-                EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(100f) *  Matrix.CreateTranslation(-100F, 0F, 150F));
+                EffectChess.Parameters["World"].SetValue(meshWorldPuente* Matrix.CreateRotationX(MathHelper.Pi/-2) * Matrix.CreateScale(100f) *  Matrix.CreateTranslation(-100F, 0F, 150F));
                 mesh.Draw();
             }
 
@@ -228,9 +247,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
             foreach (var mesh in Torre.Meshes)
             {
+                var meshWorldTorre = modelTorreMeshesBaseTransforms[mesh.ParentBone.Index];
                 // Obtain the world matrix for that mesh (relative to the parent)
                 EffectChess.Parameters["DiffuseColor"].SetValue(new Vector3(0f, 0f, 1f));
-                EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(1f) *  Matrix.CreateTranslation(450F, 0F, -300F));
+                EffectChess.Parameters["World"].SetValue(meshWorldTorre  * Matrix.CreateScale(1f) *  Matrix.CreateTranslation(300F, 0F, -300F));
                 mesh.Draw();
             }
             
@@ -242,7 +262,7 @@ namespace TGC.MonoGame.TP.Content.Models
                var color = new Vector3(random.NextSingle(), random.NextSingle(), 0.6f);
 
                 var traslacion = new Vector3(
-                -770f + (650f - (-770f)) * random.NextSingle(),
+                -770f + (1500f - (-770f)) * random.NextSingle(),
                 0,
                 -1200f + (1000f - (-1200f)) * random.NextSingle()
                 );
@@ -253,9 +273,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var mesh in Cubo.Meshes)
                 {
+                    var meshWorldCubo = modelCuboMeshesBaseTransforms[mesh.ParentBone.Index];
                  
                     EffectChess.Parameters["DiffuseColor"].SetValue(color);
-                    EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(scala) *  Matrix.CreateTranslation(traslacion));
+                    EffectChess.Parameters["World"].SetValue(meshWorldCubo * Matrix.CreateScale(scala) *  Matrix.CreateTranslation(traslacion));
                     mesh.Draw();
                     
                     // Obtain the world matrix for that mesh (relative to the parent)
@@ -269,7 +290,7 @@ namespace TGC.MonoGame.TP.Content.Models
                var color = new Vector3(random.NextSingle(), 0, random.NextSingle());
 
                 var traslacion = new Vector3(
-                -770f + (650f - (-770f)) * random.NextSingle(),
+                -770f + (150f - (-770f)) * random.NextSingle(),
                 0,
                 -1200f + (1000f - (-1200f)) * random.NextSingle()
                 );
@@ -280,9 +301,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var mesh in Lego.Meshes)
                 {
+                    var meshWorldLego = modelLegoMeshesBaseTransforms[mesh.ParentBone.Index];
                     // Obtain the world matrix for that mesh (relative to the parent)
                     EffectChess.Parameters["DiffuseColor"].SetValue(color);
-                    EffectChess.Parameters["World"].SetValue(mesh.ParentBone.Transform  * Matrix.CreateScale(scala) *  Matrix.CreateTranslation(traslacion));
+                    EffectChess.Parameters["World"].SetValue(meshWorldLego *  Matrix.CreateTranslation(traslacion)  * Matrix.CreateScale(scala));
                     mesh.Draw();
                 }
             }
