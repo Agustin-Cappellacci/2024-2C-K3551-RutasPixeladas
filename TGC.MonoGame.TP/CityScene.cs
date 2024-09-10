@@ -27,6 +27,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Model Puente {get; set;}
 
+        private Model Television {get; set;}
+
 
 
         private List<Matrix> WorldMatrices { get; set; }
@@ -58,7 +60,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             Puente = content.Load<Model>(ContentFolder3D + "escenario/puente");
 
-
+            Television = content.Load<Model>(ContentFolder3D + "tele/televisionModern");
             // Load an effect that will be used to draw the scene
             //Effect = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             
@@ -139,6 +141,14 @@ namespace TGC.MonoGame.TP.Content.Models
                     meshPart.Effect = EffectChess;
             }
 
+            foreach (var mesh in Television.Meshes)
+            {
+                // A mesh contains a collection of parts
+                foreach (var meshPart in mesh.MeshParts)
+                    // Assign the loaded effect to each part
+                    meshPart.Effect = EffectChess;
+            }
+
 
             // Create a list of places where the city model will be drawn
             WorldMatrices = new List<Matrix>()
@@ -193,6 +203,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
             var modelLegoPJMeshesBaseTransforms = new Matrix[LegoPJ.Bones.Count];
             LegoPJ.CopyAbsoluteBoneTransformsTo(modelLegoPJMeshesBaseTransforms);
+
+            var modelTelevisionMeshesBaseTransforms = new Matrix[Television.Bones.Count];
+            Television.CopyAbsoluteBoneTransformsTo(modelTelevisionMeshesBaseTransforms);
+
 
             // For each mesh in the model,
           /*  foreach (var mesh in Model.Meshes)
@@ -251,6 +265,15 @@ namespace TGC.MonoGame.TP.Content.Models
                 // Obtain the world matrix for that mesh (relative to the parent)
                 EffectChess.Parameters["DiffuseColor"].SetValue(new Vector3(0f, 0f, 1f));
                 EffectChess.Parameters["World"].SetValue(meshWorldTorre  * Matrix.CreateScale(1f) *  Matrix.CreateTranslation(300F, 0F, -300F));
+                mesh.Draw();
+            }
+
+            foreach (var mesh in Television.Meshes)
+            {
+                var meshWorldTorre = modelTelevisionMeshesBaseTransforms[mesh.ParentBone.Index];
+                // Obtain the world matrix for that mesh (relative to the parent)
+                EffectChess.Parameters["DiffuseColor"].SetValue(new Vector3(0f, 0f, 1f));
+                EffectChess.Parameters["World"].SetValue(meshWorldTorre  * Matrix.CreateRotationY(MathHelper.Pi/-2) * Matrix.CreateScale(100f) *  Matrix.CreateTranslation(-1000F, 0F, -300F));
                 mesh.Draw();
             }
             
