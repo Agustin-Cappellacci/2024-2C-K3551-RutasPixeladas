@@ -169,12 +169,24 @@ namespace TGC.MonoGame.TP
 
             // --- Captura del movimiento con WASD ---
             if (keyboardState.IsKeyDown(Keys.W))
+                if(keyboardState.IsKeyDown(Keys.LeftShift)){
+                    CameraPosition += CameraForward * 10 *cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                } else
                 CameraPosition += CameraForward * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (keyboardState.IsKeyDown(Keys.S))
+                if(keyboardState.IsKeyDown(Keys.LeftShift)){
+                    CameraPosition -= CameraForward * 10 * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                } else
                 CameraPosition -= CameraForward * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (keyboardState.IsKeyDown(Keys.A))
+                if(keyboardState.IsKeyDown(Keys.LeftShift)){
+                    CameraPosition -= CameraRight * 10 *cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                } else
                 CameraPosition -= CameraRight * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (keyboardState.IsKeyDown(Keys.D))
+                if(keyboardState.IsKeyDown(Keys.LeftShift)){
+                    CameraPosition += CameraRight * 10 *cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+                } else
                 CameraPosition += CameraRight * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             // Basado en el tiempo que paso se va generando una rotacion.
