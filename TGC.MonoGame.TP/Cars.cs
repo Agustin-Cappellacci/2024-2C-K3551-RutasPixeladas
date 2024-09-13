@@ -37,11 +37,11 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="content">The Content Manager to load resources</param>
         public Cars (ContentManager content)
         {
-            CantAutos = 80;
+            CantAutos = 90;
             // Load the Car Model
             CarModel = content.Load<Model>(ContentFolder3D+"autos/RacingCarA/RacingCar");
             //CartoonCar = content.Load<Model>(ContentFolder3D+"autos/cartoonCar/carton_car");
-            //flatoutCar = content.Load<Model>(ContentFolder3D+"autos/flatOutCar/Car");
+            flatoutCar = content.Load<Model>(ContentFolder3D+"autos/flatOutCar/Car");
             //deLorean = content.Load<Model>(ContentFolder3D+"autos/DeLorean");
             //kombi = content.Load<Model>(ContentFolder3D+"autos/kombi2");
             combatVehicle = content.Load<Model>(ContentFolder3D+"autos/CombatVehicle/Vehicle");
@@ -64,6 +64,15 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
+            foreach (var mesh in flatoutCar.Meshes)
+            {
+                // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = EffectCar;
+                }
+            }
+
             foreach (var mesh in combatVehicle.Meshes)
             {
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
@@ -75,10 +84,11 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             listaModelos = new List<Model>();
-            for (int i = 0; i < CantAutos/2; i++)
+            for (int i = 0; i < CantAutos/3; i++)
             {
                 listaModelos.Add(CarModel);
                 listaModelos.Add(combatVehicle);
+                listaModelos.Add(flatoutCar);
             }
 
             // Mezclar la lista de modelos
@@ -108,39 +118,57 @@ namespace TGC.MonoGame.TP.Content.Models
             combatVehicle.CopyAbsoluteBoneTransformsTo(meshBaseCombatVehicle);
             var meshBaseModelCar = new Matrix[CarModel.Bones.Count];
             CarModel.CopyAbsoluteBoneTransformsTo(meshBaseModelCar);
-           
-
-            var world = Matrix.Identity;
-
+            var meshBaseFlatoutCar = new Matrix[flatoutCar.Bones.Count];
+            flatoutCar.CopyAbsoluteBoneTransformsTo(meshBaseFlatoutCar);
 
             var random = new Random(Seed:0);
 
             for (int i = 0; i < CantAutos; i++){
                 
+                //scala calculada para carmodel
                 var scala = 0.1f + (0.1f - 0.05f) * random.NextSingle();
-                // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
+                //var color = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
                 var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());         /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
 
+                //angulo calculado para carmodel
                 var angulo = angulosHaciaCentro[i];
-                /*var traslacion = new Vector3(
-                -1000f + (100f - (-1000f)) * random.NextSingle(),
-                0,
-                -2000f + (1500f - (-2000f)) * random.NextSingle()
-                );*/
+
+                var traslacion = traslaciones[i];
 
                 //SCALA DE 0.5 A 1
                 //-770 A 650
                 //-1200 A 1000
 
+                if (listaModelos[i] == flatoutCar){
+                    scala = 1.4f + (1.4f - 0.9f) * random.NextSingle();
+                    angulo =   angulosHaciaCentro[i] +  (float)Math.PI;
+                    traslacion = traslaciones[i] * (1.03f);
+                }  
+
+                if (listaModelos[i] == combatVehicle){
+                    scala = 0.004f + (0.004f - 0.001f) * random.NextSingle();
+                    angulo =   angulosHaciaCentro[i] + (float)Math.PI/2;
+                }   
+
+                var worldFinal = Matrix.Identity;
 
                 foreach (var mesh in listaModelos[i].Meshes)
                 {   
-                    if (listaModelos[i] == combatVehicle){
-                        scala = 0.004f + (0.004f - 0.001f) * random.NextSingle();
-                        angulo =   angulosHaciaCentro[i] + (float)Math.PI/2;
+                    if (listaModelos[i] == CarModel){
+                        worldFinal = meshBaseModelCar[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
                     }
+
+                    if (listaModelos[i] == flatoutCar){
+                        worldFinal = meshBaseFlatoutCar[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
+                    }
+
+                    if (listaModelos[i] == combatVehicle){
+                        worldFinal = meshBaseCombatVehicle[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
+                    }   
+
                     EffectCar.Parameters["DiffuseColor"].SetValue(color);
-                    EffectCar.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslaciones[i]) );
+                    //EffectCar.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslaciones[i]) );
+                    EffectCar.Parameters["World"].SetValue(worldFinal);
 
                     mesh.Draw();
                 }
