@@ -19,7 +19,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Model CarModel { get; set; }
         private Model CartoonCar { get; set; }
-        private Model flatoutCar { get; set; }
+       // private Model flatoutCar { get; set; }
         private Model deLorean { get; set; }
         private Model kombi { get; set; }
         private Model combatVehicle { get; set; }
@@ -37,11 +37,11 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="content">The Content Manager to load resources</param>
         public Cars (ContentManager content)
         {
-            CantAutos = 90;
+            CantAutos = 70;
             // Load the Car Model
             CarModel = content.Load<Model>(ContentFolder3D+"autos/RacingCarA/RacingCar");
             //CartoonCar = content.Load<Model>(ContentFolder3D+"autos/cartoonCar/carton_car");
-            flatoutCar = content.Load<Model>(ContentFolder3D+"autos/flatOutCar/Car");
+          //  flatoutCar = content.Load<Model>(ContentFolder3D+"autos/flatOutCar/Car");
             //deLorean = content.Load<Model>(ContentFolder3D+"autos/DeLorean");
             //kombi = content.Load<Model>(ContentFolder3D+"autos/kombi2");
             combatVehicle = content.Load<Model>(ContentFolder3D+"autos/CombatVehicle/Vehicle");
@@ -49,7 +49,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Load an effect that will be used to draw the scene
             EffectCar = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
             
-            traslaciones = GenerarPuntosEnCirculo(CantAutos, 1200f);
+            traslaciones = GenerarPuntosEnCirculo(CantAutos, 700f);
 
             angulosHaciaCentro = CalcularAngulosHaciaCentro(traslaciones);
 
@@ -64,14 +64,14 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
-            foreach (var mesh in flatoutCar.Meshes)
-            {
-                // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
-                foreach (var meshPart in mesh.MeshParts)
-                {
-                    meshPart.Effect = EffectCar;
-                }
-            }
+       //     foreach (var mesh in flatoutCar.Meshes)
+          //  {
+            // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
+        //        foreach (var meshPart in mesh.MeshParts)
+          //      {
+            //        meshPart.Effect = EffectCar;
+              //  }
+            //}
 
             foreach (var mesh in combatVehicle.Meshes)
             {
@@ -84,11 +84,11 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             listaModelos = new List<Model>();
-            for (int i = 0; i < CantAutos/3; i++)
+            for (int i = 0; i < CantAutos/2; i++)
             {
                 listaModelos.Add(CarModel);
                 listaModelos.Add(combatVehicle);
-                listaModelos.Add(flatoutCar);
+      //          listaModelos.Add(flatoutCar);
             }
 
             // Mezclar la lista de modelos
@@ -118,8 +118,8 @@ namespace TGC.MonoGame.TP.Content.Models
             combatVehicle.CopyAbsoluteBoneTransformsTo(meshBaseCombatVehicle);
             var meshBaseModelCar = new Matrix[CarModel.Bones.Count];
             CarModel.CopyAbsoluteBoneTransformsTo(meshBaseModelCar);
-            var meshBaseFlatoutCar = new Matrix[flatoutCar.Bones.Count];
-            flatoutCar.CopyAbsoluteBoneTransformsTo(meshBaseFlatoutCar);
+       //     var meshBaseFlatoutCar = new Matrix[flatoutCar.Bones.Count];
+        //    flatoutCar.CopyAbsoluteBoneTransformsTo(meshBaseFlatoutCar);
 
             var random = new Random(Seed:0);
 
@@ -139,12 +139,12 @@ namespace TGC.MonoGame.TP.Content.Models
                 //-770 A 650
                 //-1200 A 1000
 
-                if (listaModelos[i] == flatoutCar){
+         /*       if (listaModelos[i] == flatoutCar){
                     scala = 1.4f + (1.4f - 0.9f) * random.NextSingle();
                     angulo =   angulosHaciaCentro[i] +  (float)Math.PI;
                     traslacion = traslaciones[i] * (1.03f);
                 }  
-
+*/
                 if (listaModelos[i] == combatVehicle){
                     scala = 0.004f + (0.004f - 0.001f) * random.NextSingle();
                     angulo =   angulosHaciaCentro[i] + (float)Math.PI/2;
@@ -158,9 +158,9 @@ namespace TGC.MonoGame.TP.Content.Models
                         worldFinal = meshBaseModelCar[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
                     }
 
-                    if (listaModelos[i] == flatoutCar){
+      /*              if (listaModelos[i] == flatoutCar){
                         worldFinal = meshBaseFlatoutCar[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
-                    }
+                    }*/
 
                     if (listaModelos[i] == combatVehicle){
                         worldFinal = meshBaseCombatVehicle[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
@@ -179,13 +179,15 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             List<Vector3> puntos = new List<Vector3>();
             float anguloIncremento = MathHelper.TwoPi / numPuntos; // Divide el círculo en partes iguales
+            float centroX = -900f; // Desplazamiento en X
+            float centroZ = -1100f; // Desplazamiento en Z
 
             for (int i = 0; i < numPuntos; i++)
             {
                 float angulo = i * anguloIncremento;
-                float x = radio * (float)Math.Cos(angulo);
-                float z = radio * (float)Math.Sin(angulo);
-                float y = 0; // Fijamos la altura Y a 0 (puedes cambiarla si lo necesitas)
+                float x = centroX + radio * (float)Math.Cos(angulo); // Coordenada X con desplazamiento
+                float z = centroZ + radio * (float)Math.Sin(angulo); // Coordenada Z con desplazamiento
+                float y = 5; // Coordenada Y fija
 
                 puntos.Add(new Vector3(x, y, z));
             }
@@ -197,22 +199,24 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             List<float> angulos = new List<float>();
 
+            // Coordenadas del centro del círculo en el plano XZ
+            float centroX = -900f;
+            float centroZ = -1100f;
+
             foreach (var posicion in posiciones)
             {
-                // Vector desde la posición del auto hacia el origen en el eje X y Z
-                float dx =  -posicion.X;
-                float dz = posicion.Z;
+                // Calculamos la diferencia en X y Z con respecto al centro desplazado
+                float dx = centroX - posicion.X; 
+                float dz = centroZ - posicion.Z; 
 
-                // Calculamos el ángulo con atan2(dz, dx)
-                float angulo = (float)Math.Atan2(dz, dx);
+                // Calculamos el ángulo con Atan2. Intercambiamos dx y dz para invertir la dirección
+                float angulo =  MathHelper.TwoPi - (float)Math.Atan2(dz, dx) + MathHelper.Pi/2; 
 
-                // Añadimos el ángulo a la lista
-                angulos.Add(angulo + (float)Math.PI/2);
+                angulos.Add(angulo);
             }
 
             return angulos;
         }
-
 
     }
 }

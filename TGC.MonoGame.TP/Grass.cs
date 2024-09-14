@@ -151,7 +151,7 @@ namespace TGC.MonoGame.TP.Content.Models
             BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
 
             var colorAzul = new Vector3(0.0f, 0.0f, 1.0f); //color azul puro
-            var traslacionBed = new Vector3(3300f, -6f, -1000f);
+            var traslacionBed = new Vector3(3300f, -20f, -1000f);
             Effect.Parameters["DiffuseColor"].SetValue(colorAzul); 
 
             foreach (var mesh in BedModel.Meshes)
