@@ -26,6 +26,8 @@ namespace TGC.MonoGame.TP
         public const string ContenidoAutoCarrera = "Models/RacingCarA";
 
         private GraphicsDeviceManager Graphics { get; }
+
+        FollowCamera Camera { get; set; }
         private SpriteBatch SpriteBatch { get; set; }
         private Model Model { get; set; }
         private Effect Effect { get; set; }
@@ -62,6 +64,7 @@ namespace TGC.MonoGame.TP
             
             Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
+
             
             // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
             // Carpeta raiz donde va a estar toda la Media.
@@ -83,6 +86,7 @@ namespace TGC.MonoGame.TP
             // Esto se hace por un problema en el diseno del modelo del logo de la materia.
             // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
             var rasterizerState = new RasterizerState();
+            Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
             rasterizerState.CullMode = CullMode.None;
             GraphicsDevice.RasterizerState = rasterizerState;
             GraphicsDevice.BlendState = BlendState.Opaque;
@@ -90,12 +94,13 @@ namespace TGC.MonoGame.TP
 
            
             // Configuramos nuestras matrices de la escena.
+            /*
             World = Matrix.Identity;
             Scale = Matrix.CreateScale(1f);
             View = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
             Projection =
                 Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250000);
-
+            */
             base.Initialize();
         }
 
@@ -204,6 +209,8 @@ namespace TGC.MonoGame.TP
 
             jugador.Update(gameTime);
 
+            Camera.Update(gameTime,jugador.carWorld);
+
 
             base.Update(gameTime);
         }
@@ -216,8 +223,8 @@ namespace TGC.MonoGame.TP
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
            
-            Effect.Parameters["View"].SetValue(View);
-            Effect.Parameters["Projection"].SetValue(Projection);
+            Effect.Parameters["View"].SetValue(Camera.View);
+            Effect.Parameters["Projection"].SetValue(Camera.Projection);
 
             GraphicsDevice.Clear(Color.White);
 
@@ -227,7 +234,7 @@ namespace TGC.MonoGame.TP
 
             Grass.Draw(gameTime, View, Projection, World);
 
-            jugador.Draw();
+            jugador.Draw(View, Projection);
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             /*
             Effect.Parameters["View"].SetValue(View);

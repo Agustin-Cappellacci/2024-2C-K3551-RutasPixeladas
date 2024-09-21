@@ -9,14 +9,11 @@ using System.Text;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
-    
-    
     class Jugador{
             public const string ContentFolder3D = "Models/";
             public const string ContentFolderEffects = "Effects/";
             private Model autoJugador {set; get;}
             private Vector3 PosicionInicial {set; get;}
-            private FollowCamera FollowCamera { get; set; } 
             private Vector3 direccionFrontal { get; set; }
 
             public Matrix carWorld {get; set;}
@@ -82,10 +79,9 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             
                 var random = new Random(Seed:0);
-                var scala = 0.1f + (0.1f - 0.05f) * random.NextSingle();
+                var scala = 3f + (0.1f - 0.05f) * random.NextSingle();
 
                 carWorld = Matrix.CreateScale(scala) * carRotation * Matrix.CreateTranslation(carPosition);
-                FollowCamera.Update(gameTime, carWorld);
 
                 
             
@@ -101,14 +97,14 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
         }
 
-        public void Draw(Matrix view, Matrix Projection){
+        public void Draw(Matrix view, Matrix projection){
             var random = new Random(Seed:0);
             var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());  
             foreach(var mesh in autoJugador.Meshes){
                 effectoAuto.Parameters["DiffuseColor"].SetValue(color);
                 effectoAuto.Parameters["World"].SetValue(carWorld);
-                effectoAuto.Parameters["View"].SetValue(FollowCamera.View);
-                effectoAuto.Parameters["Projection"].SetValue(FollowCamera.Projection);
+                effectoAuto.Parameters["View"].SetValue(view);
+                effectoAuto.Parameters["Projection"].SetValue(projection);
             }
         }
     }
