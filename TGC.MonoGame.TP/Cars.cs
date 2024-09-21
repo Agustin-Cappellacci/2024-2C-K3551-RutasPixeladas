@@ -123,6 +123,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             var random = new Random(Seed:0);
 
+
+
             for (int i = 0; i < CantAutos; i++){
                 
                 //scala calculada para carmodel
@@ -134,6 +136,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 var angulo = angulosHaciaCentro[i];
 
                 var traslacion = traslaciones[i];
+                
 
                 //SCALA DE 0.5 A 1
                 //-770 A 650
@@ -144,11 +147,11 @@ namespace TGC.MonoGame.TP.Content.Models
                     angulo =   angulosHaciaCentro[i] +  (float)Math.PI;
                     traslacion = traslaciones[i] * (1.03f);
                 }  
-*/
+*/      
                 if (listaModelos[i] == combatVehicle){
                     scala = 0.004f + (0.004f - 0.001f) * random.NextSingle();
                     angulo =   angulosHaciaCentro[i] + (float)Math.PI/2;
-                }   
+                }
 
                 var worldFinal = Matrix.Identity;
 

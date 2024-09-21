@@ -30,7 +30,8 @@ namespace TGC.MonoGame.TP
         private Model Model { get; set; }
         private Effect Effect { get; set; }
         private float Rotation { get; set; }
-
+        
+        private Jugador jugador {get; set;}
         private CityScene City { get; set; }
         private Cars Cars { get; set; }
         private Grass Grass { get; set; }
@@ -45,10 +46,11 @@ namespace TGC.MonoGame.TP
 
         private float Pitch {get; set;}
 
-        private Vector3 CameraPosition = Vector3.UnitZ * 150;
+    /*    private Vector3 CameraPosition = Vector3.UnitZ * 150;
         private Vector3 CameraForward = Vector3.Forward;
         private Vector3 CameraTarget = Vector3.Zero;
         private Vector3 CameraUp = Vector3.Up;
+    */
 
         /// <summary>
         ///     Constructor del juego.
@@ -113,6 +115,7 @@ namespace TGC.MonoGame.TP
             City = new CityScene(Content);
             Cars = new Cars(Content);
             Grass = new Grass(Content);
+            jugador = new Jugador(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
@@ -127,11 +130,12 @@ namespace TGC.MonoGame.TP
         ///     ante ellas.
         /// </summary>
         protected override void Update(GameTime gameTime)
-        {
+        {   
+            
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
-            var keyboardState = Keyboard.GetState();
+        /*    var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
             var cameraSpeed = 500f;
             var rotationSpeed = 0.02f;
@@ -196,7 +200,10 @@ namespace TGC.MonoGame.TP
 
             View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
 
-            World = Scale *  Matrix.CreateRotationY(Rotation);
+            World = Scale *  Matrix.CreateRotationY(Rotation);*/
+
+            jugador.Update(gameTime);
+
 
             base.Update(gameTime);
         }
@@ -219,6 +226,8 @@ namespace TGC.MonoGame.TP
             Cars.Draw(gameTime, View, Projection);
 
             Grass.Draw(gameTime, View, Projection, World);
+
+            jugador.Draw();
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             /*
             Effect.Parameters["View"].SetValue(View);

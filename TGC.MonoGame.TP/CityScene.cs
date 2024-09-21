@@ -349,7 +349,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     }
                 }
 
-                /*if (listaCombinada[i].Item1 == Lego){
+                if (listaCombinada[i].Item1 == Lego){
                     for (int j = 0; j < 10; j++){
                         traslacion = new Vector3(
                         -1600f + (-100f - (-1600f)) * random.NextSingle(),
@@ -374,10 +374,10 @@ namespace TGC.MonoGame.TP.Content.Models
             //1800 -500 a 100 300
 
                 if (listaCombinada[i].Item1 == LegoPile){
-                    traslacion = new Vector3(1000f, 2f, -1200f);
-                    escala = 1f;
+                        traslacion = new Vector3(1000f, 2f, -1200f);
+                        escala = 1f;
+                    }
                 }
-                }*/
 
             }
 /*
