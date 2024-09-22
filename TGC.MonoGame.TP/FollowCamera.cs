@@ -10,7 +10,7 @@ namespace TGC.MonoGame.TP.Content.Models
     /// </summary>
     class FollowCamera
     {
-        private const float AxisDistanceToTarget = 1000f;
+        private const float AxisDistanceToTarget = 2000f;
 
         private const float AngleFollowSpeed = 0.015f;
 

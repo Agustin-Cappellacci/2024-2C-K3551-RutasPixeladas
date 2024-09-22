@@ -11,6 +11,12 @@ namespace TGC.MonoGame.TP
 {
     /// <summary>
     ///     Esta es la clase principal del juego.
+    ///     
+    ///     SUPER IMPORTANTE: No olvidar una parte fundamental de teoría (porque yo me la olvide xd) . Cada modelo tiene su propia Matrix de Mundo. Por lo que Cars.cs no nos serviría para nada. 
+    ///     De momento sirve como decoración nomás.
+    ///     Para que sirva y cree otros enemigos cada uno debería guardar su propia Matrix de Mundo. Se podría usar la función pero tendríamos que hacer que cada Modelo tuviese un nombre propio o podría hacer
+    ///     una lista con todas las matrices mundo o algo así. Ya iremos viendo. 
+    /// 
     ///     Inicialmente puede ser renombrado o copiado para hacer mas ejemplos chicos, en el caso de copiar para que se
     ///     ejecute el nuevo ejemplo deben cambiar la clase que ejecuta Program <see cref="Program.Main()" /> linea 10.
     /// </summary>
@@ -30,24 +36,24 @@ namespace TGC.MonoGame.TP
         FollowCamera Camera { get; set; }
         private SpriteBatch SpriteBatch { get; set; }
         private Model Model { get; set; }
+        private Model DeLoreanModel { get; set; }
         private Effect Effect { get; set; }
-        private float Rotation { get; set; }
         
         private Jugador autoJugador {get; set;}
         private CityScene City { get; set; }
         private Cars Cars { get; set; }
         private Grass Grass { get; set; }
-        private Model DeLoreanModel { get; set; }
 
-        private Matrix Scale { get; set; }
-        private Matrix carWorld { get; set; }
+        private Matrix CarWorld { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
+        private Matrix Scale { get; set; }
 
 
+        private float Rotation { get; set; }
         private float Yaw {get; set;}
-
         private float Pitch {get; set;}
+
 
     /*    private Vector3 CameraPosition = Vector3.UnitZ * 150;
         private Vector3 CameraForward = Vector3.Forward;
@@ -98,7 +104,7 @@ namespace TGC.MonoGame.TP
             
             Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
 
-            carWorld = Matrix.Identity;
+            CarWorld = Matrix.Identity;
             /*
             GraphicsDevice.RasterizerState = rasterizerState;
             GraphicsDevice.BlendState = BlendState.Opaque;
@@ -129,15 +135,15 @@ namespace TGC.MonoGame.TP
 
             // Cargo el modelo del logo.
             autoJugador = new Jugador(Content);
+            Cars = new Cars(Content);
+            City = new CityScene(Content);
+            Grass = new Grass(Content);
             /*
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
-            City = new CityScene(Content);
-            Cars = new Cars(Content);
-            Grass = new Grass(Content);
             */
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
-            Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            
 
             base.LoadContent();
         }
@@ -149,15 +155,21 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Update(GameTime gameTime)
         {   
+            var keyboardState = Keyboard.GetState();
             
+            if (keyboardState.IsKeyDown(Keys.Escape))
+            {
+                Exit();
+            }
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
-        /*    var keyboardState = Keyboard.GetState();
+            /*    
+            var keyboardState = Keyboard.GetState();
             var mouseState = Mouse.GetState();
             var cameraSpeed = 500f;
             var rotationSpeed = 0.02f;
-            
+
             // --- Captura de la rotación con las teclas ---
             if (keyboardState.IsKeyDown(Keys.J))
                 Yaw -= rotationSpeed;  // Rotar hacia la izquierda
@@ -170,7 +182,7 @@ namespace TGC.MonoGame.TP
 
             // Limitar la rotación vertical para evitar que la cámara se dé vuelta
             Pitch = MathHelper.Clamp(Pitch, -MathHelper.PiOver2 + 0.1f, MathHelper.PiOver2 - 0.1f);
-            
+
 
                 // Calcular la dirección hacia adelante (forward) a partir del yaw y pitch
             CameraForward = Vector3.Normalize(new Vector3(
@@ -182,12 +194,8 @@ namespace TGC.MonoGame.TP
             // También podemos calcular la dirección hacia la derecha (para el movimiento lateral)
             Vector3 CameraRight = Vector3.Cross(CameraForward, CameraUp);
 
-            if (keyboardState.IsKeyDown(Keys.Escape))
-            {
-                //Salgo del juego.
-                Exit(); 
-            }
-             // Input de teclado para mover la cámara
+
+                // Input de teclado para mover la cámara
 
             // --- Captura del movimiento con WASD ---
             if (keyboardState.IsKeyDown(Keys.W))
@@ -218,11 +226,12 @@ namespace TGC.MonoGame.TP
 
             View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
 
-            World = Scale *  Matrix.CreateRotationY(Rotation);*/
-            
-            carWorld = autoJugador.Update(gameTime, carWorld );
+            World = Scale *  Matrix.CreateRotationY(Rotation);
+            */
 
-            Camera.Update(gameTime, carWorld);
+            CarWorld = autoJugador.Update(gameTime, CarWorld );
+
+            Camera.Update(gameTime, CarWorld);
 
 
             base.Update(gameTime);
@@ -236,19 +245,19 @@ namespace TGC.MonoGame.TP
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
            
-            Effect.Parameters["View"].SetValue(Camera.View);
-            Effect.Parameters["Projection"].SetValue(Camera.Projection);
 
-            GraphicsDevice.Clear(Color.White);
-            /*
-            City.Draw(gameTime, View, Projection);
+            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.BlendState = BlendState.Opaque ;
+            Cars.Draw(gameTime, Camera.View, Camera.Projection);
+            City.Draw(gameTime, Camera.View, Camera.Projection);
+            autoJugador.Draw(CarWorld,Camera.View, Camera.Projection);
+
+            GraphicsDevice.BlendState = BlendState.AlphaBlend;
+            Grass.Draw(gameTime, Camera.View, Camera.Projection, CarWorld);
             
-            Cars.Draw(gameTime, View, Projection);
-
-            Grass.Draw(gameTime, View, Projection, World);
-            */
-            autoJugador.Draw(carWorld,Camera.View, Camera.Projection);
-            // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
+            
+            // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.
+            
             /*
             Effect.Parameters["View"].SetValue(View);
             Effect.Parameters["Projection"].SetValue(Projection);
@@ -260,6 +269,7 @@ namespace TGC.MonoGame.TP
                 mesh.Draw();
             }
             */
+            
             base.Draw(gameTime);
         }
 

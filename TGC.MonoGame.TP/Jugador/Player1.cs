@@ -16,7 +16,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
         private Model Model { get; set; }
-        private Effect effectoAuto { get; set; }
+        private Effect effectAuto { get; set; }
 
         // Jugabilidad
         private Vector3 direccionFrontal { get; set; }
@@ -39,7 +39,18 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = new Vector3(0f, 0f, 0f);
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
-            //effectoAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+
+            // A model contains a collection of meshes
+            foreach (var mesh in Model.Meshes)
+            {
+                // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = effectAuto;
+                }
+            }
         }
 
         public Matrix Update(GameTime gameTime, Matrix carWorld)
@@ -50,12 +61,12 @@ namespace TGC.MonoGame.TP.Content.Models
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 carSpeed = Math.Min(carSpeed + carAcceleration, carSpeedMax);
-                carPosition = carPosition + direccionFrontal * elapsedTime * carSpeed;
+                carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {
                 carSpeed = Math.Max(carSpeed - carAcceleration, carSpeedMin);
-                carPosition = carPosition + direccionFrontal * elapsedTime * carSpeed;
+                carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
             }
             if (carPosition.Y <= 0f & keyboardState.IsKeyDown(Keys.Space))
             {
@@ -110,16 +121,16 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             var random = new Random(Seed: 0);
             var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+            effectAuto.Parameters["View"].SetValue(View);
+            effectAuto.Parameters["Projection"].SetValue(Projection);
+
 
             foreach (ModelMesh mesh in Model.Meshes)
             {
-                foreach (BasicEffect effect in mesh.Effects)
-                {
-                    //effectoAuto.Parameters["DiffuseColor"].SetValue(color);
-                    effect.World = mesh.ParentBone.Transform * CarWorld;
-                    effect.View = View;
-                    effect.Projection = Projection;
-                }
+                effectAuto.Parameters["DiffuseColor"].SetValue(color);
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
+
+
 
                 mesh.Draw();
             }

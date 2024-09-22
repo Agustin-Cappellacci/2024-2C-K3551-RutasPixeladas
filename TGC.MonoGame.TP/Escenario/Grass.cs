@@ -105,7 +105,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             var scala = 10f; // Escala entre 1.0 y 11.0
             // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
-            var color = new Vector3(0.6f, 0.3f, 0.01f); //color verde puro
+            var color = new Vector3(0.6f, 0.3f, 0.01f); //color marrón
             Effect.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
                 
             var traslacion = new Vector3(0f, -1f, 0f);
