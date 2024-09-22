@@ -33,7 +33,7 @@ namespace TGC.MonoGame.TP
         private Effect Effect { get; set; }
         private float Rotation { get; set; }
         
-        private Jugador jugador {get; set;}
+        private Jugador autoJugador {get; set;}
         private CityScene City { get; set; }
         private Cars Cars { get; set; }
         private Grass Grass { get; set; }
@@ -128,7 +128,7 @@ namespace TGC.MonoGame.TP
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Cargo el modelo del logo.
-            jugador = new Jugador(Content);
+            autoJugador = new Jugador(Content);
             /*
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
             City = new CityScene(Content);
@@ -219,8 +219,8 @@ namespace TGC.MonoGame.TP
             View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
 
             World = Scale *  Matrix.CreateRotationY(Rotation);*/
-
-            jugador.Update(gameTime, carWorld);
+            
+            carWorld = autoJugador.Update(gameTime, carWorld );
 
             Camera.Update(gameTime, carWorld);
 
@@ -247,7 +247,7 @@ namespace TGC.MonoGame.TP
 
             Grass.Draw(gameTime, View, Projection, World);
             */
-            jugador.Draw(carWorld,View, Projection);
+            autoJugador.Draw(carWorld,Camera.View, Camera.Projection);
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             /*
             Effect.Parameters["View"].SetValue(View);
