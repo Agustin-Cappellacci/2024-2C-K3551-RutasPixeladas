@@ -34,6 +34,9 @@ namespace TGC.MonoGame.TP
         private GraphicsDeviceManager Graphics { get; }
 
         FollowCamera Camera { get; set; }
+        
+        FreeCamera FreeCamera { get; set; }
+
         private SpriteBatch SpriteBatch { get; set; }
         private Model Model { get; set; }
         private Model DeLoreanModel { get; set; }
@@ -47,19 +50,12 @@ namespace TGC.MonoGame.TP
         private Matrix CarWorld { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
-        private Matrix Scale { get; set; }
 
 
-        private float Rotation { get; set; }
-        private float Yaw {get; set;}
-        private float Pitch {get; set;}
 
 
-    /*    private Vector3 CameraPosition = Vector3.UnitZ * 150;
-        private Vector3 CameraForward = Vector3.Forward;
-        private Vector3 CameraTarget = Vector3.Zero;
-        private Vector3 CameraUp = Vector3.Up;
-    */
+        private bool liberarCamara = false;
+
 
         /// <summary>
         ///     Constructor del juego.
@@ -68,10 +64,6 @@ namespace TGC.MonoGame.TP
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
-            /*
-            Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
-            Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
-            */
             
             // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
             // Carpeta raiz donde va a estar toda la Media.
@@ -103,23 +95,15 @@ namespace TGC.MonoGame.TP
 
             
             Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+            
+            FreeCamera = new FreeCamera(GraphicsDevice.Viewport.AspectRatio);
 
             CarWorld = Matrix.Identity;
-            /*
-            GraphicsDevice.RasterizerState = rasterizerState;
-            GraphicsDevice.BlendState = BlendState.Opaque;
-            */
+          
             // Seria hasta aca.
-
            
             // Configuramos nuestras matrices de la escena.
-            /*
-            World = Matrix.Identity;
-            Scale = Matrix.CreateScale(1f);
-            View = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
-            Projection =
-                Matrix.CreatePerspectiveFieldOfView(MathHelper.PiOver4, GraphicsDevice.Viewport.AspectRatio, 1, 250000);
-            */
+           
             base.Initialize();
         }
 
@@ -164,74 +148,25 @@ namespace TGC.MonoGame.TP
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
-            /*    
-            var keyboardState = Keyboard.GetState();
-            var mouseState = Mouse.GetState();
-            var cameraSpeed = 500f;
-            var rotationSpeed = 0.02f;
-
-            // --- Captura de la rotación con las teclas ---
-            if (keyboardState.IsKeyDown(Keys.J))
-                Yaw -= rotationSpeed;  // Rotar hacia la izquierda
-            if (keyboardState.IsKeyDown(Keys.L))
-                Yaw += rotationSpeed;  // Rotar hacia la derecha
-            if (keyboardState.IsKeyDown(Keys.I))
-                Pitch -= rotationSpeed; // Mirar hacia arriba
-            if (keyboardState.IsKeyDown(Keys.K))
-                Pitch += rotationSpeed; // Mirar hacia abajo
-
-            // Limitar la rotación vertical para evitar que la cámara se dé vuelta
-            Pitch = MathHelper.Clamp(Pitch, -MathHelper.PiOver2 + 0.1f, MathHelper.PiOver2 - 0.1f);
-
-
-                // Calcular la dirección hacia adelante (forward) a partir del yaw y pitch
-            CameraForward = Vector3.Normalize(new Vector3(
-                (float)(Math.Cos(Pitch) * Math.Cos(Yaw)),
-                (float)Math.Sin(Pitch),
-                (float)(Math.Cos(Pitch) * Math.Sin(Yaw))
-            ));
-
-            // También podemos calcular la dirección hacia la derecha (para el movimiento lateral)
-            Vector3 CameraRight = Vector3.Cross(CameraForward, CameraUp);
-
-
-                // Input de teclado para mover la cámara
-
-            // --- Captura del movimiento con WASD ---
-            if (keyboardState.IsKeyDown(Keys.W))
-                if(keyboardState.IsKeyDown(Keys.LeftShift)){
-                    CameraPosition += CameraForward * 10 *cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-                } else
-                CameraPosition += CameraForward * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (keyboardState.IsKeyDown(Keys.S))
-                if(keyboardState.IsKeyDown(Keys.LeftShift)){
-                    CameraPosition -= CameraForward * 10 * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-                } else
-                CameraPosition -= CameraForward * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (keyboardState.IsKeyDown(Keys.A))
-                if(keyboardState.IsKeyDown(Keys.LeftShift)){
-                    CameraPosition -= CameraRight * 10 *cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-                } else
-                CameraPosition -= CameraRight * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (keyboardState.IsKeyDown(Keys.D))
-                if(keyboardState.IsKeyDown(Keys.LeftShift)){
-                    CameraPosition += CameraRight * 10 *cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-                } else
-                CameraPosition += CameraRight * cameraSpeed * (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            // Basado en el tiempo que paso se va generando una rotacion.
-            Rotation += Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-            CameraTarget = CameraPosition + CameraForward;
-
-            View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
-
-            World = Scale *  Matrix.CreateRotationY(Rotation);
-            */
-
-            CarWorld = autoJugador.Update(gameTime, CarWorld );
-
-            Camera.Update(gameTime, CarWorld);
+            
+            if (keyboardState.IsKeyDown(Keys.Enter))
+            {
+                liberarCamara = !liberarCamara;
+            }
+            if (!liberarCamara)
+            {
+                CarWorld = autoJugador.Update(gameTime, CarWorld);
+                Camera.Update(gameTime, CarWorld);
+                View = Camera.View;
+                Projection = Camera.Projection;
+            }
+            else
+            {
+                FreeCamera.Update(gameTime, CarWorld);
+                View = FreeCamera.View;
+                Projection = FreeCamera.Projection;
+            }
+                
 
 
             base.Update(gameTime);
@@ -248,12 +183,13 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque ;
-            Cars.Draw(gameTime, Camera.View, Camera.Projection);
-            City.Draw(gameTime, Camera.View, Camera.Projection);
-            autoJugador.Draw(CarWorld,Camera.View, Camera.Projection);
+            
+            Cars.Draw(gameTime, View, Projection);
+            City.Draw(gameTime, View, Projection);
+            autoJugador.Draw(CarWorld,View, Projection);
 
-            GraphicsDevice.BlendState = BlendState.AlphaBlend;
-            Grass.Draw(gameTime, Camera.View, Camera.Projection, CarWorld);
+            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            Grass.Draw(gameTime, View, Projection, CarWorld);
             
             
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.
