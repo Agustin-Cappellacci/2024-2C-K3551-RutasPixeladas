@@ -12,7 +12,6 @@ namespace TGC.MonoGame.TP.Content.Models
 {
     class FreeCamera
     {
-        public Matrix World { get; private set; }
         public Matrix Projection { get; private set; }
         public Matrix View { get; private set; }
         private Matrix Scale { get; set; }
@@ -32,7 +31,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Perspective camera
             // Uso 60° como FOV, aspect ratio, pongo las distancias a near plane y far plane en 0.1 y 100000 (mucho) respectivamente
-            World = Matrix.Identity;
+            
             Scale = Matrix.CreateScale(1f);
             View = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
             Projection = Matrix.CreatePerspectiveFieldOfView(MathF.PI / 3f, aspectRatio, 0.1f, 100000f);
@@ -109,8 +108,6 @@ namespace TGC.MonoGame.TP.Content.Models
             CameraTarget = CameraPosition + CameraForward;
 
             View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
-
-            World = Scale * Matrix.CreateRotationY(Rotation);
         }
     }
 }

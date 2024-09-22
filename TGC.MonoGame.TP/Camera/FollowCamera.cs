@@ -20,11 +20,11 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public Matrix View { get; private set; }
 
-        private Vector3 CurrentRightVector { get; set; } = Vector3.Right;
+        private Vector3 CurrentRightVector { get; set; } = Vector3.Left;
 
         private float RightVectorInterpolator { get; set; } = 0f;
 
-        private Vector3 PastRightVector { get; set; } = Vector3.Right;
+        private Vector3 PastRightVector { get; set; } = Vector3.Left;
 
         /// <summary>
         /// Crea una FollowCamera que sigue a una matriz de mundo
@@ -54,7 +54,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var followedPosition = followedWorld.Translation;
 
             // Obtengo el vector Derecha de la matriz de mundo que estoy siguiendo
-            var followedRight = followedWorld.Right;
+            var followedRight = followedWorld.Left;
 
             // Si el producto escalar entre el vector Derecha anterior
             // y el actual es mas grande que un limite,

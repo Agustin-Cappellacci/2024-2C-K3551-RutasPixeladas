@@ -11,6 +11,8 @@ using TGC.MonoGame.TP;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
+    // Nunca olvides mesh.ParentBone.Transform
+
     class Jugador
     {
         public const string ContentFolder3D = "Models/";
@@ -21,7 +23,9 @@ namespace TGC.MonoGame.TP.Content.Models
         // Jugabilidad
         private Vector3 direccionFrontal { get; set; }
         private Vector3 carPosition { get; set; }
-        private Matrix carRotation { get; set; }
+        private Matrix carRotation = Matrix.CreateRotationY(0f);
+            
+      
         private float carSpeed = 0f;
         private float carVerticalSpeed = 0f;
         private const float carAcceleration = 500f;
@@ -31,7 +35,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpeedMin = -700f;
         private const float carJumpSpeed = 50f;
         private const float gravity = 98f;
-        private const float carSpinSpeed = 0.04f;
+        private const float carSpinSpeed = 0.4f;
+        private float angle = 0f;
 
 
         public Jugador(ContentManager content)
@@ -82,25 +87,38 @@ namespace TGC.MonoGame.TP.Content.Models
             // #region TODO Rotacion
             // Cuando multiplicamos la rotación con la Matrix el auto desaparece. Buscar Causa. Lo dejo así para que el problema sea más visible xd 
 
-            /*
+            
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                carRotation *= Matrix.CreateRotationY(-carSpinSpeed);
-                direccionFrontal = Vector3.Transform(Vector3.Forward, carRotation * elapsedTime);
+                angle -= carSpinSpeed * elapsedTime;
+                carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
+                direccionFrontal = Vector3.Normalize(new Vector3
+                {
+                    X = MathF.Sin(angle),
+                    Y = 0,
+                    Z = MathF.Cos(angle)
+                }); 
             }
             if (keyboardState.IsKeyDown(Keys.D))
             {
-                carRotation *= Matrix.CreateRotationY(carSpinSpeed);
-                direccionFrontal = Vector3.Transform(Vector3.Forward, carRotation * elapsedTime);
+                angle += carSpinSpeed * elapsedTime;
+                carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
+
+                direccionFrontal = Vector3.Normalize(new Vector3
+                {
+                    X = MathF.Sin(angle),
+                    Y = 0,
+                    Z = MathF.Cos(angle)
+                });
             }
             
-            */
+           
 
             // #endregion
 
             var random = new Random(Seed: 0);
             var scale = 1f + (0.1f - 0.05f) * random.NextSingle();
-            carWorld = Matrix.CreateScale(scale) * Matrix.CreateTranslation(carPosition);
+            carWorld = Matrix.CreateScale(scale) * carRotation * Matrix.CreateTranslation(carPosition);
 
             // #region TODO Efectos
             /*
