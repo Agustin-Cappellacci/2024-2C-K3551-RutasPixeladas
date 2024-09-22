@@ -40,9 +40,10 @@ namespace TGC.MonoGame.TP
         private Model DeLoreanModel { get; set; }
 
         private Matrix Scale { get; set; }
-        private Matrix World { get; set; }
+        private Matrix carWorld { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
+
 
         private float Yaw {get; set;}
 
@@ -61,10 +62,10 @@ namespace TGC.MonoGame.TP
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
-            
+            /*
             Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
-
+            */
             
             // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
             // Carpeta raiz donde va a estar toda la Media.
@@ -86,10 +87,22 @@ namespace TGC.MonoGame.TP
             // Esto se hace por un problema en el diseno del modelo del logo de la materia.
             // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
             var rasterizerState = new RasterizerState();
-            Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
-            rasterizerState.CullMode = CullMode.None;
+            rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
             GraphicsDevice.RasterizerState = rasterizerState;
             GraphicsDevice.BlendState = BlendState.Opaque;
+
+            Graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width - 100;
+            Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
+            Graphics.ApplyChanges();
+
+            
+            Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
+
+            carWorld = Matrix.Identity;
+            /*
+            GraphicsDevice.RasterizerState = rasterizerState;
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            */
             // Seria hasta aca.
 
            
@@ -115,13 +128,13 @@ namespace TGC.MonoGame.TP
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Cargo el modelo del logo.
+            jugador = new Jugador(Content);
+            /*
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
-
             City = new CityScene(Content);
             Cars = new Cars(Content);
             Grass = new Grass(Content);
-            jugador = new Jugador(Content);
-
+            */
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
             Effect = Content.Load<Effect>(ContentFolderEffects + "BasicShader");
@@ -207,9 +220,9 @@ namespace TGC.MonoGame.TP
 
             World = Scale *  Matrix.CreateRotationY(Rotation);*/
 
-            jugador.Update(gameTime);
+            jugador.Update(gameTime, carWorld);
 
-            Camera.Update(gameTime,jugador.carWorld);
+            Camera.Update(gameTime, carWorld);
 
 
             base.Update(gameTime);
@@ -227,14 +240,14 @@ namespace TGC.MonoGame.TP
             Effect.Parameters["Projection"].SetValue(Camera.Projection);
 
             GraphicsDevice.Clear(Color.White);
-
+            /*
             City.Draw(gameTime, View, Projection);
-
+            
             Cars.Draw(gameTime, View, Projection);
 
             Grass.Draw(gameTime, View, Projection, World);
-
-            jugador.Draw(View, Projection);
+            */
+            jugador.Draw(carWorld,View, Projection);
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando.
             /*
             Effect.Parameters["View"].SetValue(View);
@@ -247,6 +260,7 @@ namespace TGC.MonoGame.TP
                 mesh.Draw();
             }
             */
+            base.Draw(gameTime);
         }
 
         /// <summary>

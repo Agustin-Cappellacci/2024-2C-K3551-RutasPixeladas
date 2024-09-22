@@ -16,7 +16,6 @@ namespace TGC.MonoGame.TP.Content.Models
             private Vector3 PosicionInicial {set; get;}
             private Vector3 direccionFrontal { get; set; }
 
-            public Matrix carWorld {get; set;}
             private Vector3 carPosition { get; set; }
             private Matrix carRotation { get; set; }
             private float carSpeed = 0f;
@@ -39,7 +38,7 @@ namespace TGC.MonoGame.TP.Content.Models
             autoJugador = content.Load<Model>(ContentFolder3D+"autos/RacingCarA/RacingCar");
             effectoAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
         }
-        public void Update(GameTime gameTime){
+        public void Update(GameTime gameTime, Matrix carWorld){
             /*Acá empieza lo mio*/
                 var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
                 // Caputo el estado del teclado.
@@ -70,6 +69,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 {
                     
                 }
+                /*
                 if(carPosition.Y <= 0f & keyboardState.IsKeyDown(Keys.Space)){
                     carVerticalSpeed = carJumpSpeed;
                     carPosition += Vector3.Up * carVerticalSpeed ;
@@ -77,16 +77,15 @@ namespace TGC.MonoGame.TP.Content.Models
                     carVerticalSpeed -= gravity * elapsedTime;
                     carPosition += Vector3.Up * carVerticalSpeed ;
                 }
-            
+                */
                 var random = new Random(Seed:0);
                 var scala = 3f + (0.1f - 0.05f) * random.NextSingle();
 
                 carWorld = Matrix.CreateScale(scala) * carRotation * Matrix.CreateTranslation(carPosition);
 
-                
-            
             // Assign the mesh effect
             // A model contains a collection of meshes
+                /*
                 foreach (var mesh in autoJugador.Meshes)
                 {
                     // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
@@ -95,16 +94,35 @@ namespace TGC.MonoGame.TP.Content.Models
                         meshPart.Effect = effectoAuto;
                     }
                 }
+                */
         }
 
-        public void Draw(Matrix view, Matrix projection){
-            var random = new Random(Seed:0);
-            var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());  
-            foreach(var mesh in autoJugador.Meshes){
-                effectoAuto.Parameters["DiffuseColor"].SetValue(color);
-                effectoAuto.Parameters["World"].SetValue(carWorld);
-                effectoAuto.Parameters["View"].SetValue(view);
-                effectoAuto.Parameters["Projection"].SetValue(projection);
+        public void Draw(Matrix carWorld, Matrix view, Matrix projection)
+        {
+            var random = new Random(Seed: 0);
+            var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+
+            foreach (var mesh in autoJugador.Meshes)
+            {
+                foreach (var part in mesh.MeshParts)
+                {
+                    // Configura el efecto para este mesh
+                    effectoAuto.Parameters["DiffuseColor"].SetValue(color);
+                    effectoAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                    effectoAuto.Parameters["View"].SetValue(view);
+                    effectoAuto.Parameters["Projection"].SetValue(projection);
+
+                    // Configura otros parámetros según sea necesario
+                    
+
+                    // Ahora dibuja la parte de la malla
+                    /*
+                    GraphicsDevice.SetVertexBuffer(part.VertexBuffer);
+                    GraphicsDevice.Indices = part.IndexBuffer;
+                    GraphicsDevice.DrawIndexedPrimitives(PrimitiveType.TriangleList, part.VertexOffset, 0, part.PrimitiveCount);
+                    */
+                }
+                mesh.Draw();
             }
         }
     }
