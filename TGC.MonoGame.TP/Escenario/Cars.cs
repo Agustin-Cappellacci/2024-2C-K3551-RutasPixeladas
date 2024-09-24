@@ -9,13 +9,100 @@ using System.Threading.Tasks;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
-    class Cars
+
+    public abstract class AutoEnemigo {
+        public const string ContentFolder3D = "Models/";
+        public const string ContentFolderEffects = "Effects/";
+        protected Matrix WorldMatrix { get; set; }
+        protected Model Modelo { get; set; }
+        protected Vector3 PosicionInicial { get; set; }
+        protected float anguloInicial { get; set; }
+        protected float Escala { get; set; }
+        protected Effect EffectCar { get; set; }
+        protected Vector3 Color { get; set; }
+
+        // Constructor abstracto
+        protected AutoEnemigo(ContentManager content, Vector3 posicion, float angulo) {
+            WorldMatrix = Matrix.Identity;
+            PosicionInicial = posicion;
+            anguloInicial = angulo;
+            
+            var random = new Random(Seed: 0);
+            Color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+        }
+
+        protected abstract void CargarModelo(ContentManager content);
+
+        public virtual void Update() {
+            /*
+            funcion
+            */
+        }
+
+        public void Draw(GameTime gametime, Matrix View, Matrix Projection) {
+            EffectCar.Parameters["View"].SetValue(View);
+            EffectCar.Parameters["Projection"].SetValue(Projection);
+
+            var meshBaseAuto = new Matrix[Modelo.Bones.Count];
+            Modelo.CopyAbsoluteBoneTransformsTo(meshBaseAuto);
+
+            foreach (var mesh in Modelo.Meshes) {
+                EffectCar.Parameters["DiffuseColor"].SetValue(Color);
+                WorldMatrix = meshBaseAuto[mesh.ParentBone.Index] * Matrix.CreateRotationY(anguloInicial) * Matrix.CreateScale(Escala) * Matrix.CreateTranslation(PosicionInicial);
+
+                EffectCar.Parameters["World"].SetValue(WorldMatrix);
+
+                mesh.Draw();
+            }
+        }
+    }
+
+    class AutoEnemigoCombate : AutoEnemigo {
+        public AutoEnemigoCombate(ContentManager content, Vector3 posicion, float angulo)
+            : base(content, posicion, angulo + (float)Math.PI / 2) // Ajustar ángulo si es necesario
+        {
+            CargarModelo(content);
+            Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
+        }
+
+        protected override void CargarModelo(ContentManager content) {
+            Modelo = content.Load<Model>(ContentFolder3D + "autos/CombatVehicle/Vehicle");
+            EffectCar = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+
+            foreach (var mesh in Modelo.Meshes) {
+                foreach (var meshPart in mesh.MeshParts) {
+                    meshPart.Effect = EffectCar;
+                }
+            }
+        }
+    }
+
+    class AutoEnemigoCarrera : AutoEnemigo {
+        public AutoEnemigoCarrera(ContentManager content, Vector3 posicion, float angulo)
+            : base(content, posicion, angulo) 
+        {
+            CargarModelo(content);
+            Escala = 0.1f + (0.1f - 0.05f) * new Random().NextSingle();
+        }
+
+        protected override void CargarModelo(ContentManager content) {
+            Modelo = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
+            EffectCar = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+
+            foreach (var mesh in Modelo.Meshes) {
+                foreach (var meshPart in mesh.MeshParts) {
+                    meshPart.Effect = EffectCar;
+                }
+            }
+        }
+    }
+}
+/*
+class Cars
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
-
         private Matrix WorldMatrix { get; set; }
-
         private Model CarModel { get; set; }
         private Model CombatVehicle { get; set; }
         public List<Model> listaModelos { get; set; }
@@ -49,6 +136,8 @@ namespace TGC.MonoGame.TP.Content.Models
             traslaciones = GenerarPuntosEnCirculo(CantAutos, 700f);
 
             angulosHaciaCentro = CalcularAngulosHaciaCentro(traslaciones);
+
+
 
             // Assign the mesh effect
             // A model contains a collection of meshes
@@ -153,7 +242,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     angulo =   angulosHaciaCentro[i] +  (float)Math.PI;
                     traslacion = traslaciones[i] * (1.03f);
                 }  
-                */
+                
 
                 if (listaModelos[i] == CombatVehicle)
                 {
@@ -175,7 +264,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     if (listaModelos[i] == flatoutCar){
                         worldFinal = meshBaseFlatoutCar[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
                     }
-                    */
+                    
 
                     if (listaModelos[i] == CombatVehicle)
                     {
@@ -234,3 +323,5 @@ namespace TGC.MonoGame.TP.Content.Models
         }
     }
 }
+
+*/

@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TGC.MonoGame.TP.Content.Models;
+using System.Collections.Generic;
 
 namespace TGC.MonoGame.TP
 {
@@ -44,22 +45,30 @@ namespace TGC.MonoGame.TP
         
         private Jugador autoJugador {get; set;}
         private CityScene City { get; set; }
-        private Cars Cars { get; set; }
+       // private Cars Cars { get; set; }
         private Grass Grass { get; set; }
 
         private Matrix CarWorld { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
 
-
+        //------ Variables para los SpawnPoint
+        public enum TipoAuto
+        {
+            tipoJugador,
+            tipoCarrera,
+            tipoCombate
+        }        
+        private float CantidadDeAutos {get; set;}
+        public List<TipoAuto> listaModelos { get; set; }
+        public List<AutoEnemigo> listaAutos { get; set; }
+        private List<Vector3> traslacionesIniciales { get; set; }
+        private List<float> angulosIniciales { get; set; }
+        // ------
 
 
         private bool liberarCamara = false;
 
-
-        /// <summary>
-        ///     Constructor del juego.
-        /// </summary>
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -80,6 +89,12 @@ namespace TGC.MonoGame.TP
         protected override void Initialize()
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
+            CantidadDeAutos = 70;
+            traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
+            angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales); 
+
+            listaModelos = new List<TipoAuto>();
+            listaAutos = new List<AutoEnemigo>();
 
             // Apago el backface culling.
             // Esto se hace por un problema en el diseno del modelo del logo de la materia.
@@ -116,15 +131,47 @@ namespace TGC.MonoGame.TP
         {
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
+            
+            int tessellation = 2;
+            if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
+                throw new ArgumentOutOfRangeException(nameof(tessellation));
+            
+            listaModelos.Add(TipoAuto.tipoJugador);
+            for (int i = 0; i < CantidadDeAutos / tessellation; i++)
+            {
+                listaModelos.Add(TipoAuto.tipoCarrera);
+                listaModelos.Add(TipoAuto.tipoCombate);
+                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
+            }
+            // mezclar posiciones
+            var random = new Random(0);
+            for (int i = listaModelos.Count - 1; i > 1; i--) // Empezar desde el último índice y detenerse en el índice 1
+            {
+                int j = random.Next(1, i + 1); // Limitar la mezcla a los elementos a partir del índice 1
+                var temp = listaModelos[i];
+                listaModelos[i] = listaModelos[j];
+                listaModelos[j] = temp;
+            }
+
+            // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
+            for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
+            {   
+                if (listaModelos[i] == TipoAuto.tipoCarrera){
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                }
+                if (listaModelos[i] == TipoAuto.tipoCombate){
+                    listaAutos.Add(new AutoEnemigoCombate(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                }
+                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
+            }
+
 
             // Cargo el modelo del logo.
             autoJugador = new Jugador(Content);
-            Cars = new Cars(Content);
+            //Cars = new Cars(Content);
             City = new CityScene(Content);
             Grass = new Grass(Content);
-            /*
-            Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
-            */
+
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
             
@@ -166,8 +213,13 @@ namespace TGC.MonoGame.TP
                 View = FreeCamera.View;
                 Projection = FreeCamera.Projection;
             }
-                
 
+            /*  
+            foreach ( var Auto in listaAutos){
+                Auto.Update();
+            }
+            */
+            
 
             base.Update(gameTime);
         }
@@ -183,8 +235,12 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque ;
+
+            foreach ( var Auto in listaAutos){
+                Auto.Draw(gameTime, View, Projection);
+            }
             
-            Cars.Draw(gameTime, View, Projection);
+
             City.Draw(gameTime, View, Projection);
             autoJugador.Draw(CarWorld,View, Projection);
 
@@ -218,6 +274,49 @@ namespace TGC.MonoGame.TP
             Content.Unload();
 
             base.UnloadContent();
+        }
+
+        public List<Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
+        {
+            List<Vector3> puntos = new List<Vector3>();
+            float anguloIncremento = MathHelper.TwoPi / numPuntos; // Divide el círculo en partes iguales
+            float centroX = -900f; // Desplazamiento en X
+            float centroZ = -1100f; // Desplazamiento en Z
+
+            for (int i = 0; i < numPuntos; i++)
+            {
+                float angulo = i * anguloIncremento;
+                float x = centroX + radio * (float)Math.Cos(angulo); // Coordenada X con desplazamiento
+                float z = centroZ + radio * (float)Math.Sin(angulo); // Coordenada Z con desplazamiento
+                float y = 5; // Coordenada Y fija
+
+                puntos.Add(new Vector3(x, y, z));
+            }
+
+            return puntos;
+        }
+
+        public List<float> CalcularAngulosHaciaCentro(List<Vector3> posiciones)     // Gira los autos para que miren al centro
+        {
+            List<float> angulos = new List<float>();
+
+            // Coordenadas del centro del círculo en el plano XZ
+            float centroX = -900f;
+            float centroZ = -1100f;
+
+            foreach (var posicion in posiciones)
+            {
+                // Calculamos la diferencia en X y Z con respecto al centro desplazado
+                float dx = centroX - posicion.X;
+                float dz = centroZ - posicion.Z;
+
+                // Calculamos el ángulo con Atan2. Intercambiamos dx y dz para invertir la dirección
+                float angulo = MathHelper.TwoPi - (float)Math.Atan2(dz, dx) + MathHelper.Pi / 2;
+
+                angulos.Add(angulo);
+            }
+
+            return angulos;
         }
     }
 }
