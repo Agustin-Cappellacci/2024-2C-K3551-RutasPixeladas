@@ -45,7 +45,7 @@ namespace TGC.MonoGame.TP
         private Jugador autoJugador {get; set;}
         private CityScene City { get; set; }
         private Cars Cars { get; set; }
-        private Grass Grass { get; set; }
+        private Cuarto Cuarto { get; set; }
 
         private Matrix CarWorld { get; set; }
         private Matrix View { get; set; }
@@ -121,7 +121,7 @@ namespace TGC.MonoGame.TP
             autoJugador = new Jugador(Content);
             Cars = new Cars(Content);
             City = new CityScene(Content);
-            Grass = new Grass(Content);
+            Cuarto = new Cuarto(Content);
             /*
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
             */
@@ -189,7 +189,7 @@ namespace TGC.MonoGame.TP
             autoJugador.Draw(CarWorld,View, Projection);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            Grass.Draw(gameTime, View, Projection, CarWorld);
+            Cuarto.Draw(gameTime, View, Projection, CarWorld);
             
             
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.
