@@ -43,7 +43,7 @@ namespace TGC.MonoGame.TP
         private Effect Effect { get; set; }
         
         private Jugador autoJugador {get; set;}
-        private CityScene City { get; set; }
+        private Toys Toys { get; set; }
         private Cars Cars { get; set; }
         private Cuarto Cuarto { get; set; }
 
@@ -118,16 +118,18 @@ namespace TGC.MonoGame.TP
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Cargo el modelo del logo.
+            
             autoJugador = new Jugador(Content);
             Cars = new Cars(Content);
-            City = new CityScene(Content);
+            Toys = new Toys(Content);
             Cuarto = new Cuarto(Content);
+
             /*
             Model = Content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
             */
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
-            
+
 
             base.LoadContent();
         }
@@ -183,13 +185,15 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque ;
+
             
             Cars.Draw(gameTime, View, Projection);
-            City.Draw(gameTime, View, Projection);
+            Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(CarWorld,View, Projection);
+            Cuarto.Draw(gameTime, View, Projection, CarWorld);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            Cuarto.Draw(gameTime, View, Projection, CarWorld);
+            
             
             
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.

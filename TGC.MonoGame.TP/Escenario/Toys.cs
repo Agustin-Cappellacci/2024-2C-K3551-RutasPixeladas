@@ -13,7 +13,7 @@ namespace TGC.MonoGame.TP.Content.Models
     /// <summary>
     /// A City Scene to be drawn
     /// </summary>
-    class CityScene
+    class Toys
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
@@ -36,7 +36,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Model carpet {get; set;}
         private Model Puente {get; set;}
 
-         private Model caballo1 {get; set;}
+        private Model caballo1 {get; set;}
         private Model caballo2 {get; set;}
 
         private Model Television {get; set;}
@@ -45,16 +45,29 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private List<Matrix> WorldMatrices { get; set; }
         private Effect EfectoComun { get; set; }
+        private Effect EfectoTexture { get; set; }
         public List<Tuple<Model, Effect>> listaCombinada;
         public List<Model> listaModelos;
         public List<Effect> listaEfectos;
+
+        //Load textures
+        private Texture2D textureMadera2 { get; set; }
+        private Texture2D textureMadera { get; set; }
+        private Texture2D textureRampa { get; set; }
+        private Texture2D textureCarpet { get; set; }
+        private Texture2D textureLegoPile { get; set; }
+        private Texture2D textureCaballo1 { get; set; }
+        private Texture2D textureCaballo2 { get; set; }
+        private Texture2D texture { get; set; }
+        private Texture2D textureLegoPJ { get; set; }
+        private Texture2D textureMetal { get; set; }
 
 
         // <summary>
         /// Creates a City Scene with a content manager to load resources.
         /// </summary>
         /// <param name="content">The Content Manager to load resources</param>
-        public CityScene(ContentManager content)
+        public Toys(ContentManager content)
         {   
 
 
@@ -78,11 +91,25 @@ namespace TGC.MonoGame.TP.Content.Models
            listaModelos = new List<Model>(){
                 Ajedrez, Lego, Torre, LegoPJ, Puente, Television, rampaDoble, rampaPanza, rampa, carpet, LegoPile, caballo1, caballo2
             };
+
+            //Load textures
+            textureMetal = content.Load<Texture2D>(ContentFolder3D + "escenario/Textures/metal");
+            textureLegoPJ = content.Load<Texture2D>(ContentFolder3D + "escenario/legoPJ/Skin1");
+            textureMadera2 = content.Load<Texture2D>(ContentFolder3D + "escenario/Rubics_cube/wood/cherry_1");
+            textureRampa = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/texture");
+            textureMadera = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/wood");
+            textureCarpet = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/alfombra2");
+            textureLegoPile = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/pila_legos");
+            textureCaballo1 = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/bullseye");
+            textureCaballo2 = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/ColAlphY_horse_brown");
+            texture = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/default-grey");
+
+
             // Load an effect that will be used to draw the scene
-            //Effect = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
             listaEfectos = new List<Effect>(){
-                EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun, EfectoComun
+                EfectoComun, EfectoComun, EfectoTexture, EfectoTexture, EfectoTexture, EfectoComun, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture
             };
 
             for (int i = 0; i < listaModelos.Count; i++){
@@ -222,12 +249,14 @@ namespace TGC.MonoGame.TP.Content.Models
                 if (listaCombinada[i].Item1 == carpet){
                     traslacion = new Vector3(-900f, -1f, -1100f);
                     escala = 10f;
+                    texture = textureCarpet;
                 }
 
                 if (listaCombinada[i].Item1 == rampaDoble){
                     traslacion = new Vector3(-1400f, 0f, -1000f);
                     escala = 4f;
                     color = new Vector3(0.8f, 0.8f, 0.8f);
+                    texture = textureMadera;
                 }     
 
                 if (listaCombinada[i].Item1 == rampa){
@@ -235,6 +264,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 10f;
                     rotacion = (float)Math.PI/2;
                     color = new Vector3(1f, 0.3f, 0f);
+                    texture = textureMadera;
                 }
 
                 if (listaCombinada[i].Item1 == rampaPanza){
@@ -242,6 +272,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 300f;
                     rotacion = (float)Math.PI/3;
                     color = new Vector3(0.8f, 0.8f, 0.8f);
+                    texture = textureRampa;
                 } 
 
                 if (listaCombinada[i].Item1 == caballo1){
@@ -249,6 +280,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 130f;
                     rotacion = -(float)Math.PI * (5/4);
                     color = new Vector3(0f, 1f, 0.5f);
+                    texture = textureCaballo2;
                 }   
                 
                 if (listaCombinada[i].Item1 == caballo2){
@@ -256,6 +288,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 130f;
                     rotacion = -(float)Math.PI/4;
                     color = new Vector3(0f, 0.5f, 1f);
+                    texture = textureCaballo1;
                 }   
 
                 if (listaCombinada[i].Item1 == Ajedrez){
@@ -270,6 +303,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 0.1f;
                     rotacion = -(float)Math.PI/4;
                     color = new Vector3(0f, 0.5f, 1f);
+                    texture = textureLegoPJ;
                 }
 
                 if (listaCombinada[i].Item1 == Puente){
@@ -277,6 +311,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 100f;
                     rotacion = (float)Math.PI/4;
                     color = new Vector3(1f, 1f, 0f);
+                    texture = textureMadera2;
                 }
 
                 if (listaCombinada[i].Item1 == Torre){
@@ -284,6 +319,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     escala = 1.5f;
                     rotacion = (float)Math.PI/10;
                     color = new Vector3(0.2f, 0.2f, 1f);
+                    texture = textureMetal;
                 }
 
                
@@ -304,47 +340,57 @@ namespace TGC.MonoGame.TP.Content.Models
                     foreach (var mesh in listaCombinada[i].Item1.Meshes){                    
                     if (listaCombinada[i].Item1 == carpet){
                         worldFinal = modelCarpetMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == rampaDoble){
                         worldFinal = modelrampaDobleMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == rampa){
                         worldFinal = modelrampaMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationX(-(float)Math.PI/2)  * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == rampaPanza){
                         worldFinal = modelrampaPanzaMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == caballo1){
                         worldFinal = modelCaballo1MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == caballo2){
                         worldFinal = modelCaballo2MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == Ajedrez){
                         worldFinal = modelChessMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoComun.Parameters["DiffuseColor"].SetValue(color);
+                        }
 
                     if (listaCombinada[i].Item1 == LegoPJ){
                         worldFinal = modelLegoPJMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
                     
                     if (listaCombinada[i].Item1 == Puente){
                         worldFinal = modelPuenteMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationX((float)Math.PI/-2) * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
 
                     if (listaCombinada[i].Item1 == Torre){
                         worldFinal = modelTorreMeshesBaseTransforms[mesh.ParentBone.Index] *  Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                    }
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
         
-                        EfectoComun.Parameters["DiffuseColor"].SetValue(color);
                         //EffectCar.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslaciones[i]) );
                         EfectoComun.Parameters["World"].SetValue(worldFinal);
+                        EfectoTexture.Parameters["World"].SetValue(worldFinal);
                         mesh.Draw();
                     }
                 }

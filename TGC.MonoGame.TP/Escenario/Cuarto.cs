@@ -21,6 +21,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private Model BedModel { get; set; }
         private Effect Effect { get; set; }
         private Effect EffectChair { get; set; }
+        private Effect EffectBed { get; set; }
+        private Texture2D textureFloor { get; set; }
+        private Texture2D textureChair { get; set; }
 
         private List<Matrix> WorldMatrices { get; set; }
 
@@ -36,16 +39,20 @@ namespace TGC.MonoGame.TP.Content.Models
             ChairModel = content.Load<Model>(ContentFolder3D+"chair/chair");
             BedModel = content.Load<Model>(ContentFolder3D+"Cama/bedSingle");
 
+            Effect = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            //Effect = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+
             // Load an effect that will be used to draw the scene
-            Effect = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            EffectBed = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+
+            EffectChair = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             // load texture
-            
-            EffectChair = content.Load<Effect>(ContentFolderEffects + "BasicShader");
 
-            var texture = content.Load<Texture2D>(ContentFolder3D + "chair/chair_tex"); // Asegúrate de usar la ruta correcta
-            EffectChair.Parameters["ModelTexture"].SetValue(texture);
+            textureChair = content.Load<Texture2D>(ContentFolder3D + "chair/chair_tex"); // Asegúrate de usar la ruta correcta
+            textureFloor = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/piso"); // Asegúrate de usar la ruta correcta
             
+
 
             // Assign the mesh effect
             // A model contains a collection of meshes
@@ -73,10 +80,14 @@ namespace TGC.MonoGame.TP.Content.Models
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
                 foreach (var meshPart in mesh.MeshParts)
                 {
-                    meshPart.Effect = Effect;
+                    // Set the texture from the mesh part, if available
+                    //EffectBed.Parameters["Texture0"].SetValue(meshPart.Effect.Parameters["Texture"].GetValueTexture2D());
+
+                    meshPart.Effect = EffectBed;
+
                 }
             }
-
+            
 
             WorldMatrices = new List<Matrix>()
             {
@@ -114,12 +125,15 @@ namespace TGC.MonoGame.TP.Content.Models
             EffectChair.Parameters["View"].SetValue(view);
             EffectChair.Parameters["Projection"].SetValue(projection);
 
+            EffectBed.Parameters["View"].SetValue(view);
+            EffectBed.Parameters["Projection"].SetValue(projection);
+
             var random = new Random(Seed:0);
 
             var scala = 10f; // Escala entre 1.0 y 11.0
             // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
-            var color = new Vector3(0.6f, 0.3f, 0.01f); //color marrón
-            Effect.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
+            //var color = new Vector3(1.0f, 1.0f, 1.0f); //color marrón
+            //.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
                 
             var traslacion = new Vector3(0f, -1f, 0f);
 
@@ -135,6 +149,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var worldMatrix in WorldMatrices)
                 {
+                    Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                     // We set the main matrices for each mesh to draw
                     Effect.Parameters["World"].SetValue(meshWorld * worldMatrix * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
 
@@ -151,7 +166,8 @@ namespace TGC.MonoGame.TP.Content.Models
             //Effect.Parameters["DiffuseColor"].SetValue(colorRojo); 
 
             foreach (var mesh in ChairModel.Meshes)
-            {   
+            {
+                EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
                 var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
                 // We set the main matrices for each mesh to draw
                 EffectChair.Parameters["World"].SetValue(meshWorldChair * Matrix.CreateRotationY(-MathHelper.Pi/2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(traslacionChair));
@@ -162,15 +178,21 @@ namespace TGC.MonoGame.TP.Content.Models
             var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
             BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
 
-            var colorAzul = new Vector3(0.0f, 0.0f, 1.0f); //color azul puro
+
+            //var colorAzul = new Vector3(0.0f, 0.0f, 1.0f); //color azul puro
             var traslacionBed = new Vector3(3300f, -20f, -1000f);
-            Effect.Parameters["DiffuseColor"].SetValue(colorAzul); 
+            //EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul); 
 
             foreach (var mesh in BedModel.Meshes)
-            {   
-                var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
-                // We set the main matrices for each mesh to draw
-                Effect.Parameters["World"].SetValue(meshWorldBed * Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed));
+            {
+                foreach (var part in mesh.MeshParts)
+                {
+                    var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+                    EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
+                    var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
+                    // We set the main matrices for each mesh to draw
+                    EffectBed.Parameters["World"].SetValue(meshWorldBed * Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed));
+                }
                 // Draw the mesh
                 mesh.Draw();
             }

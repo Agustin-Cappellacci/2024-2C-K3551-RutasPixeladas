@@ -44,8 +44,10 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = new Vector3(0f, 0f, 0f);
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
-            //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
+            effectAuto.Parameters["ModelTexture"].SetValue(texture);
 
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -138,14 +140,14 @@ namespace TGC.MonoGame.TP.Content.Models
         public void Draw(Matrix CarWorld, Matrix View, Matrix Projection)
         {
             var random = new Random(Seed: 0);
-            var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+            var color = new Vector3(1.0f, 0.0f, 0.0f);
             effectAuto.Parameters["View"].SetValue(View);
             effectAuto.Parameters["Projection"].SetValue(Projection);
 
 
             foreach (ModelMesh mesh in Model.Meshes)
             {
-                effectAuto.Parameters["DiffuseColor"].SetValue(color);
+                //effectAuto.Parameters["DiffuseColor"].SetValue(color);
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
 
 
