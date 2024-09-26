@@ -1,3 +1,5 @@
+using BepuPhysics;
+using BepuPhysics.Collidables;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -5,6 +7,7 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
@@ -24,8 +27,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Vector3 direccionFrontal { get; set; }
         private Vector3 carPosition { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
-            
-      
+
         private float carSpeed = 0f;
         private float carVerticalSpeed = 0f;
         private const float carAcceleration = 500f;
@@ -38,14 +40,23 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.4f;
         private float angle = 0f;
 
+        // Colisiones
+        private BodyHandle bodyHandle;
+        private Simulation simulation;
+        private Vector3[] verticesAuto;
 
-        public Jugador(ContentManager content)
+
+
+        public Jugador(ContentManager content, Simulation simulation)
         {
             carPosition = new Vector3(0f, 0f, 0f);
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+
+            // array de vertices a lista, para manejo de colisiones
+            List<System.Numerics.Vector3> verticesList = new List<System.Numerics.Vector3>();
 
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -54,34 +65,80 @@ namespace TGC.MonoGame.TP.Content.Models
                 foreach (var meshPart in mesh.MeshParts)
                 {
                     meshPart.Effect = effectAuto;
-                }
+
+                    // Extraer los vértices del VertexBuffer
+                    VertexBuffer vertexBuffer = meshPart.VertexBuffer;
+                    VertexPositionNormalTexture[] vertices = new VertexPositionNormalTexture[vertexBuffer.VertexCount];
+                    vertexBuffer.GetData(vertices);
+
+                    foreach (var vertex in vertices)
+                    {
+                        verticesList.Add(PositionToNumerics(vertex.Position));
+                    }
+                    }
             }
+            
+
+            // transformo lista a span para parametro de convexHull
+            Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(verticesList);
+
+             // Calcular el centroide
+            Vector3 centroid = Vector3.Zero;
+            foreach (var vertex in verticesList)
+            {
+                centroid += vertex;
+            }
+            centroid /= verticesList.Count;
+
+            this.simulation = simulation;
+            // creacion de ConvexHull
+            var initialPosition = carPosition;
+            var initialOrientation = Quaternion.Identity;
+            // transformo a system.numerics
+            var numericPosition = PositionToNumerics(initialPosition);
+            var numericQuaternion = QuaternionToNumerics(initialOrientation);
+            var pose = new RigidPose(numericPosition, numericQuaternion);
+            var hullShape = new ConvexHull(verticesSpan, simulation.BufferPool, out System.Numerics.Vector3 hullCenter);
+            var inertia = hullShape.ComputeInertia(1.0f);
+            bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
+            pose, inertia, simulation.Shapes.Add(hullShape), 0.01f));
+            
         }
 
         public Matrix Update(GameTime gameTime, Matrix carWorld)
         {
+            // Obtener la posición del cuerpo desde la simulación física
+            var bodyReference = simulation.Bodies.GetBodyReference(bodyHandle);
+            var bodyPose = bodyReference.Pose;
+
 
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
             var keyboardState = Keyboard.GetState();
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 carSpeed = Math.Min(carSpeed + carAcceleration, carSpeedMax);
-                carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
+                //carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
+                var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
+                bodyReference.Velocity.Linear += moveDirection;
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {
                 carSpeed = Math.Max(carSpeed - carAcceleration, carSpeedMin);
-                carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
+                //carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
+                var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
+                bodyReference.Velocity.Linear += moveDirection;
             }
             if (carPosition.Y <= 0f & keyboardState.IsKeyDown(Keys.Space))
             {
                 carVerticalSpeed = carJumpSpeed;
-                carPosition += Vector3.Up * carVerticalSpeed;
+                //carPosition += Vector3.Up * carVerticalSpeed;
+                 bodyReference.Velocity.Linear += new System.Numerics.Vector3(0, carVerticalSpeed, 0);
             }
             else if (carPosition.Y > 0f)
             {
                 carVerticalSpeed -= gravity * elapsedTime;
-                carPosition += Vector3.Up * carVerticalSpeed;
+                //carPosition += Vector3.Up * carVerticalSpeed;
+                bodyReference.Velocity.Linear += new System.Numerics.Vector3(0, carVerticalSpeed, 0);
             }
 
             // #region TODO Rotacion
@@ -98,6 +155,9 @@ namespace TGC.MonoGame.TP.Content.Models
                     Y = 0,
                     Z = MathF.Cos(angle)
                 }); 
+
+                // Rotar el cuerpo físico
+                bodyReference.Pose.Orientation = QuaternionToNumerics(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
             }
             if (keyboardState.IsKeyDown(Keys.D))
             {
@@ -110,12 +170,16 @@ namespace TGC.MonoGame.TP.Content.Models
                     Y = 0,
                     Z = MathF.Cos(angle)
                 });
+
+                bodyReference.Pose.Orientation = QuaternionToNumerics(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
             }
             
            
 
             // #endregion
-
+             // Actualizar la posición del auto en el mundo de MonoGame
+            carPosition = new Vector3(bodyPose.Position.X, bodyPose.Position.Y, bodyPose.Position.Z);
+            
             var random = new Random(Seed: 0);
             var scale = 1f + (0.1f - 0.05f) * random.NextSingle();
             carWorld = Matrix.CreateScale(scale) * carRotation * Matrix.CreateTranslation(carPosition);
@@ -152,6 +216,18 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 mesh.Draw();
             }
+        }
+
+
+        
+           
+        public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
+        {
+            return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
+        }
+        public static System.Numerics.Quaternion QuaternionToNumerics(Microsoft.Xna.Framework.Quaternion xnaQuat)
+        {
+            return new System.Numerics.Quaternion(xnaQuat.X, xnaQuat.Y, xnaQuat.Z, xnaQuat.W);
         }
     }
 }

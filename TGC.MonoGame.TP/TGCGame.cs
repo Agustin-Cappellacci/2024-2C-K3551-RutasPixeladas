@@ -7,6 +7,15 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TGC.MonoGame.TP.Content.Models;
 using System.Collections.Generic;
+using System.Numerics; // Para usar Vector3 y otras estructuras de System.Numerics
+using BepuPhysics; // Núcleo de BepuPhysics para la simulación física
+using BepuPhysics.Collidables; // Para usar formas de colisión, como ConvexHull y StaticMesh
+using BepuPhysics.CollisionDetection; // Para detección de colisiones
+using BepuPhysics.Constraints; // Para manejar restricciones físicas si es necesario
+using BepuPhysics.Trees; // Opcional si usas árboles para optimizar colisiones
+using BepuUtilities.Memory; // Para el manejo de buffer pools en Bepu
+using Quaternion = Microsoft.Xna.Framework.Quaternion; // Si usas Quaternion de MonoGame
+using Vector3XNA = Microsoft.Xna.Framework.Vector3; // Para diferenciar entre Vector3 de MonoGame y System.Numerics
 
 namespace TGC.MonoGame.TP
 {
@@ -62,9 +71,11 @@ namespace TGC.MonoGame.TP
         private float CantidadDeAutos {get; set;}
         public List<TipoAuto> listaModelos { get; set; }
         public List<AutoEnemigo> listaAutos { get; set; }
-        private List<Vector3> traslacionesIniciales { get; set; }
+        private List<Microsoft.Xna.Framework.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
         // ------
+
+        private Simulation simulation;
 
 
         private bool liberarCamara = false;
@@ -132,6 +143,18 @@ namespace TGC.MonoGame.TP
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             
+            // Inicializar la simulación de física de Bepu
+            var bufferPool = new BufferPool();
+            var narrowPhaseCallbacks = new TGCNarrowPhaseCallbacks(); // Puedes ajustar los callbacks para manejar colisiones.
+            var poseIntegratorCallbacks = new TGCPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.81f, 0)); // Gravedad.
+            var solveDescription = new SolveDescription
+            {
+                VelocityIterationCount = 7,
+                SubstepCount = 1 // Asegúrate de que este valor sea positivo.
+            };
+            simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
+
+
             int tessellation = 2;
             if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
@@ -167,9 +190,9 @@ namespace TGC.MonoGame.TP
 
 
             // Cargo el modelo del logo.
-            autoJugador = new Jugador(Content);
+            autoJugador = new Jugador(Content, simulation);
             //Cars = new Cars(Content);
-            City = new CityScene(Content);
+            City = new CityScene(Content, simulation);
             Grass = new Grass(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -187,6 +210,10 @@ namespace TGC.MonoGame.TP
         protected override void Update(GameTime gameTime)
         {   
             var keyboardState = Keyboard.GetState();
+
+            // Actualiza la simulación de BepuPhysics
+            simulation.Timestep(1f / 60f); // Ajusta la frecuencia de actualización según tus necesidades
+
             
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
@@ -276,9 +303,9 @@ namespace TGC.MonoGame.TP
             base.UnloadContent();
         }
 
-        public List<Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
+        public List<Microsoft.Xna.Framework.Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
         {
-            List<Vector3> puntos = new List<Vector3>();
+            List<Microsoft.Xna.Framework.Vector3> puntos = new List<Microsoft.Xna.Framework.Vector3>();
             float anguloIncremento = MathHelper.TwoPi / numPuntos; // Divide el círculo en partes iguales
             float centroX = -900f; // Desplazamiento en X
             float centroZ = -1100f; // Desplazamiento en Z
@@ -290,13 +317,13 @@ namespace TGC.MonoGame.TP
                 float z = centroZ + radio * (float)Math.Sin(angulo); // Coordenada Z con desplazamiento
                 float y = 5; // Coordenada Y fija
 
-                puntos.Add(new Vector3(x, y, z));
+                puntos.Add(new Microsoft.Xna.Framework.Vector3(x, y, z));
             }
 
             return puntos;
         }
 
-        public List<float> CalcularAngulosHaciaCentro(List<Vector3> posiciones)     // Gira los autos para que miren al centro
+        public List<float> CalcularAngulosHaciaCentro(List<Microsoft.Xna.Framework.Vector3> posiciones)     // Gira los autos para que miren al centro
         {
             List<float> angulos = new List<float>();
 
