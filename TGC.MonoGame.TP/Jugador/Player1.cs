@@ -43,13 +43,11 @@ namespace TGC.MonoGame.TP.Content.Models
         // Colisiones
         private BodyHandle bodyHandle;
         private Simulation simulation;
-        private Vector3[] verticesAuto;
-
 
 
         public Jugador(ContentManager content, Simulation simulation)
         {
-            carPosition = new Vector3(0f, 0f, 0f);
+            carPosition = new Vector3(0f, 1000f, 0f);
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
@@ -75,14 +73,14 @@ namespace TGC.MonoGame.TP.Content.Models
                     {
                         verticesList.Add(PositionToNumerics(vertex.Position));
                     }
-                    }
+                }
             }
-            
+
 
             // transformo lista a span para parametro de convexHull
             Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(verticesList);
 
-             // Calcular el centroide
+            // Calcular el centroide
             Vector3 centroid = Vector3.Zero;
             foreach (var vertex in verticesList)
             {
@@ -99,10 +97,10 @@ namespace TGC.MonoGame.TP.Content.Models
             var numericQuaternion = QuaternionToNumerics(initialOrientation);
             var pose = new RigidPose(numericPosition, numericQuaternion);
             var hullShape = new ConvexHull(verticesSpan, simulation.BufferPool, out System.Numerics.Vector3 hullCenter);
-            var inertia = hullShape.ComputeInertia(1.0f);
+            var inertia = hullShape.ComputeInertia(1500.0f);
             bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
-            pose, inertia, simulation.Shapes.Add(hullShape), 0.01f));
-            
+            pose, inertia, simulation.Shapes.Add(hullShape), 0.0f));
+
         }
 
         public Matrix Update(GameTime gameTime, Matrix carWorld)
@@ -114,12 +112,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
             var keyboardState = Keyboard.GetState();
+
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 carSpeed = Math.Min(carSpeed + carAcceleration, carSpeedMax);
                 //carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
                 var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
                 bodyReference.Velocity.Linear += moveDirection;
+
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {
@@ -128,11 +128,24 @@ namespace TGC.MonoGame.TP.Content.Models
                 var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
                 bodyReference.Velocity.Linear += moveDirection;
             }
+            
+            /*
+            if (keyboardState.IsKeyDown(Keys.W))
+            {
+                var moveForce = PositionToNumerics(direccionFrontal) * (carAcceleration * elapsedTime);
+                bodyReference.ApplyLinearImpulse(moveForce);
+            }
+            if (keyboardState.IsKeyDown(Keys.S))
+            {
+                var moveForce = PositionToNumerics(-direccionFrontal) * (carAcceleration * elapsedTime);
+                bodyReference.ApplyLinearImpulse(moveForce);
+            }
+            */
             if (carPosition.Y <= 0f & keyboardState.IsKeyDown(Keys.Space))
             {
                 carVerticalSpeed = carJumpSpeed;
                 //carPosition += Vector3.Up * carVerticalSpeed;
-                 bodyReference.Velocity.Linear += new System.Numerics.Vector3(0, carVerticalSpeed, 0);
+                bodyReference.Velocity.Linear += new System.Numerics.Vector3(0, carVerticalSpeed, 0);
             }
             else if (carPosition.Y > 0f)
             {
@@ -144,7 +157,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // #region TODO Rotacion
             // Cuando multiplicamos la rotación con la Matrix el auto desaparece. Buscar Causa. Lo dejo así para que el problema sea más visible xd 
 
-            
+
             if (keyboardState.IsKeyDown(Keys.A))
             {
                 angle -= carSpinSpeed * elapsedTime;
@@ -154,7 +167,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     X = MathF.Sin(angle),
                     Y = 0,
                     Z = MathF.Cos(angle)
-                }); 
+                });
 
                 // Rotar el cuerpo físico
                 bodyReference.Pose.Orientation = QuaternionToNumerics(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
@@ -173,13 +186,13 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 bodyReference.Pose.Orientation = QuaternionToNumerics(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
             }
-            
-           
+
+
 
             // #endregion
-             // Actualizar la posición del auto en el mundo de MonoGame
+            // Actualizar la posición del auto en el mundo de MonoGame
             carPosition = new Vector3(bodyPose.Position.X, bodyPose.Position.Y, bodyPose.Position.Z);
-            
+
             var random = new Random(Seed: 0);
             var scale = 1f + (0.1f - 0.05f) * random.NextSingle();
             carWorld = Matrix.CreateScale(scale) * carRotation * Matrix.CreateTranslation(carPosition);
@@ -219,8 +232,8 @@ namespace TGC.MonoGame.TP.Content.Models
         }
 
 
-        
-           
+
+
         public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);

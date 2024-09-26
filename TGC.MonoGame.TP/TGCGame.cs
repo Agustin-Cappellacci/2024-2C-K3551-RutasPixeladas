@@ -15,7 +15,7 @@ using BepuPhysics.Constraints; // Para manejar restricciones físicas si es nece
 using BepuPhysics.Trees; // Opcional si usas árboles para optimizar colisiones
 using BepuUtilities.Memory; // Para el manejo de buffer pools en Bepu
 using Quaternion = Microsoft.Xna.Framework.Quaternion; // Si usas Quaternion de MonoGame
-using Vector3XNA = Microsoft.Xna.Framework.Vector3; // Para diferenciar entre Vector3 de MonoGame y System.Numerics
+using Vector3XNA = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP
 {
@@ -60,6 +60,7 @@ namespace TGC.MonoGame.TP
         private Matrix CarWorld { get; set; }
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
+        private SimpleThreadDispatcher ThreadDispatcher { get; set; }
 
         //------ Variables para los SpawnPoint
         public enum TipoAuto
@@ -74,11 +75,11 @@ namespace TGC.MonoGame.TP
         private List<Microsoft.Xna.Framework.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
         // ------
-
-        private Simulation simulation;
-
+        private Simulation Simulation {get; set;}
+        private BufferPool BufferPool { get; set; }
 
         private bool liberarCamara = false;
+        
 
         public TGCGame()
         {
@@ -144,15 +145,11 @@ namespace TGC.MonoGame.TP
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             
             // Inicializar la simulación de física de Bepu
-            var bufferPool = new BufferPool();
-            var narrowPhaseCallbacks = new TGCNarrowPhaseCallbacks(); // Puedes ajustar los callbacks para manejar colisiones.
-            var poseIntegratorCallbacks = new TGCPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.81f, 0)); // Gravedad.
-            var solveDescription = new SolveDescription
-            {
-                VelocityIterationCount = 7,
-                SubstepCount = 1 // Asegúrate de que este valor sea positivo.
-            };
-            simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
+            BufferPool = new BufferPool();
+            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(30, 1)); // Puedes ajustar los callbacks para manejar colisiones.
+            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100f, 0)); // Gravedad.
+            var solveDescription = new SolveDescription(8,1);
+            Simulation = Simulation.Create(BufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
 
 
             int tessellation = 2;
@@ -190,14 +187,13 @@ namespace TGC.MonoGame.TP
 
 
             // Cargo el modelo del logo.
-            autoJugador = new Jugador(Content, simulation);
+            autoJugador = new Jugador(Content, Simulation);
             //Cars = new Cars(Content);
-            City = new CityScene(Content, simulation);
+            City = new CityScene(Content, Simulation);
             Grass = new Grass(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
-            
 
             base.LoadContent();
         }
@@ -212,7 +208,14 @@ namespace TGC.MonoGame.TP
             var keyboardState = Keyboard.GetState();
 
             // Actualiza la simulación de BepuPhysics
-            simulation.Timestep(1f / 60f); // Ajusta la frecuencia de actualización según tus necesidades
+            try {
+                Simulation.Timestep(1f / 60f, ThreadDispatcher); // Ajusta la frecuencia de actualización según tus necesidades
+            } 
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during simulation step: {ex.Message}");
+            }
+           
 
             
             if (keyboardState.IsKeyDown(Keys.Escape))

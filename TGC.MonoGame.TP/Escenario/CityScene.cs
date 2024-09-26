@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using BepuUtilities.Memory;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -56,6 +57,10 @@ namespace TGC.MonoGame.TP.Content.Models
         private Simulation simulation;
         private StaticHandle rampaPanzaBodyHandle;
         private StaticHandle carpetHandle;
+        private BufferPool bufferPool;
+        private VertexBuffer lineVertexBuffer;
+        private BasicEffect lineEffect;
+        private List<VertexPositionColor> lineVertices;
         // <summary>
         /// Creates a City Scene with a content manager to load resources.
         /// </summary>
@@ -119,10 +124,10 @@ namespace TGC.MonoGame.TP.Content.Models
                     foreach (var meshPart in mesh.MeshParts) meshPart.Effect = listaCombinada[i].Item2;
                 }
             }
-
             // MANEJO DE COLISIONES
             this.simulation = simulation;
 
+            /*
             // Crear colisiones para la rampa
             var rampVertices = ExtractVertices(rampaPanza);
             // transformo lista a span para parametro de convexHull
@@ -137,22 +142,20 @@ namespace TGC.MonoGame.TP.Content.Models
             rampCenter, // Posición inicial de la rampa
             rampShapeIndex
             ));
-
+            */
+            
             // Crear colisiones para el suelo como caja
             // Define el tamaño del box (ancho, alto, profundo)
-            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(10f, 0.1f, 10f);
-
-
+            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(100000000f, 100f, 100000000f);
             // Crear el Collidable Box
             var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
             var boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
-
             // Crear el objeto estático para el suelo
             carpetHandle = simulation.Statics.Add(new StaticDescription(
-                new System.Numerics.Vector3(0, -0.1f, 0), // Posición inicial del box (ajusta la posición como sea necesario)
+                new System.Numerics.Vector3(0, 0f, 0), // Posición inicial del box (ajusta la posición como sea necesario)
                 boxShapeIndex // Fricción
             ));
-
+            
             // Create a list of places where the city model will be drawn
             WorldMatrices = new List<Matrix>()
             {
@@ -519,6 +522,7 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
+        
 
     }
 }
