@@ -202,14 +202,14 @@ namespace TGC.MonoGame.TP
             }
             if (!liberarCamara)
             {
-                CarWorld = autoJugador.Update(gameTime, CarWorld);
-                Camera.Update(gameTime, CarWorld);
+                autoJugador.Update(gameTime);
+                Camera.Update(gameTime, autoJugador.carWorld);
                 View = Camera.View;
                 Projection = Camera.Projection;
             }
             else
             {
-                FreeCamera.Update(gameTime, CarWorld);
+                FreeCamera.Update(gameTime, autoJugador.carWorld);
                 View = FreeCamera.View;
                 Projection = FreeCamera.Projection;
             }
@@ -242,7 +242,7 @@ namespace TGC.MonoGame.TP
             
 
             City.Draw(gameTime, View, Projection);
-            autoJugador.Draw(CarWorld,View, Projection);
+            autoJugador.Draw(View, Projection);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             Grass.Draw(gameTime, View, Projection, CarWorld);
