@@ -147,8 +147,8 @@ namespace TGC.MonoGame.TP
             // Inicializar la simulación de física de Bepu
             BufferPool = new BufferPool();
             var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(30, 1)); // Puedes ajustar los callbacks para manejar colisiones.
-            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100f, 0)); // Gravedad.
-            var solveDescription = new SolveDescription(8,1);
+            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.81f, 0)); // Gravedad.
+            var solveDescription = new SolveDescription(4,1);
             Simulation = Simulation.Create(BufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
 
 
@@ -249,8 +249,6 @@ namespace TGC.MonoGame.TP
                 Auto.Update();
             }
             */
-            
-
             base.Update(gameTime);
         }
 

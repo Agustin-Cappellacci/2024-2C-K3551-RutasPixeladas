@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using BepuUtilities.Memory;
+using Microsoft.VisualBasic;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -55,12 +56,13 @@ namespace TGC.MonoGame.TP.Content.Models
 
         // para colisiones
         private Simulation simulation;
-        private StaticHandle rampaPanzaBodyHandle;
+        private StaticHandle rampaBodyHandle;
         private StaticHandle carpetHandle;
         private BufferPool bufferPool;
         private VertexBuffer lineVertexBuffer;
         private BasicEffect lineEffect;
         private List<VertexPositionColor> lineVertices;
+
         // <summary>
         /// Creates a City Scene with a content manager to load resources.
         /// </summary>
@@ -127,35 +129,37 @@ namespace TGC.MonoGame.TP.Content.Models
             // MANEJO DE COLISIONES
             this.simulation = simulation;
 
-            /*
+
+
             // Crear colisiones para la rampa
-            var rampVertices = ExtractVertices(rampaPanza);
+            //var rampVertices = ExtractVertices(rampa);
+            var rampVerticesTrasladados = ObtenerVerticesTransformados(rampa, new System.Numerics.Vector3(0, 0, 1000f), 10f, -(float)Math.PI / 2 ,(float)Math.PI / 2);
             // transformo lista a span para parametro de convexHull
-            Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(rampVertices);
+            Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(rampVerticesTrasladados);
             // crea el convexHull para la rampa
             var rampHull = new ConvexHull(verticesSpan, simulation.BufferPool, out var rampCenter);
             // Registra la forma de la rampa en el sistema de colisiones y obtiene un TypedIndex.
             var rampShapeIndex = simulation.Shapes.Add(rampHull);
 
             // Crear el cuerpo estático para la rampa
-            rampaPanzaBodyHandle = simulation.Statics.Add(new StaticDescription(
+            rampaBodyHandle = simulation.Statics.Add(new StaticDescription(
             rampCenter, // Posición inicial de la rampa
             rampShapeIndex
             ));
-            */
-            
+
+
             // Crear colisiones para el suelo como caja
             // Define el tamaño del box (ancho, alto, profundo)
-            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(100000000f, 100f, 100000000f);
+            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(100000f, 100f, 100000f);
             // Crear el Collidable Box
             var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
             var boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para el suelo
             carpetHandle = simulation.Statics.Add(new StaticDescription(
-                new System.Numerics.Vector3(0, 0f, 0), // Posición inicial del box (ajusta la posición como sea necesario)
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box (ajusta la posición como sea necesario)
                 boxShapeIndex // Fricción
             ));
-            
+
             // Create a list of places where the city model will be drawn
             WorldMatrices = new List<Matrix>()
             {
@@ -522,7 +526,30 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
-        
+        public List<System.Numerics.Vector3> ObtenerVerticesTransformados(Model model, System.Numerics.Vector3 traslacion, float escala, float rotacionX,float rotacionY)
+        {
+            var verticesOriginales = ExtractVertices(model);
+            List<System.Numerics.Vector3> verticesTransformados = new List<System.Numerics.Vector3>();
+
+            // Crear matrices de transformación
+            System.Numerics.Matrix4x4 matrizEscala = System.Numerics.Matrix4x4.CreateScale(escala);
+            System.Numerics.Matrix4x4 matrizRotacionX = System.Numerics.Matrix4x4.CreateRotationX(rotacionX); // Rotación alrededor del eje Y (ajusta según sea necesario)
+            System.Numerics.Matrix4x4 matrizRotacionY = System.Numerics.Matrix4x4.CreateRotationY(rotacionY); // Rotación alrededor del eje Y (ajusta según sea necesario)
+            System.Numerics.Matrix4x4 matrizTraslacion = System.Numerics.Matrix4x4.CreateTranslation(traslacion);
+
+            // Combinar las matrices en el orden correcto
+            System.Numerics.Matrix4x4 matrizTransformacion = matrizRotacionX * matrizRotacionY * matrizEscala * matrizTraslacion;
+
+            // Aplicar la transformación a cada vértice
+            foreach (var vertice in verticesOriginales)
+            {
+                // Convertir el vértice a Vector3
+                System.Numerics.Vector3 verticeTransformado = System.Numerics.Vector3.Transform(vertice, matrizTransformacion);
+                verticesTransformados.Add(verticeTransformado);
+            }
+
+            return verticesTransformados;
+        }
 
     }
 }

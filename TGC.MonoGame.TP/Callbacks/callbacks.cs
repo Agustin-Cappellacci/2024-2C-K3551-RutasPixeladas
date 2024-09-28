@@ -43,7 +43,7 @@ public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
     ///     solver.
     ///     If false, unconstrained bodies use a single step of length equal to the dt provided to Simulation.Timestep.
     /// </summary>
-    public readonly bool AllowSubstepsForUnconstrainedBodies => false;
+    public readonly bool AllowSubstepsForUnconstrainedBodies => true;
 
     /// <summary>
     ///     Gets whether the velocity integration callback should be called for kinematic bodies.
@@ -53,7 +53,7 @@ public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
     /// </summary>
     public readonly bool IntegrateVelocityForKinematics => false;
 
-    public PoseIntegratorCallbacks(Vector3 gravity, float linearDamping = .03f, float angularDamping = .03f) : this()
+    public PoseIntegratorCallbacks(Vector3 gravity, float linearDamping = 0.1f, float angularDamping = 0.1f) : this()
     {
         Gravity = gravity;
         LinearDamping = linearDamping;
@@ -132,8 +132,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
     {
     }
 
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity,
-        float frictionCoefficient)
+    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f,float frictionCoefficient = 10f)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = maximumRecoveryVelocity;
@@ -145,9 +144,9 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
         //Use a default if the springiness value wasn't initialized... at least until struct field initializers are supported outside of previews.
         if (ContactSpringiness.AngularFrequency == 0 && ContactSpringiness.TwiceDampingRatio == 0)
         {
-            ContactSpringiness = new SpringSettings(10, 1);
-            MaximumRecoveryVelocity = 1.5f;
-            FrictionCoefficient = 1f;
+            ContactSpringiness = new SpringSettings(60, 1);
+            MaximumRecoveryVelocity = 5f;
+            FrictionCoefficient = 10f;
         }
     }
 
@@ -171,10 +170,10 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
     public bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold,
         out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
     {
-        Console.WriteLine($"Colisión entre: {pair.A} y {pair.B}");
+        Console.WriteLine($"Colision entre: {pair.A} y {pair.B}");
         pairMaterial.FrictionCoefficient = FrictionCoefficient;
-        pairMaterial.MaximumRecoveryVelocity = 0.5f;
-        pairMaterial.SpringSettings = ContactSpringiness;
+        pairMaterial.MaximumRecoveryVelocity = 2.0f;
+        pairMaterial.SpringSettings = new SpringSettings(30,1);
         return true;
         
     }

@@ -47,15 +47,20 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public Jugador(ContentManager content, Simulation simulation)
         {
-            carPosition = new Vector3(0f, 1000f, 0f);
+            carPosition = new Vector3(0f, 1500f, 0f);
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
-            // array de vertices a lista, para manejo de colisiones
-            List<System.Numerics.Vector3> verticesList = new List<System.Numerics.Vector3>();
+            // Aproximadamente las dimensiones del auto para la caja (modifica según sea necesario)
+            float carWidth = 2.0f;  // Ancho de la caja
+            float carHeight = 1.0f; // Altura de la caja
+            float carLength = 4.0f; // Largo de la caja
 
+            // array de vertices a lista, para manejo de colisiones
+            //List<System.Numerics.Vector3> verticesList = new List<System.Numerics.Vector3>();
+            /*
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
             {
@@ -75,7 +80,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     }
                 }
             }
-
+            
 
             // transformo lista a span para parametro de convexHull
             Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(verticesList);
@@ -87,6 +92,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 centroid += vertex;
             }
             centroid /= verticesList.Count;
+            */
 
             this.simulation = simulation;
             // creacion de ConvexHull
@@ -96,11 +102,13 @@ namespace TGC.MonoGame.TP.Content.Models
             var numericPosition = PositionToNumerics(initialPosition);
             var numericQuaternion = QuaternionToNumerics(initialOrientation);
             var pose = new RigidPose(numericPosition, numericQuaternion);
-            var hullShape = new ConvexHull(verticesSpan, simulation.BufferPool, out System.Numerics.Vector3 hullCenter);
-            var inertia = hullShape.ComputeInertia(1500.0f);
-            bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(
-            pose, inertia, simulation.Shapes.Add(hullShape), 0.0f));
-
+            //var hullShape = new ConvexHull(verticesSpan, simulation.BufferPool, out System.Numerics.Vector3 hullCenter);
+            //var inertia = hullShape.ComputeInertia(1500.0f);
+            
+            var boxShape = new Box(carWidth, carHeight, carLength);
+            var inertia = boxShape.ComputeInertia(1000f);
+            //bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(pose, inertia, simulation.Shapes.Add(hullShape), 0.0f));
+            bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(pose, inertia, simulation.Shapes.Add(boxShape), 1f));
         }
 
         public Matrix Update(GameTime gameTime, Matrix carWorld)
@@ -128,7 +136,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
                 bodyReference.Velocity.Linear += moveDirection;
             }
-            
+
             /*
             if (keyboardState.IsKeyDown(Keys.W))
             {
@@ -209,6 +217,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             */
             // #endregion
+            Console.WriteLine($"Posición del auto: {simulation.Bodies.GetBodyReference(bodyHandle).Pose.Position}");
             return carWorld;
         }
 
