@@ -1,5 +1,6 @@
 using BepuPhysics;
 using BepuPhysics.Collidables;
+using BepuUtilities;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -12,6 +13,9 @@ using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
 
+using Matrix = Microsoft.Xna.Framework.Matrix;
+using BepuMatrix = BepuUtilities.Matrix;
+    
 namespace TGC.MonoGame.TP.Content.Models
 {
     // Nunca olvides mesh.ParentBone.Transform
@@ -40,9 +44,13 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.4f;
         private float angle = 0f;
 
+        public Matrix carWorld;
+
         // Colisiones
         private BodyHandle bodyHandle;
         private Simulation simulation;
+
+        
 
 
         public Jugador(ContentManager content, Simulation simulation)
@@ -107,11 +115,10 @@ namespace TGC.MonoGame.TP.Content.Models
             
             var boxShape = new Box(carWidth, carHeight, carLength);
             var inertia = boxShape.ComputeInertia(1000f);
-            //bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(pose, inertia, simulation.Shapes.Add(hullShape), 0.0f));
             bodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(pose, inertia, simulation.Shapes.Add(boxShape), 1f));
         }
 
-        public Matrix Update(GameTime gameTime, Matrix carWorld)
+        public void Update(GameTime gameTime)
         {
             // Obtener la posición del cuerpo desde la simulación física
             var bodyReference = simulation.Bodies.GetBodyReference(bodyHandle);
@@ -121,6 +128,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
             var keyboardState = Keyboard.GetState();
 
+     
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 carSpeed = Math.Min(carSpeed + carAcceleration, carSpeedMax);
@@ -128,13 +136,16 @@ namespace TGC.MonoGame.TP.Content.Models
                 var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
                 bodyReference.Velocity.Linear += moveDirection;
 
+
+
             }
-            if (keyboardState.IsKeyDown(Keys.S))
+             if (keyboardState.IsKeyDown(Keys.S))
             {
                 carSpeed = Math.Max(carSpeed - carAcceleration, carSpeedMin);
                 //carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
                 var moveDirection = PositionToNumerics(direccionFrontal * elapsedTime * carSpeed);
                 bodyReference.Velocity.Linear += moveDirection;
+
             }
 
             /*
@@ -168,7 +179,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                angle -= carSpinSpeed * elapsedTime;
+                angle += carSpinSpeed * elapsedTime;
                 carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
                 direccionFrontal = Vector3.Normalize(new Vector3
                 {
@@ -182,7 +193,7 @@ namespace TGC.MonoGame.TP.Content.Models
             }
             if (keyboardState.IsKeyDown(Keys.D))
             {
-                angle += carSpinSpeed * elapsedTime;
+                angle -= carSpinSpeed * elapsedTime;
                 carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
 
                 direccionFrontal = Vector3.Normalize(new Vector3
@@ -197,31 +208,16 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
 
-            // #endregion
-            // Actualizar la posición del auto en el mundo de MonoGame
             carPosition = new Vector3(bodyPose.Position.X, bodyPose.Position.Y, bodyPose.Position.Z);
 
             var random = new Random(Seed: 0);
             var scale = 1f + (0.1f - 0.05f) * random.NextSingle();
             carWorld = Matrix.CreateScale(scale) * carRotation * Matrix.CreateTranslation(carPosition);
 
-            // #region TODO Efectos
-            /*
-                foreach (var mesh in autoJugador.Meshes)
-                {
-                    // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
-                    foreach (var meshPart in mesh.MeshParts)
-                    {
-                        meshPart.Effect = effectoAuto;
-                    }
-                }
-            */
-            // #endregion
             Console.WriteLine($"Posición del auto: {simulation.Bodies.GetBodyReference(bodyHandle).Pose.Position}");
-            return carWorld;
         }
 
-        public void Draw(Matrix CarWorld, Matrix View, Matrix Projection)
+        public void Draw(Matrix View, Matrix Projection)
         {
             var random = new Random(Seed: 0);
             var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
@@ -232,7 +228,7 @@ namespace TGC.MonoGame.TP.Content.Models
             foreach (ModelMesh mesh in Model.Meshes)
             {
                 effectAuto.Parameters["DiffuseColor"].SetValue(color);
-                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
 
 
 

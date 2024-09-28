@@ -132,7 +132,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
     {
     }
 
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f,float frictionCoefficient = 10f)
+    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f,float frictionCoefficient = 1000f)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = maximumRecoveryVelocity;
@@ -144,9 +144,9 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
         //Use a default if the springiness value wasn't initialized... at least until struct field initializers are supported outside of previews.
         if (ContactSpringiness.AngularFrequency == 0 && ContactSpringiness.TwiceDampingRatio == 0)
         {
-            ContactSpringiness = new SpringSettings(60, 1);
+            ContactSpringiness = new SpringSettings(30, 1);
             MaximumRecoveryVelocity = 5f;
-            FrictionCoefficient = 10f;
+            FrictionCoefficient = 1000f;
         }
     }
 

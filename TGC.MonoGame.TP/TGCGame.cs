@@ -124,8 +124,6 @@ namespace TGC.MonoGame.TP
             Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
             
             FreeCamera = new FreeCamera(GraphicsDevice.Viewport.AspectRatio);
-
-            CarWorld = Matrix.Identity;
           
             // Seria hasta aca.
            
@@ -177,10 +175,10 @@ namespace TGC.MonoGame.TP
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {   
                 if (listaModelos[i] == TipoAuto.tipoCarrera){
-                    listaAutos.Add(new AutoEnemigoCarrera(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, traslacionesIniciales[i], angulosIniciales[i], new AutoCPU()));
                 }
                 if (listaModelos[i] == TipoAuto.tipoCombate){
-                    listaAutos.Add(new AutoEnemigoCombate(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCombate(Content, traslacionesIniciales[i], angulosIniciales[i], new AutoCPU()));
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
@@ -232,14 +230,14 @@ namespace TGC.MonoGame.TP
             }
             if (!liberarCamara)
             {
-                CarWorld = autoJugador.Update(gameTime, CarWorld);
-                Camera.Update(gameTime, CarWorld);
+                autoJugador.Update(gameTime);
+                Camera.Update(gameTime, autoJugador.carWorld);
                 View = Camera.View;
                 Projection = Camera.Projection;
             }
             else
             {
-                FreeCamera.Update(gameTime, CarWorld);
+                FreeCamera.Update(gameTime, autoJugador.carWorld);
                 View = FreeCamera.View;
                 Projection = FreeCamera.Projection;
             }
@@ -270,7 +268,7 @@ namespace TGC.MonoGame.TP
             
 
             City.Draw(gameTime, View, Projection);
-            autoJugador.Draw(CarWorld,View, Projection);
+            autoJugador.Draw(View, Projection);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             Grass.Draw(gameTime, View, Projection, CarWorld);

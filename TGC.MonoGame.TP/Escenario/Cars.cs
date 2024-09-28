@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,14 +16,27 @@ namespace TGC.MonoGame.TP.Content.Models
         public const string ContentFolderEffects = "Effects/";
         protected Matrix WorldMatrix { get; set; }
         protected Model Modelo { get; set; }
+        private Vector3 direccionFrontal { get; set; }
+        private Vector3 carPosition { get; set; }
+        private Matrix carRotation = Matrix.CreateRotationY(0f);
         protected Vector3 PosicionInicial { get; set; }
         protected float anguloInicial { get; set; }
         protected float Escala { get; set; }
         protected Effect EffectCar { get; set; }
         protected Vector3 Color { get; set; }
 
+        private float carSpeed = 0f;
+        private float carVerticalSpeed = 0f;
+        private const float carAcceleration = 500f;
+        private const float carSpeedMax = 1000f;
+        private const float carSpeedMin = -700f;
+        private const float carJumpSpeed = 50f;
+        private const float gravity = 98f;
+        private const float carSpinSpeed = 0.4f;
+        private float angle = 0f;
+
         // Constructor abstracto
-        protected AutoEnemigo(ContentManager content, Vector3 posicion, float angulo) {
+        protected AutoEnemigo(ContentManager content, Vector3 posicion, float angulo, Comportamiento comportamiento) {
             WorldMatrix = Matrix.Identity;
             PosicionInicial = posicion;
             anguloInicial = angulo;
@@ -58,8 +72,8 @@ namespace TGC.MonoGame.TP.Content.Models
     }
 
     class AutoEnemigoCombate : AutoEnemigo {
-        public AutoEnemigoCombate(ContentManager content, Vector3 posicion, float angulo)
-            : base(content, posicion, angulo + (float)Math.PI / 2) // Ajustar ángulo si es necesario
+        public AutoEnemigoCombate(ContentManager content, Vector3 posicion, float angulo, Comportamiento comportamiento)
+            : base(content, posicion, angulo + (float)Math.PI / 2, comportamiento) // Ajustar ángulo si es necesario
         {
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
@@ -78,8 +92,8 @@ namespace TGC.MonoGame.TP.Content.Models
     }
 
     class AutoEnemigoCarrera : AutoEnemigo {
-        public AutoEnemigoCarrera(ContentManager content, Vector3 posicion, float angulo)
-            : base(content, posicion, angulo) 
+        public AutoEnemigoCarrera(ContentManager content, Vector3 posicion, float angulo, Comportamiento comportamiento)
+            : base(content, posicion, angulo, comportamiento) 
         {
             CargarModelo(content);
             Escala = 0.1f + (0.1f - 0.05f) * new Random().NextSingle();
