@@ -7,6 +7,9 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TGC.MonoGame.TP.Content.Models;
 using System.Collections.Generic;
+using BepuPhysics;
+using BepuPhysics.Constraints;
+using BepuUtilities.Memory;
 
 namespace TGC.MonoGame.TP
 {
@@ -65,6 +68,9 @@ namespace TGC.MonoGame.TP
         private List<Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
         // ------
+        private Simulation simulation;
+
+        private BufferPool bufferPool;
 
 
         private bool liberarCamara = false;
@@ -132,6 +138,14 @@ namespace TGC.MonoGame.TP
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             
+             // Inicializar la simulación de física de Bepu
+            bufferPool = new BufferPool();
+            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(30, 1)); // Puedes ajustar los callbacks para manejar colisiones.
+            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.81f, 0)); // Gravedad.
+            var solveDescription = new SolveDescription(4,1);
+            simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
+
+
             int tessellation = 2;
             if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
@@ -167,9 +181,9 @@ namespace TGC.MonoGame.TP
 
 
             // Cargo el modelo del logo.
-            autoJugador = new Jugador(Content);
+            autoJugador = new Jugador(Content, simulation);
             //Cars = new Cars(Content);
-            City = new CityScene(Content);
+            City = new CityScene(Content, simulation);
             Grass = new Grass(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -185,7 +199,8 @@ namespace TGC.MonoGame.TP
         ///     ante ellas.
         /// </summary>
         protected override void Update(GameTime gameTime)
-        {   
+        {      
+            simulation.Timestep(1f/60f);
             var keyboardState = Keyboard.GetState();
             
             if (keyboardState.IsKeyDown(Keys.Escape))

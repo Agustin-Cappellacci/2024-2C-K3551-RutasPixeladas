@@ -1,4 +1,5 @@
 using BepuPhysics;
+using BepuPhysics.Collidables;
 using BepuPhysics.Constraints;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -6,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace TGC.MonoGame.TP.Content.Models
@@ -49,12 +51,16 @@ namespace TGC.MonoGame.TP.Content.Models
         public List<Model> listaModelos;
         public List<Effect> listaEfectos;
 
+        private StaticHandle floorHandle;
+        private StaticHandle rampaBodyHandle;
+        private Simulation simulation;
+
 
         // <summary>
         /// Creates a City Scene with a content manager to load resources.
         /// </summary>
         /// <param name="content">The Content Manager to load resources</param>
-        public CityScene(ContentManager content)
+        public CityScene(ContentManager content, Simulation simulation)
         {   
 
 
@@ -117,15 +123,38 @@ namespace TGC.MonoGame.TP.Content.Models
             WorldMatrices = new List<Matrix>()
             {
                 Matrix.Identity,
-                /*Matrix.CreateTranslation(Vector3.Right * DistanceBetweenCities),
-                Matrix.CreateTranslation(Vector3.Left * DistanceBetweenCities),
-                Matrix.CreateTranslation(Vector3.Forward * DistanceBetweenCities),
-                Matrix.CreateTranslation(Vector3.Backward * DistanceBetweenCities),
-                Matrix.CreateTranslation((Vector3.Forward + Vector3.Right) * DistanceBetweenCities),
-                Matrix.CreateTranslation((Vector3.Forward + Vector3.Left) * DistanceBetweenCities),
-                Matrix.CreateTranslation((Vector3.Backward + Vector3.Right) * DistanceBetweenCities),
-                Matrix.CreateTranslation((Vector3.Backward + Vector3.Left) * DistanceBetweenCities),*/
             };
+
+            this.simulation = simulation;
+
+            // Crear colisiones para el suelo como caja
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(1000f, 10f, 1000f);
+            // Crear el Collidable Box
+            var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
+            var boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            floorHandle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, 0f, 0), // Posición inicial del box (ajusta la posición como sea necesario)
+                boxShapeIndex // Fricción
+            ));
+
+            // Crear colisiones para la rampa
+            //var rampVertices = ExtractVertices(rampa);
+            var rampVerticesTrasladados = ObtenerVerticesTransformados(rampa, new System.Numerics.Vector3(0, 0, 1000f), 10f, -(float)Math.PI / 2 ,(float)Math.PI / 2);
+            // transformo lista a span para parametro de convexHull
+            Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(rampVerticesTrasladados);
+            // crea el convexHull para la rampa
+            var rampHull = new ConvexHull(verticesSpan, simulation.BufferPool, out var rampCenter);
+            // Registra la forma de la rampa en el sistema de colisiones y obtiene un TypedIndex.
+            var rampShapeIndex = simulation.Shapes.Add(rampHull);
+
+            // Crear el cuerpo estático para la rampa
+            rampaBodyHandle = simulation.Statics.Add(new StaticDescription(
+            rampCenter, // Posición inicial de la rampa
+            rampShapeIndex
+            ));
+
 
         }
 
@@ -425,5 +454,56 @@ namespace TGC.MonoGame.TP.Content.Models
             
             }*/
         }
+        // Función para extraer vértices de un modelo 3D (similar a la que se usó en el Jugador)
+        private List<System.Numerics.Vector3> ExtractVertices(Model model)
+        {
+            var vertices = new List<System.Numerics.Vector3>();
+
+            foreach (var mesh in model.Meshes)
+            {
+                foreach (var part in mesh.MeshParts)
+                {
+                    var vertexData = new Microsoft.Xna.Framework.Vector3[part.VertexBuffer.VertexCount];
+                    part.VertexBuffer.GetData(vertexData);
+
+                    foreach (var vertex in vertexData)
+                    {
+                        vertices.Add(PositionToNumerics(vertex));
+                    }
+                }
+            }
+
+            return vertices;
+        }
+        // Función para convertir Vector3 de XNA a System.Numerics
+        public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
+        {
+            return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
+        }
+        public List<System.Numerics.Vector3> ObtenerVerticesTransformados(Model model, System.Numerics.Vector3 traslacion, float escala, float rotacionX,float rotacionY)
+        {
+            var verticesOriginales = ExtractVertices(model);
+            List<System.Numerics.Vector3> verticesTransformados = new List<System.Numerics.Vector3>();
+
+            // Crear matrices de transformación
+            System.Numerics.Matrix4x4 matrizEscala = System.Numerics.Matrix4x4.CreateScale(escala);
+            System.Numerics.Matrix4x4 matrizRotacionX = System.Numerics.Matrix4x4.CreateRotationX(rotacionX); // Rotación alrededor del eje Y (ajusta según sea necesario)
+            System.Numerics.Matrix4x4 matrizRotacionY = System.Numerics.Matrix4x4.CreateRotationY(rotacionY); // Rotación alrededor del eje Y (ajusta según sea necesario)
+            System.Numerics.Matrix4x4 matrizTraslacion = System.Numerics.Matrix4x4.CreateTranslation(traslacion);
+
+            // Combinar las matrices en el orden correcto
+            System.Numerics.Matrix4x4 matrizTransformacion = matrizRotacionX * matrizRotacionY * matrizEscala * matrizTraslacion;
+
+            // Aplicar la transformación a cada vértice
+            foreach (var vertice in verticesOriginales)
+            {
+                // Convertir el vértice a Vector3
+                System.Numerics.Vector3 verticeTransformado = System.Numerics.Vector3.Transform(vertice, matrizTransformacion);
+                verticesTransformados.Add(verticeTransformado);
+            }
+
+            return verticesTransformados;
+        }
+
     }
 }
