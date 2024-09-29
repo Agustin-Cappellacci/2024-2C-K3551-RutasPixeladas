@@ -96,7 +96,7 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Matrix world)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection)
         {
             Effect.Parameters["View"].SetValue(view);
             Effect.Parameters["Projection"].SetValue(projection);

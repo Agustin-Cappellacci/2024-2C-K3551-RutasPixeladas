@@ -33,22 +33,26 @@ namespace TGC.MonoGame.TP
         public const string ContenidoAutoCarrera = "Models/RacingCarA";
 
         private GraphicsDeviceManager Graphics { get; }
+        private SpriteBatch SpriteBatch { get; set; }
 
+        // Cámara
         FollowCamera Camera { get; set; }
-        
         FreeCamera FreeCamera { get; set; }
 
-        private SpriteBatch SpriteBatch { get; set; }
+        private bool liberarCamara = false;
+        private KeyboardState oldState { get; set; }
+
+        // Modelos y efectos
         private Model Model { get; set; }
         private Model DeLoreanModel { get; set; }
         private Effect Effect { get; set; }
         
+        // Clases
         private Jugador autoJugador {get; set;}
         private CityScene City { get; set; }
-       // private Cars Cars { get; set; }
         private Grass Grass { get; set; }
 
-        private Matrix CarWorld { get; set; }
+        // Matrices
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
 
@@ -67,16 +71,19 @@ namespace TGC.MonoGame.TP
         // ------
 
 
-        private bool liberarCamara = false;
+        
 
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
             
-            // Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
+            // Consejo: Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
+            
+            
             // Carpeta raiz donde va a estar toda la Media.
             Content.RootDirectory = "Content";
+            
             // Hace que el mouse sea visible.
             IsMouseVisible = true;
         }
@@ -97,8 +104,6 @@ namespace TGC.MonoGame.TP
             listaAutos = new List<AutoEnemigo>();
 
             // Apago el backface culling.
-            // Esto se hace por un problema en el diseno del modelo del logo de la materia.
-            // Una vez que empiecen su juego, esto no es mas necesario y lo pueden sacar.
             var rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
             GraphicsDevice.RasterizerState = rasterizerState;
@@ -109,14 +114,12 @@ namespace TGC.MonoGame.TP
             Graphics.ApplyChanges();
 
             
+            
             Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
             
             FreeCamera = new FreeCamera(GraphicsDevice.Viewport.AspectRatio);
-
-            CarWorld = Matrix.Identity;
           
-            // Seria hasta aca.
-           
+            
             // Configuramos nuestras matrices de la escena.
            
             base.Initialize();
@@ -166,9 +169,8 @@ namespace TGC.MonoGame.TP
             }
 
 
-            // Cargo el modelo del logo.
+            // Cargo Clases
             autoJugador = new Jugador(Content);
-            //Cars = new Cars(Content);
             City = new CityScene(Content);
             Grass = new Grass(Content);
 
@@ -196,7 +198,7 @@ namespace TGC.MonoGame.TP
 
             // Capturar Input teclado
             
-            if (keyboardState.IsKeyDown(Keys.Enter))
+            if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
             {
                 liberarCamara = !liberarCamara;
             }
@@ -219,7 +221,8 @@ namespace TGC.MonoGame.TP
                 Auto.Update();
             }
             */
-            
+
+            oldState = keyboardState;
 
             base.Update(gameTime);
         }
@@ -245,7 +248,7 @@ namespace TGC.MonoGame.TP
             autoJugador.Draw(View, Projection);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            Grass.Draw(gameTime, View, Projection, CarWorld);
+            Grass.Draw(gameTime, View, Projection);
             
             
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.

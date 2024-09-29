@@ -27,7 +27,7 @@ namespace TGC.MonoGame.TP.Content.Models
             PosicionInicial = posicion;
             anguloInicial = angulo;
             
-            var random = new Random(Seed: 0);
+            var random = new Random();  // No hace falta un seed porque se usa una sola vez y se guarda en una variable.
             Color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
         }
 
