@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks.Dataflow;
 
-namespace TGC.MonoGame.TPZero.Camara
+namespace TGC.MonoGame.TP.Content.Models
 {
     /// <summary>
     /// Una camara que sigue objetos

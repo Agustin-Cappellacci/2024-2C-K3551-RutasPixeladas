@@ -45,10 +45,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.4f;
 
         private float rotacionRuedasDelanterasY {get; set;}
-        private Vector3 CarPosition { get; set; }
-        private float CarSpeed = 0f;
+        private float CarSpeed;
 
-        private float angle = 0f;
+        private float angle;
 
         private System.Numerics.Vector3 carPosition { get; set; }
 
@@ -178,7 +177,7 @@ namespace TGC.MonoGame.TP.Content.Models
             }
             // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
             var forwardDirection = System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ,
-       System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
+            System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
             carBodyReference.Velocity.Linear = forwardDirection * CarSpeed;
 
 
@@ -211,14 +210,14 @@ namespace TGC.MonoGame.TP.Content.Models
             Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
             Matrix.CreateTranslation(-distanciaEje, 0, distanciaTrasera) *  // 2. Coloca la rueda trasera izquierda en su lugar
             Matrix.CreateRotationY(CarRotationY) *  // 3. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
+            Matrix.CreateTranslation(carPosition);  // 4. Traslada el coche completo a su posición en el mundo
 
                     // Rueda trasera derecha
             ruedaTraseraDerTransform =
             Matrix.CreateRotationX(ruedaGiroVelocidad) * // 1. Rota la rueda sobre su eje X
             Matrix.CreateTranslation(distanciaEje, 0, distanciaTrasera)*  // 2. Coloca la rueda trasera derecha en su lugar
             Matrix.CreateRotationY(CarRotationY)*  // 3. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
+            Matrix.CreateTranslation(carPosition);  // 4. Traslada el coche completo a su posición en el mundo
 
             // Rueda delantera izquierda
             ruedaDelanteraIzqTransform = 
@@ -226,7 +225,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
             Matrix.CreateTranslation(-distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera izquierda en su lugar
             Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(CarPosition);  // 5. Traslada el coche completo a su posición en el mundo
+            Matrix.CreateTranslation(carPosition);  // 5. Traslada el coche completo a su posición en el mundo
 
             // Rueda delantera derecha
             ruedaDelanteraDerTransform = 
@@ -234,7 +233,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
             Matrix.CreateTranslation(distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera derecha en su lugar
             Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(CarPosition); 
+            Matrix.CreateTranslation(carPosition); 
 
             // Movimiento del coche en base a la velocidad
 
@@ -252,8 +251,8 @@ namespace TGC.MonoGame.TP.Content.Models
         public void Draw(Matrix View, Matrix Projection)
 {
     var random = new Random(Seed: 0);
-    var color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
-    var colorRueda = new Vector3(0, 0, 0);
+    var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+    var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
 
     effectAuto.Parameters["View"].SetValue(View);
     effectAuto.Parameters["Projection"].SetValue(Projection);
@@ -294,9 +293,9 @@ namespace TGC.MonoGame.TP.Content.Models
                 mesh.Draw();
             }
 
-*/
+            */
 
-
+            /*
             foreach (ModelMesh rueda in ruedas)
             {
                 effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
@@ -309,14 +308,10 @@ namespace TGC.MonoGame.TP.Content.Models
                     effectAuto.Parameters["World"].SetValue(ruedaTraseraTransform);
                 }
                 rueda.Draw();
-            }
+            }*/
         }
 
-        public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
-        {
-            return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
-
-        }
+        
         else if (rueda.Name.Contains("WheelB"))
         {
             // Aplicar transformación de la rueda delantera derecha
@@ -335,6 +330,12 @@ namespace TGC.MonoGame.TP.Content.Models
         
         rueda.Draw();
     }
-}
+    
+        }
+        public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
+        {
+            return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
+
+        }
     }
 }
