@@ -24,15 +24,20 @@ namespace TGC.MonoGame.TP.Content.Models
         private Vector3 direccionFrontal { get; set; }
         private Vector3 carPosition { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
+        private float wheelRotationAngle;
+        private float wheelSteeringAngle;
+        private float maxWheelSteer = 0.7f;
+
+        private float wheelSteerDelta = 0.2f;
             
       
         private float carSpeed = 0f;
         private float carVerticalSpeed = 0f;
-        private const float carAcceleration = 500f;
+        private const float carAcceleration = 50f;
         //    private const float carAcceleratioSpeedMax = 0;
         //    private const float carAcceleratioSpeedMin = 0;
-        private const float carSpeedMax = 1000f;
-        private const float carSpeedMin = -700f;
+        private const float carSpeedMax = 500f;
+        private const float carSpeedMin = -500f;
         private const float carJumpSpeed = 50f;
         private const float gravity = 98f;
         private const float carSpinSpeed = 0.4f;
@@ -68,13 +73,16 @@ namespace TGC.MonoGame.TP.Content.Models
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 carSpeed = Math.Min(carSpeed + carAcceleration, carSpeedMax);
-                carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
             }
             if (keyboardState.IsKeyDown(Keys.S))
             {
                 carSpeed = Math.Max(carSpeed - carAcceleration, carSpeedMin);
-                carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
             }
+            carSpeed = carSpeed * 0.97f;
+            if (Math.Abs(carSpeed) < 10) {
+                carSpeed = 0;
+            }
+            carPosition = carPosition + (direccionFrontal * elapsedTime * carSpeed);
             if (carPosition.Y <= 0f & keyboardState.IsKeyDown(Keys.Space))
             {
                 carVerticalSpeed = carJumpSpeed;
@@ -92,27 +100,38 @@ namespace TGC.MonoGame.TP.Content.Models
             
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                angle -= carSpinSpeed * elapsedTime;
-                carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
-                direccionFrontal = Vector3.Normalize(new Vector3
-                {
-                    X = MathF.Sin(angle),
-                    Y = 0,
-                    Z = MathF.Cos(angle)
-                }); 
-            }
-            if (keyboardState.IsKeyDown(Keys.D))
+                if (carSpeed != 0) {
+                    angle += carSpinSpeed * elapsedTime;
+                    carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
+                    direccionFrontal = Vector3.Normalize(new Vector3
+                    {
+                        X = MathF.Sin(angle),
+                        Y = 0,
+                        Z = MathF.Cos(angle)
+                    }); 
+                }
+                wheelSteeringAngle = Math.Min(wheelSteeringAngle + wheelSteerDelta, maxWheelSteer);
+                
+            } else if (keyboardState.IsKeyDown(Keys.D))
             {
-                angle += carSpinSpeed * elapsedTime;
-                carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
+                if (carSpeed != 0) {
+                    angle -= carSpinSpeed * elapsedTime;
+                    carRotation = Matrix.CreateFromQuaternion(new Quaternion(0, MathF.Sin(angle * 0.5f), 0, MathF.Cos(angle * 0.5f)));
 
-                direccionFrontal = Vector3.Normalize(new Vector3
-                {
-                    X = MathF.Sin(angle),
-                    Y = 0,
-                    Z = MathF.Cos(angle)
-                });
+                    direccionFrontal = Vector3.Normalize(new Vector3
+                    {
+                        X = MathF.Sin(angle),
+                        Y = 0,
+                        Z = MathF.Cos(angle)
+                    });
+                }
+                wheelSteeringAngle = Math.Max(wheelSteeringAngle - wheelSteerDelta, -maxWheelSteer);
+            } else {
+                wheelSteeringAngle = 0;
             }
+
+            float wheelRotationDelta = carSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
+            wheelRotationAngle += wheelRotationDelta;
             
            
 
@@ -147,10 +166,22 @@ namespace TGC.MonoGame.TP.Content.Models
 
             foreach (ModelMesh mesh in Model.Meshes)
             {
-                //effectAuto.Parameters["DiffuseColor"].SetValue(color);
-                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
+                Matrix world = mesh.ParentBone.Transform * CarWorld;
 
+                // Verifica si la mesh es una de las ruedas y aplica una rotación adicional
+                if (mesh.Name == "WheelA" || mesh.Name == "WheelB" || mesh.Name == "WheelC" || mesh.Name == "WheelD")
+                {
+                    // Crear una matriz de rotación alrededor del eje X (giro de la rueda)
+                    Matrix wheelRotation = Matrix.CreateRotationX(wheelRotationAngle);
+                    if (mesh.Name == "WheelA" || mesh.Name == "WheelB") {
+                        wheelRotation = wheelRotation * Matrix.CreateRotationY(wheelSteeringAngle);
+                    }
 
+                    // Aplicar la rotación de la rueda al mundo
+                    world = wheelRotation * world;
+                }
+
+                effectAuto.Parameters["World"].SetValue(world);
 
                 mesh.Draw();
             }
