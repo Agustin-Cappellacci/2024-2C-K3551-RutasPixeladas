@@ -64,8 +64,10 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = new Vector3(0f, 0f, 0f);
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
-            //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
+            effectAuto.Parameters["ModelTexture"].SetValue(texture);
 
             rotacionRuedasDelanterasY = 0;
             CarSpeed = 0f;
@@ -213,9 +215,26 @@ namespace TGC.MonoGame.TP.Content.Models
       
         if (rueda.Name.Contains("WheelA"))
         {
-            // Aplicar transformación de la rueda delantera izquierda
+            // HEAD Aplicar transformación de la rueda delantera izquierda
             
             effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaDelanteraIzqTransform);
+/*
+            var random = new Random(Seed: 0);
+            var color = new Vector3(1.0f, 0.0f, 0.0f);
+            effectAuto.Parameters["View"].SetValue(View);
+            effectAuto.Parameters["Projection"].SetValue(Projection);
+
+
+            foreach (ModelMesh mesh in Model.Meshes)
+            {
+                //effectAuto.Parameters["DiffuseColor"].SetValue(color);
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
+
+
+
+                mesh.Draw();
+            }
+*/
         }
         else if (rueda.Name.Contains("WheelB"))
         {

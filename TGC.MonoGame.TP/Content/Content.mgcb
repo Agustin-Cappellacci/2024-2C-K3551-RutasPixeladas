@@ -25,6 +25,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/DiffuseColor.fx
 
+#begin Effects/ModelsTexture.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/ModelsTexture.fx
+
 #begin Models/autos/cartoonCar/material/carton_car.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -43,6 +49,18 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/autos/cartoonCar/material/carton_car.fbx
+
+#begin Models/autos/CombatVehicle/TEX.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/autos/CombatVehicle/TEX.png
 
 #begin Models/autos/CombatVehicle/Vehicle.fbx
 /importer:FbxImporter
@@ -158,6 +176,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/autos/RacingCarA/RacingCar.fbx
 
+#begin Models/autos/RacingCarA/TEX.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/autos/RacingCarA/TEX.png
+
 #begin Models/Cama/bedSingle.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -176,6 +206,37 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/Cama/bedSingle.fbx
+
+#begin Models/chair/chair_tex.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/chair/chair_tex.png
+
+#begin Models/chair/chair.fbx
+/importer:FbxImporter
+/processor:ModelProcessor
+/processorParam:ColorKeyColor=0,0,0,0
+/processorParam:ColorKeyEnabled=True
+/processorParam:DefaultEffect=BasicEffect
+/processorParam:GenerateMipmaps=True
+/processorParam:GenerateTangentFrames=False
+/processorParam:PremultiplyTextureAlpha=True
+/processorParam:PremultiplyVertexColors=True
+/processorParam:ResizeTexturesToPowerOfTwo=False
+/processorParam:RotationX=0
+/processorParam:RotationY=0
+/processorParam:RotationZ=0
+/processorParam:Scale=1
+/processorParam:SwapWindingOrder=False
+/processorParam:TextureFormat=Compressed
+/build:Models/chair/chair.fbx
 
 #begin Models/escenario/Buffettable.FBX
 /importer:FbxImporter
@@ -272,6 +333,66 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/legoPj/FireNinjaBlueOcatpus2/Fireninja_blueninja.fbx
 
+#begin Models/escenario/legoPj/Skin1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/legoPj/Skin1.png
+
+#begin Models/escenario/nuevos/alfombra.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/alfombra.jpg
+
+#begin Models/escenario/nuevos/alfombra2.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/alfombra2.jpg
+
+#begin Models/escenario/nuevos/bullseye.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/bullseye.jpg
+
+#begin Models/escenario/nuevos/caballo_peluche.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/caballo_peluche.jpg
+
 #begin Models/escenario/nuevos/caballo1.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -329,6 +450,30 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/nuevos/carpet.fbx
 
+#begin Models/escenario/nuevos/ColAlphY_horse_brown.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/ColAlphY_horse_brown.jpg
+
+#begin Models/escenario/nuevos/default-grey.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/default-grey.jpg
+
 #begin Models/escenario/nuevos/espiral.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -367,6 +512,30 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/nuevos/legoPile.fbx
 
+#begin Models/escenario/nuevos/pila_legos.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/pila_legos.jpg
+
+#begin Models/escenario/nuevos/piso.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/piso.jpg
+
 #begin Models/escenario/nuevos/rampa color.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -385,6 +554,30 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/nuevos/rampa color.fbx
+
+#begin Models/escenario/nuevos/rampa_doble.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/rampa_doble.jpg
+
+#begin Models/escenario/nuevos/rampa_grande.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/rampa_grande.jpg
 
 #begin Models/escenario/nuevos/rampa.fbx
 /importer:FbxImporter
@@ -462,6 +655,42 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/nuevos/rieles.fbx
 
+#begin Models/escenario/nuevos/star_wars.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/star_wars.png
+
+#begin Models/escenario/nuevos/texture.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/texture.jpg
+
+#begin Models/escenario/nuevos/wood.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/nuevos/wood.jpg
+
 #begin Models/escenario/puente.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -500,6 +729,18 @@
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/Rubics_cube/cube.fbx
 
+#begin Models/escenario/Rubics_cube/wood/cherry_1.jpg
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/Rubics_cube/wood/cherry_1.jpg
+
 #begin Models/escenario/skate.fbx
 /importer:FbxImporter
 /processor:ModelProcessor
@@ -518,6 +759,18 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/escenario/skate.fbx
+
+#begin Models/escenario/Textures/metal.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Models/escenario/Textures/metal.png
 
 #begin Models/escenario/torre.fbx
 /importer:FbxImporter

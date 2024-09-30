@@ -51,8 +51,9 @@ namespace TGC.MonoGame.TP
         
         // Clases
         private Jugador autoJugador {get; set;}
-        private CityScene City { get; set; }
-        private Grass Grass { get; set; }
+        private Toys Toys { get; set; }
+        private Cuarto Cuarto { get; set; }
+
 
         // Matrices
         private Matrix View { get; set; }
@@ -159,6 +160,7 @@ namespace TGC.MonoGame.TP
                 listaModelos[j] = temp;
             }
 
+
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {   
@@ -174,12 +176,13 @@ namespace TGC.MonoGame.TP
 
             // Cargo Clases
             autoJugador = new Jugador(Content);
-            City = new CityScene(Content);
-            Grass = new Grass(Content);
+            Toys = new Toys(Content);
+            Cuarto = new Cuarto(Content);
+
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
-            
+
 
             base.LoadContent();
         }
@@ -247,11 +250,13 @@ namespace TGC.MonoGame.TP
             }
             
 
-            City.Draw(gameTime, View, Projection);
+            
             autoJugador.Draw(View, Projection);
-
+            Toys.Draw(gameTime, View, Projection);
+            Cuarto.Draw(gameTime, View, Projection);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            Grass.Draw(gameTime, View, Projection);
+            
+
             
             
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.

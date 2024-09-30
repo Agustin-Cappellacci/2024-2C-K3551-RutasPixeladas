@@ -107,6 +107,7 @@ class Cars
         private Model CombatVehicle { get; set; }
         public List<Model> listaModelos { get; set; }
         private Effect EffectCar { get; set; }
+        private Effect EffectCar2 { get; set; }
         private List<Vector3> traslaciones { get; set; }
         private List<float> angulosHaciaCentro { get; set; }
         private int CantAutos { get; set; }
@@ -130,8 +131,14 @@ class Cars
 
             // Load an effect that will be used to draw the scene
 
-            //EffectCar = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            EffectCar = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            //EffectCar = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            EffectCar = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
+            EffectCar.Parameters["ModelTexture"].SetValue(texture);
+
+            EffectCar2 = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            texture = content.Load<Texture2D>(ContentFolder3D + "autos/CombatVehicle/TEX"); // Asegúrate de usar la ruta correcta
+            EffectCar2.Parameters["ModelTexture"].SetValue(texture);
 
             traslaciones = GenerarPuntosEnCirculo(CantAutos, 700f);
 
@@ -156,7 +163,7 @@ class Cars
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
                 foreach (var meshPart in mesh.MeshParts)
                 {
-                    meshPart.Effect = EffectCar;
+                    meshPart.Effect = EffectCar2;
                 }
             }
 
@@ -200,6 +207,8 @@ class Cars
 
         public void Draw(GameTime gametime, Matrix View, Matrix Projection)
         {
+            EffectCar2.Parameters["View"].SetValue(View);
+            EffectCar2.Parameters["Projection"].SetValue(Projection);
 
 
             EffectCar.Parameters["View"].SetValue(View);
@@ -254,11 +263,12 @@ class Cars
 
                 foreach (var mesh in listaModelos[i].Meshes)
                 {
-                    EffectCar.Parameters["DiffuseColor"].SetValue(color);
+                    //EffectCar.Parameters["DiffuseColor"].SetValue(color);
                     if (listaModelos[i] == CarModel)
                     {
 
                         worldFinal = meshBaseModelCar[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
+                        EffectCar.Parameters["World"].SetValue(worldFinal);
                     }
                     /*
                     if (listaModelos[i] == flatoutCar){
@@ -269,10 +279,11 @@ class Cars
                     if (listaModelos[i] == CombatVehicle)
                     {
                         worldFinal = meshBaseCombatVehicle[mesh.ParentBone.Index] * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslacion);
+                        EffectCar2.Parameters["World"].SetValue(worldFinal);
                     }
 
                     //EffectCar.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslaciones[i]) );
-                    EffectCar.Parameters["World"].SetValue(worldFinal);
+                    
 
                     mesh.Draw();
                 }
