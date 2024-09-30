@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using TGC.MonoGame.TP.Content.Models;
 using System.Collections.Generic;
+using TGC.MonoGame.TPZero.Camara;
 
 namespace TGC.MonoGame.TP
 {
@@ -37,6 +38,7 @@ namespace TGC.MonoGame.TP
 
         // Cámara
         FollowCamera Camera { get; set; }
+        IsometricCamera IsometricCamera { get; set; }
         FreeCamera FreeCamera { get; set; }
 
         private bool liberarCamara = false;
@@ -118,8 +120,9 @@ namespace TGC.MonoGame.TP
             Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
             
             FreeCamera = new FreeCamera(GraphicsDevice.Viewport.AspectRatio);
-          
             
+            IsometricCamera = new IsometricCamera(Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight);
+
             // Configuramos nuestras matrices de la escena.
            
             base.Initialize();
@@ -205,9 +208,9 @@ namespace TGC.MonoGame.TP
             if (!liberarCamara)
             {
                 autoJugador.Update(gameTime);
-                Camera.Update(gameTime, autoJugador.carWorld);
-                View = Camera.View;
-                Projection = Camera.Projection;
+                IsometricCamera.Update(gameTime, autoJugador.carWorld);
+                View = IsometricCamera.View;
+                Projection = IsometricCamera.Projection;
             }
             else
             {

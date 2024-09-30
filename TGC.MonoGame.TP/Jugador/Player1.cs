@@ -154,8 +154,8 @@ namespace TGC.MonoGame.TP.Content.Models
             float distanciaTrasera = 0f; // Distancia del centro del coche a las ruedas traseras (eje Z)
 
             ruedaTraseraIzqTransform = 
+            Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
             Matrix.CreateTranslation(-distanciaEje, 0, distanciaTrasera) *  // 2. Coloca la rueda trasera izquierda en su lugar
-            //Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
             Matrix.CreateRotationY(CarRotationY) *  // 3. Aplica la rotación del coche completo
             Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
 
@@ -168,7 +168,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Rueda delantera izquierda
             ruedaDelanteraIzqTransform = 
-            //Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
+            Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
             Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
             Matrix.CreateTranslation(-distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera izquierda en su lugar
             Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
@@ -176,7 +176,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Rueda delantera derecha
             ruedaDelanteraDerTransform = 
-            //Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
+            Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
             Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
             Matrix.CreateTranslation(distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera derecha en su lugar
             Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
@@ -210,9 +210,7 @@ namespace TGC.MonoGame.TP.Content.Models
     foreach (ModelMesh rueda in ruedas)
     {
         effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
-
-                effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * Matrix.CreateRotationX((CarSpeed * elapsedTime) / 0.5f));
-                /*
+      
         if (rueda.Name.Contains("WheelA"))
         {
             // Aplicar transformación de la rueda delantera izquierda
@@ -234,7 +232,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Aplicar transformación de la rueda trasera derecha
             effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaTraseraDerTransform);
         }
-        */
+        
         rueda.Draw();
     }
 }
