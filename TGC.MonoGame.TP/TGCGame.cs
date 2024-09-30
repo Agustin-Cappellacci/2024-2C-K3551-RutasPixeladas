@@ -68,12 +68,11 @@ namespace TGC.MonoGame.TP
         private List<Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
         // ------
+
         private Simulation simulation;
-
         private BufferPool bufferPool;
-
-
         private bool liberarCamara = false;
+        private SimpleThreadDispatcher threadDispatcher;
 
         public TGCGame()
         {
@@ -137,12 +136,17 @@ namespace TGC.MonoGame.TP
         {
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
+
+            // setea el threadCount para el update de la simulacion de bepu
+            var targetThreadCount = Math.Max(1,
+                Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
+            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
             
              // Inicializar la simulación de física de Bepu
             bufferPool = new BufferPool();
-            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(30, 1)); // Puedes ajustar los callbacks para manejar colisiones.
-            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -9.81f, 0)); // Gravedad.
-            var solveDescription = new SolveDescription(4,1);
+            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(60, 1)); // Callback para manejar colisiones, rebotes, etc
+            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -500, 0)); // Callback para manejar gravedad
+            var solveDescription = new SolveDescription(8,1);
             simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
 
 
@@ -181,9 +185,9 @@ namespace TGC.MonoGame.TP
 
 
             // Cargo el modelo del logo.
-            autoJugador = new Jugador(Content, simulation);
+            autoJugador = new Jugador(Content, simulation, GraphicsDevice);
             //Cars = new Cars(Content);
-            City = new CityScene(Content, simulation);
+            City = new CityScene(Content, simulation,GraphicsDevice);
             Grass = new Grass(Content);
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -200,8 +204,9 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Update(GameTime gameTime)
         {      
-            simulation.Timestep(1f/60f);
+            simulation.Timestep(1f/60f, threadDispatcher);
             var keyboardState = Keyboard.GetState();
+            var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
             
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
@@ -235,7 +240,8 @@ namespace TGC.MonoGame.TP
             }
             */
             
-
+            float fps = 1f / elapsedTime;
+            Console.WriteLine("FPS: " + fps);
             base.Update(gameTime);
         }
 

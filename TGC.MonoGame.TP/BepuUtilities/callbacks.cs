@@ -117,6 +117,7 @@ public struct PoseIntegratorCallbacks : IPoseIntegratorCallbacks
         //Note that these are SIMD operations and "Wide" types. There are Vector<float>.Count lanes of execution being evaluated simultaneously.
         //The types are laid out in array-of-structures-of-arrays (AOSOA) format. That's because this function is frequently called from vectorized contexts within the solver.
         //Transforming to "array of structures" (AOS) format for the callback and then back to AOSOA would involve a lot of overhead, so instead the callback works on the AOSOA representation directly.
+        
         velocity.Linear = (velocity.Linear + GravityWideDt) * LinearDampingDt;
         velocity.Angular *= AngularDampingDt;
     }
@@ -132,7 +133,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
     {
     }
 
-    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f,float frictionCoefficient = 1000f)
+    public NarrowPhaseCallbacks(SpringSettings contactSpringiness, float maximumRecoveryVelocity = 2f,float frictionCoefficient = 1f)
     {
         ContactSpringiness = contactSpringiness;
         MaximumRecoveryVelocity = maximumRecoveryVelocity;
@@ -146,7 +147,7 @@ public struct NarrowPhaseCallbacks : INarrowPhaseCallbacks
         {
             ContactSpringiness = new SpringSettings(30, 1);
             MaximumRecoveryVelocity = 5f;
-            FrictionCoefficient = 1000f;
+            FrictionCoefficient = 1f;
         }
     }
 
