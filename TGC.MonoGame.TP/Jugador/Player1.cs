@@ -38,7 +38,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.4f;
         private float rotacionRuedasDelanterasY {get; set;}
         private Vector3 CarPosition { get; set; }
-        private float CarSpeed;
+        private float CarSpeed = 0f;
         private const float CarMaxSpeed = 1000f;
         private const float CarAcceleration = 200f;
         private const float CarBrakeForce = 800f;
@@ -68,7 +68,7 @@ namespace TGC.MonoGame.TP.Content.Models
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             rotacionRuedasDelanterasY = 0;
-
+            CarSpeed = 0f;
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
 
@@ -100,98 +100,6 @@ namespace TGC.MonoGame.TP.Content.Models
 
             elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
-            /*
-            // logica para el salto, solo si aprieto espacio Y el auto esta en el suelo
-            if (keyboardState.IsKeyDown(Keys.Space) & CarPosition.Y == 0f)
-            {
-                CarVerticalVelocity = CarjumpStrength;
-            }
-            // caida
-            if (CarPosition.Y > 0f || CarVerticalVelocity > 0f)
-            {
-                CarVerticalVelocity -= gravity * elapsedTime;
-                CarPosition += Vector3.UnitY * CarVerticalVelocity * elapsedTime;
-                // Si se pasa de la posicion en y (a negativa) corrijo la posicion en y 
-                if (CarPosition.Y < 0f)
-                {
-                    CarPosition = new Vector3(CarPosition.X, 0f, CarPosition.Z);
-                    CarVerticalVelocity = 0;
-                }
-            }
-
-            // Movimiento hacia adelante
-            if (keyboardState.IsKeyDown(Keys.W))
-            {
-                CarSpeed += CarAcceleration * elapsedTime;
-                Console.WriteLine(CarSpeed);
-                if (CarSpeed < CarMaxSpeed)
-                {
-                    CarSpeed = CarMaxSpeed; // Limita la velocidad máxima
-                }
-            }
-            // Movimiento hacia atrás
-            if (keyboardState.IsKeyDown(Keys.S))
-            {
-                // si la velocidad es negativa (en realdidad ahi esta yendo hacia adelante)
-                if (CarSpeed < 0)
-                {
-                    // aumento la fuerza de frenado
-                    CarSpeed -= CarBrakeForce * elapsedTime;
-                }
-                else
-                {
-                    // si ya esta yendo en reversa, sigue con la aceleracion pero en reversa
-                    CarSpeed -= CarAcceleration * elapsedTime;
-                }
-
-                // limito la velocidad maxima en reversa
-                if (CarSpeed > -CarMaxSpeed / 2)
-                {
-                    CarSpeed = -CarMaxSpeed / 2;
-                }
-
-            }
-
-
-            // Si no se presiona ninguna tecla, desacelera
-            if (CarSpeed > 0)
-            {
-                CarSpeed -= CarDeceleration * elapsedTime;
-                if (CarSpeed < 0)
-                {
-                    CarSpeed = 0; // Evita que se vuelva negativa la velocidad
-                }
-            }
-            else if (CarSpeed < 0)
-            {
-                CarSpeed += CarDeceleration * elapsedTime;
-                if (CarSpeed > 0)
-                {
-                    CarSpeed = 0; // Evita que se vuelva positiva la velocidad
-                }
-            }
-
-
-            // Aplico la velocidad al movimiento del auto
-            CarPosition += Vector3.Transform(Vector3.UnitZ * CarSpeed * elapsedTime, Matrix.CreateRotationY(CarRotationY));
-            if (keyboardState.IsKeyDown(Keys.A))
-            {
-                if (CarSpeed != 0)
-                    CarRotationY += 2f * elapsedTime;
-            }
-            if (keyboardState.IsKeyDown(Keys.D))
-            {
-                if (CarSpeed != 0)
-                    CarRotationY -= 2f * elapsedTime;
-
-            }
-
-            carWorld = Matrix.CreateRotationY(CarRotationY) * Matrix.CreateTranslation(CarPosition.X, CarPosition.Y, CarPosition.Z);
-            return carWorld;
-            */
-
-            // Capturar el estado del teclado
-
             // Movimiento hacia adelante
             if (keyboardState.IsKeyDown(Keys.W))
             {
@@ -206,9 +114,21 @@ namespace TGC.MonoGame.TP.Content.Models
             else
             {
                 // Desacelerar cuando no se presionan las teclas
-                CarSpeed -= CarSpeed > 0 ? CarDeceleration * elapsedTime : -CarDeceleration * elapsedTime;
-                if (Math.Abs(CarSpeed) < 0.1f) CarSpeed = 0; // Detener el auto cuando está casi en reposo
+                if (CarSpeed > 0f)
+                {
+                    CarSpeed -= CarDeceleration * elapsedTime;
+                }
+                else if (CarSpeed < 0f)
+                {
+                    CarSpeed += CarDeceleration * elapsedTime; // Sumar para desacelerar en reversa
+                }
+
+                if (Math.Abs(CarSpeed) < 5f)        // Hay que probar varios valores. 0.1f no funciona bien, es casi imposible hacer que se detenga el auto 
+                {
+                    CarSpeed = 0f; // Detener el auto cuando está casi en reposo
+                }
             }
+
             // Almacenar las transformaciones de las ruedas delanteras y traseras
                                     
             if (keyboardState.IsKeyDown(Keys.A))
@@ -233,40 +153,40 @@ namespace TGC.MonoGame.TP.Content.Models
             float distanciaDelantera = 0f; // Distancia del centro del coche a las ruedas delanteras (eje Z)
             float distanciaTrasera = 0f; // Distancia del centro del coche a las ruedas traseras (eje Z)
 
-ruedaTraseraIzqTransform = 
-    Matrix.CreateTranslation(-distanciaEje, 0, distanciaTrasera) *  // 2. Coloca la rueda trasera izquierda en su lugar
-    Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-    Matrix.CreateRotationY(CarRotationY) *  // 3. Aplica la rotación del coche completo
-    Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
+            ruedaTraseraIzqTransform = 
+            Matrix.CreateTranslation(-distanciaEje, 0, distanciaTrasera) *  // 2. Coloca la rueda trasera izquierda en su lugar
+            //Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
+            Matrix.CreateRotationY(CarRotationY) *  // 3. Aplica la rotación del coche completo
+            Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
 
-// Rueda trasera derecha
-ruedaTraseraDerTransform = 
-    Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-    Matrix.CreateTranslation(distanciaEje, 0, distanciaTrasera) *  // 2. Coloca la rueda trasera derecha en su lugar
-    Matrix.CreateRotationY(CarRotationY) *  // 3. Aplica la rotación del coche completo
-    Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
+                    // Rueda trasera derecha
+            ruedaTraseraDerTransform =
+            Matrix.CreateRotationX(ruedaGiroVelocidad) * // 1. Rota la rueda sobre su eje X
+            Matrix.CreateTranslation(distanciaEje, 0, distanciaTrasera)*  // 2. Coloca la rueda trasera derecha en su lugar
+            Matrix.CreateRotationY(CarRotationY)*  // 3. Aplica la rotación del coche completo
+            Matrix.CreateTranslation(CarPosition);  // 4. Traslada el coche completo a su posición en el mundo
 
-// Rueda delantera izquierda
-ruedaDelanteraIzqTransform = 
-    Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-    Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
-    Matrix.CreateTranslation(-distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera izquierda en su lugar
-    Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
-    Matrix.CreateTranslation(CarPosition);  // 5. Traslada el coche completo a su posición en el mundo
+            // Rueda delantera izquierda
+            ruedaDelanteraIzqTransform = 
+            //Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
+            Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
+            Matrix.CreateTranslation(-distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera izquierda en su lugar
+            Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
+            Matrix.CreateTranslation(CarPosition);  // 5. Traslada el coche completo a su posición en el mundo
 
-// Rueda delantera derecha
-ruedaDelanteraDerTransform = 
-    Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-    Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
-    Matrix.CreateTranslation(distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera derecha en su lugar
-    Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
-    Matrix.CreateTranslation(CarPosition); 
+            // Rueda delantera derecha
+            ruedaDelanteraDerTransform = 
+            //Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
+            Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
+            Matrix.CreateTranslation(distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera derecha en su lugar
+            Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
+            Matrix.CreateTranslation(CarPosition); 
 
-    // Movimiento del coche en base a la velocidad
-    CarPosition += Vector3.Transform(Vector3.UnitZ * CarSpeed * elapsedTime, Matrix.CreateRotationY(CarRotationY));
+            // Movimiento del coche en base a la velocidad
+            CarPosition += Vector3.Transform(Vector3.UnitZ * CarSpeed * elapsedTime, Matrix.CreateRotationY(CarRotationY));
 
-    // Actualizar la matriz del mundo del coche
-    carWorld = Matrix.CreateRotationY(CarRotationY) * Matrix.CreateTranslation(CarPosition);
+            // Actualizar la matriz del mundo del coche
+            carWorld = Matrix.CreateRotationY(CarRotationY) * Matrix.CreateTranslation(CarPosition);
 }
 
         public void Draw(Matrix View, Matrix Projection)
@@ -286,14 +206,17 @@ ruedaDelanteraDerTransform =
         mesh.Draw();
     }
 
-    // Dibujar cada rueda con su respectiva transformación
+    // Dibujar cada rueda con su respectiva transformació
     foreach (ModelMesh rueda in ruedas)
     {
         effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
 
+                effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * Matrix.CreateRotationX((CarSpeed * elapsedTime) / 0.5f));
+                /*
         if (rueda.Name.Contains("WheelA"))
         {
             // Aplicar transformación de la rueda delantera izquierda
+            
             effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaDelanteraIzqTransform);
         }
         else if (rueda.Name.Contains("WheelB"))
@@ -311,7 +234,7 @@ ruedaDelanteraDerTransform =
             // Aplicar transformación de la rueda trasera derecha
             effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaTraseraDerTransform);
         }
-
+        */
         rueda.Draw();
     }
 }
