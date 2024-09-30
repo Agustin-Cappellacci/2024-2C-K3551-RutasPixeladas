@@ -18,8 +18,13 @@ namespace TGC.MonoGame.TP.Content.Models
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
+
+        // Modelos y Efectos
         private Model Model { get; set; }
         private Effect effectAuto { get; set; }
+
+        private List<ModelMesh> ruedas;
+        private List<ModelMesh> restoAuto;
 
         // Jugabilidad
         private Vector3 direccionFrontal { get; set; }
@@ -56,8 +61,7 @@ namespace TGC.MonoGame.TP.Content.Models
         
         
         
-        private List<ModelMesh> ruedas;
-        private List<ModelMesh> restoAuto;
+        
 
         public Jugador(ContentManager content)
         {
@@ -203,7 +207,7 @@ namespace TGC.MonoGame.TP.Content.Models
     // Dibujar el cuerpo del coche
     foreach (ModelMesh mesh in restoAuto)
     {
-        effectAuto.Parameters["DiffuseColor"].SetValue(color);
+        //effectAuto.Parameters["DiffuseColor"].SetValue(color);
         effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
         mesh.Draw();
     }
@@ -211,7 +215,7 @@ namespace TGC.MonoGame.TP.Content.Models
     // Dibujar cada rueda con su respectiva transformació
     foreach (ModelMesh rueda in ruedas)
     {
-        effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
+        //effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
       
         if (rueda.Name.Contains("WheelA"))
         {

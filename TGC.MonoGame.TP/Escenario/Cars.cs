@@ -19,7 +19,10 @@ namespace TGC.MonoGame.TP.Content.Models
         protected float anguloInicial { get; set; }
         protected float Escala { get; set; }
         protected Effect EffectCar { get; set; }
+        protected Effect EffectCar2 { get; set; }
         protected Vector3 Color { get; set; }
+
+
 
         // Constructor abstracto
         protected AutoEnemigo(ContentManager content, Vector3 posicion, float angulo) {
@@ -29,6 +32,14 @@ namespace TGC.MonoGame.TP.Content.Models
             
             var random = new Random();  // No hace falta un seed porque se usa una sola vez y se guarda en una variable.
             Color = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+
+            EffectCar = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
+            EffectCar.Parameters["ModelTexture"].SetValue(texture);
+
+            EffectCar2 = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            texture = content.Load<Texture2D>(ContentFolder3D + "autos/CombatVehicle/TEX"); // Asegúrate de usar la ruta correcta
+            EffectCar2.Parameters["ModelTexture"].SetValue(texture);
         }
 
         protected abstract void CargarModelo(ContentManager content);
@@ -40,17 +51,17 @@ namespace TGC.MonoGame.TP.Content.Models
         }
 
         public void Draw(GameTime gametime, Matrix View, Matrix Projection) {
-            EffectCar.Parameters["View"].SetValue(View);
-            EffectCar.Parameters["Projection"].SetValue(Projection);
+            EffectCar2.Parameters["View"].SetValue(View);
+            EffectCar2.Parameters["Projection"].SetValue(Projection);
 
             var meshBaseAuto = new Matrix[Modelo.Bones.Count];
             Modelo.CopyAbsoluteBoneTransformsTo(meshBaseAuto);
 
             foreach (var mesh in Modelo.Meshes) {
-                EffectCar.Parameters["DiffuseColor"].SetValue(Color);
+               
                 WorldMatrix = meshBaseAuto[mesh.ParentBone.Index] * Matrix.CreateRotationY(anguloInicial) * Matrix.CreateScale(Escala) * Matrix.CreateTranslation(PosicionInicial);
 
-                EffectCar.Parameters["World"].SetValue(WorldMatrix);
+                EffectCar2.Parameters["World"].SetValue(WorldMatrix);
 
                 mesh.Draw();
             }
@@ -63,15 +74,19 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
+
+
+
         }
 
         protected override void CargarModelo(ContentManager content) {
             Modelo = content.Load<Model>(ContentFolder3D + "autos/CombatVehicle/Vehicle");
-            EffectCar = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            
+
 
             foreach (var mesh in Modelo.Meshes) {
                 foreach (var meshPart in mesh.MeshParts) {
-                    meshPart.Effect = EffectCar;
+                    meshPart.Effect = EffectCar2;
                 }
             }
         }
@@ -96,6 +111,9 @@ namespace TGC.MonoGame.TP.Content.Models
             }
         }
     }
+
+
+
 }
 /*
 class Cars
