@@ -23,25 +23,23 @@ namespace TGC.MonoGame.TP.Content.Models
         public const float DistanceBetweenCities = 2100f;
 
         private Model Model { get; set; }
-        private Model Ajedrez {get; set;}
-        private Model Lego {get; set;}
-        private Model Torre {get; set;}
-        private Model Cubo {get; set;}
-        private Model LegoPJ {get; set;}
-        private Model rampaPanza {get; set;}
+        private Model Ajedrez { get; set; }
+        private Model Lego { get; set; }
+        private Model Torre { get; set; }
+        private Model Cubo { get; set; }
+        private Model LegoPJ { get; set; }
+        private Model rampaPanza { get; set; }
 
-        private Model rampaDoble {get; set;}
+        private Model rampaDoble { get; set; }
 
-        private Model rampa {get; set;}
+        private Model rampa { get; set; }
 
-        private Model LegoPile {get; set;}
-        private Model carpet {get; set;}
-        private Model Puente {get; set;}
-
+        private Model LegoPile { get; set; }
+        private Model carpet { get; set; }
+        private Model Puente { get; set; }
         private Model caballo1 {get; set;}
         private Model caballo2 {get; set;}
-
-        private Model Television {get; set;}
+        private Model Television { get; set; }
 
 
 
@@ -66,8 +64,19 @@ namespace TGC.MonoGame.TP.Content.Models
         private Texture2D textureMetal { get; set; }
 
         private StaticHandle floorHandle;
+        private StaticHandle torreHandle;
         private StaticHandle rampaBodyHandle;
+        private StaticHandle rampaDobleBodyHandle;
+        private StaticHandle caballo1BodyHandle;
+        private StaticHandle caballo2BodyHandle;
+        private StaticHandle rampaPanzaBodyHandle;
+        private StaticHandle ajedrezBodyHandle;
+        private StaticHandle legoBodyHandle;
+        private StaticHandle puenteBodyHandle;
+        
         private Simulation simulation;
+        private GraphicsDevice graphicsDevice;
+        private ConvexHull rampHull;
 
 
 
@@ -76,12 +85,15 @@ namespace TGC.MonoGame.TP.Content.Models
         /// </summary>
         /// <param name="content">The Content Manager to load resources</param>
 
-        public Toys(ContentManager content, Simulation simulation)
+        public Toys(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
 
         {   
 
 
-            listaCombinada = new List<Tuple<Model, Effect>>(){
+
+            // ESTA INTERESANTE PERO NO HACE NADA
+            listaCombinada = new List<Tuple<Model, Effect>>()
+            {
 
             };
             // Load the City Model
@@ -98,7 +110,7 @@ namespace TGC.MonoGame.TP.Content.Models
             LegoPile = content.Load<Model>(ContentFolder3D + "escenario/nuevos/legoPile");
             caballo1 = content.Load<Model>(ContentFolder3D + "escenario/nuevos/caballo1");
             caballo2 = content.Load<Model>(ContentFolder3D + "escenario/nuevos/caballo2");
-           listaModelos = new List<Model>(){
+            listaModelos = new List<Model>(){
                 Ajedrez, Lego, Torre, LegoPJ, Puente, Television, rampaDoble, rampaPanza, rampa, carpet, LegoPile, caballo1, caballo2
             };
 
@@ -122,8 +134,9 @@ namespace TGC.MonoGame.TP.Content.Models
                 EfectoComun, EfectoComun, EfectoTexture, EfectoTexture, EfectoTexture, EfectoComun, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture, EfectoTexture
             };
 
-            for (int i = 0; i < listaModelos.Count; i++){
-                listaCombinada.Add(new Tuple<Model, Effect>(listaModelos[i], listaEfectos[i]));    
+            for (int i = 0; i < listaModelos.Count; i++)
+            {
+                listaCombinada.Add(new Tuple<Model, Effect>(listaModelos[i], listaEfectos[i]));
             }
 
 
@@ -136,47 +149,95 @@ namespace TGC.MonoGame.TP.Content.Models
             var colorMesa = new Vector3(0.8f, 0.8f, 0.8f); //gris
             var colorAjedrez = new Vector3(0.8f, 0.8f, 0.8f); //blanco
             var colorRampa = new Vector3(1f, 0f, 1f); //rojo
-            //EffectLego.Parameters["DiffuseColor"].SetValue(colorLego);
-            // Set the Texture to the Effect
-             
+                                                      //EffectLego.Parameters["DiffuseColor"].SetValue(colorLego);
+                                                      // Set the Texture to the Effect
+
             //Effect.Parameters["ModelTexture"].SetValue(texture);
-            
+
             // Assign the mesh effect
             // A model contains a collection of meshes
-            for (int i = 0; i < listaCombinada.Count; i++){
-                foreach (var mesh in listaCombinada[i].Item1.Meshes){
+
+            // Ponemos efectos a todas las partes
+            for (int i = 0; i < listaCombinada.Count; i++)
+            {
+                foreach (var mesh in listaCombinada[i].Item1.Meshes)
+                {
                     foreach (var meshPart in mesh.MeshParts) meshPart.Effect = listaCombinada[i].Item2;
-                }   
+                }
             }
-            
-            
+
+
             // Create a list of places where the city model will be drawn
             WorldMatrices = new List<Matrix>()
             {
                 Matrix.Identity,
             };
 
+            inicializadorColisionables(simulation, graphicsDevice);
+
+
+        }
+
+        private void inicializadorColisionables(Simulation simulation, GraphicsDevice graphicsDevice)
+        {
+
+            // TODO LO QUE ESTA ACA ES PARA LOS OBJETOS DE COLISION, NO TIENE NADA QUE VER CON LO QUE SE VE EN PANTALLA
+            // SI SE MODIFICA ALGO DE ACA, HAY QUE MODIFICAR MANUALMENTE EL DRAWBOX YA QUE NO SE VA A ACTUALIZAR CON LOS CAMBIOS EN LOS OBJETOS DE COLISION
             this.simulation = simulation;
+            // utilizo el graphicsDevice para dibujar las cajas
+            this.graphicsDevice = graphicsDevice;
 
             // Crear colisiones para el suelo como caja
             // Define el tamaño del box (ancho, alto, profundo)
-            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(1000f, 10f, 1000f);
+            System.Numerics.Vector3 boxSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
             // Crear el Collidable Box
             var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
             var boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para el suelo
             floorHandle = simulation.Statics.Add(new StaticDescription(
-                new System.Numerics.Vector3(0, 0f, 0), // Posición inicial del box (ajusta la posición como sea necesario)
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
                 boxShapeIndex // Fricción
             ));
 
+
+            // Crear colisiones para la torre eiffel
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 torreSize = new System.Numerics.Vector3(200f, 500f, 200f);
+            // Crear el Collidable Box
+            var torreShape = new Box(torreSize.X, torreSize.Y, torreSize.Z); // Crea la forma del box
+            var torreShapeIndex = simulation.Shapes.Add(torreShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            torreHandle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(-1300f, 1f, 700f), // Posición inicial del box
+                torreShapeIndex // Fricción
+            ));
+
+            
+            // Definir las dimensiones de la rampa
+            var rampSize = new System.Numerics.Vector3(900f, 600f, 2500f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var rampPosition = new System.Numerics.Vector3(-200f, 50f, 900f); // Posición de la rampa
+            var rampOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 6, 0); // Rotación
+            var rampShape = new Box(rampSize.X, rampSize.Y, rampSize.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var rampShapeIndex = simulation.Shapes.Add(rampShape);
+
+            // Crear el cuerpo estático para la rampa
+            rampaBodyHandle = simulation.Statics.Add(new StaticDescription(
+                rampPosition, // Posición inicial de la rampa
+                rampOrientation,
+                rampShapeIndex
+            ));
+            
+            
+            /* ESTA IMPLEMENTACION ES CON UN CONVEX HULL, ES LA IDEAL PERO NO PUDE HACERLA FUNCIONAR MUY BIEN
             // Crear colisiones para la rampa
-            //var rampVertices = ExtractVertices(rampa);
-            var rampVerticesTrasladados = ObtenerVerticesTransformados(rampa, new System.Numerics.Vector3(0, 0, 1000f), 10f, -(float)Math.PI / 2 ,(float)Math.PI / 2);
+            var rampVerticesTrasladados = ObtenerVerticesTransformados(rampa, new System.Numerics.Vector3(0f, -10f, 1000f), 10f, -(float)Math.PI / 2, (float)Math.PI / 2);
             // transformo lista a span para parametro de convexHull
             Span<System.Numerics.Vector3> verticesSpan = CollectionsMarshal.AsSpan(rampVerticesTrasladados);
             // crea el convexHull para la rampa
-            var rampHull = new ConvexHull(verticesSpan, simulation.BufferPool, out var rampCenter);
+            rampHull = new ConvexHull(verticesSpan, simulation.BufferPool, out var rampCenter);
             // Registra la forma de la rampa en el sistema de colisiones y obtiene un TypedIndex.
             var rampShapeIndex = simulation.Shapes.Add(rampHull);
 
@@ -185,8 +246,126 @@ namespace TGC.MonoGame.TP.Content.Models
             rampCenter, // Posición inicial de la rampa
             rampShapeIndex
             ));
+            */
+
+            // Crear colisiones con rampa doble
+            // Definir las dimensiones de la rampa
+            var rampaDobleSize = new System.Numerics.Vector3(1000f, 100f, 300f); //Tamaño
+            // Calcular la posición y la rotación
+            var rampaDoblePosition = new System.Numerics.Vector3(-900f, 0f, -1100f); // Posición de la rampa
+            var rampaDobleShape = new Box(rampaDobleSize.X, rampaDobleSize.Y, rampaDobleSize.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var rampaDobleShapeIndex = simulation.Shapes.Add(rampaDobleShape);
+
+            // Crear el cuerpo estático para la rampa
+            rampaDobleBodyHandle = simulation.Statics.Add(new StaticDescription(
+                rampaDoblePosition, // Posición inicial de la rampa
+                rampaDobleShapeIndex
+            ));
+
+            // Definir las dimensiones de la rampa
+            var rampaPanzaSize = new System.Numerics.Vector3(350f, 100f, 500f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var rampaPanzaPosition = new System.Numerics.Vector3(-1200f, 10f, 0f); // Posición de la rampa
+            var rampaPanzaOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 3, 0, 0); // Rotación
+
+            var rampaPanzaShape = new Box(rampaPanzaSize.X, rampaPanzaSize.Y, rampaPanzaSize.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var rampaPanzaShapeIndex = simulation.Shapes.Add(rampaPanzaShape);
+
+            // Crear el cuerpo estático para la rampa
+            rampaPanzaBodyHandle = simulation.Statics.Add(new StaticDescription(
+                rampaPanzaPosition, // Posición inicial de la rampa
+                rampaPanzaOrientation,
+                rampaPanzaShapeIndex
+            ));
+            // Definir las dimensiones del caballo
+            var caballo1PanzaSize = new System.Numerics.Vector3(100f, 500f, 260f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var caballo1Position = new System.Numerics.Vector3(1000f, 730f, 300f); // Posición del caballo
+            var caballo1Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI * (5/4), 0, 0); // Rotación
+            var caballo1Shape = new Box(caballo1PanzaSize.X, caballo1PanzaSize.Y, caballo1PanzaSize.Z);
+
+            // Registrar la forma del caballo en el sistema de colisiones y obtener un TypedIndex
+            var caballo1ShapeIndex = simulation.Shapes.Add(caballo1Shape);
+            // Crear el cuerpo estático para el caballo
+            caballo1BodyHandle = simulation.Statics.Add(new StaticDescription(
+                caballo1Position, // Posición inicial del caballo
+                caballo1Orientation,
+                caballo1ShapeIndex
+            ));
+
+            // Definir las dimensiones del caballo
+            var caballo2Size = new System.Numerics.Vector3(100f, 550f, 260f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var caballo2Position = new System.Numerics.Vector3(1200f, 730f, -100f); // Posición de la rampa
+            var caballo2Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0); // Rotación
+            var caballo2Shape = new Box(caballo2Size.X, caballo2Size.Y, caballo2Size.Z);
+            // Registrar la forma del caballo en el sistema de colisiones y obtener un TypedIndex
+            var caballo2ShapeIndex = simulation.Shapes.Add(caballo2Shape);
+            // Crear el cuerpo estático para el caballo
+            caballo2BodyHandle = simulation.Statics.Add(new StaticDescription(
+                caballo2Position, // Posición inicial del caballo
+                caballo2Orientation,
+                caballo2ShapeIndex
+            ));
+
+            // Definir las dimensiones del tablero
+            var ajedrezSize = new System.Numerics.Vector3(500f, 100f, 500f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ajedrezPosition = new System.Numerics.Vector3(-1200f, 2f, 1700f); // Posición de la rampa
+            var ajedrezOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0); // Rotación
+
+            var ajedrezShape = new Box(ajedrezSize.X, ajedrezSize.Y, ajedrezSize.Z);
+
+            // Registrar la forma del tablero en el sistema de colisiones y obtener un TypedIndex
+            var ajedrezShapeIndex = simulation.Shapes.Add(ajedrezShape);
+
+            // Crear el cuerpo estático para el trablero
+            ajedrezBodyHandle = simulation.Statics.Add(new StaticDescription(
+                ajedrezPosition,
+                ajedrezOrientation,
+                ajedrezShapeIndex
+            ));
+
+            // Definir las dimensiones del legoPJ
+            var legoPJSize = new System.Numerics.Vector3(150f, 100f, 150f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var legoPJPosition = new System.Numerics.Vector3(1200f, 2f, 1700f); // Posición del legoPJ
+            var legoPJOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0); // Rotación
+            var legoPJShape = new Box(legoPJSize.X, legoPJSize.Y, legoPJSize.Z);
+
+            // Registrar la forma del legoPJ en el sistema de colisiones y obtener un TypedIndex
+            var legoPJShapeIndex = simulation.Shapes.Add(legoPJShape);
+
+            // Crear el cuerpo estático para el legoPJ
+            legoBodyHandle = simulation.Statics.Add(new StaticDescription(
+                legoPJPosition, // Posición inicial del legoPJ
+                legoPJOrientation,
+                legoPJShapeIndex
+            ));
+            
+            // Definir las dimensiones del puente
+            var puenteSize = new System.Numerics.Vector3(500f, 200f, 500f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var puentePosition = new System.Numerics.Vector3(360F, 2f, -1700f); // Posición del puente
+            var puenteOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, (float)Math.PI / -2); // Rotación
+            var puenteShape = new Box(puenteSize.X, puenteSize.Y, puenteSize.Z);
+
+            // Registrar la forma del puente en el sistema de colisiones y obtener un TypedIndex
+            var puenteShapeIndex = simulation.Shapes.Add(puenteShape);
+
+            // Crear el cuerpo estático para el puente
+            puenteBodyHandle = simulation.Statics.Add(new StaticDescription(
+                puentePosition,
+                puenteOrientation,
+                puenteShapeIndex
+            ));
 
 
+            
         }
 
         // <summary>
@@ -213,10 +392,10 @@ namespace TGC.MonoGame.TP.Content.Models
             var modellegoPileMeshesBaseTransforms = new Matrix[LegoPile.Bones.Count];
             LegoPile.CopyAbsoluteBoneTransformsTo(modellegoPileMeshesBaseTransforms);
 
-             var modelCaballo1MeshesBaseTransforms = new Matrix[caballo1.Bones.Count];
+            var modelCaballo1MeshesBaseTransforms = new Matrix[caballo1.Bones.Count];
             caballo1.CopyAbsoluteBoneTransformsTo(modelCaballo1MeshesBaseTransforms);
 
-             var modelCaballo2MeshesBaseTransforms = new Matrix[caballo2.Bones.Count];
+            var modelCaballo2MeshesBaseTransforms = new Matrix[caballo2.Bones.Count];
             caballo2.CopyAbsoluteBoneTransformsTo(modelCaballo2MeshesBaseTransforms);
 
             var modelrampaDobleMeshesBaseTransforms = new Matrix[rampaDoble.Bones.Count];
@@ -245,73 +424,78 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             // For each mesh in the model,
-          /*  foreach (var mesh in Model.Meshes)
-            {
-                // Obtain the world matrix for that mesh (relative to the parent)
-                EffectMesa.Parameters["DiffuseColor"].SetValue(new Vector3(0.8f, 0.8f, 0.8f));
-                EffectMesa.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(10F, -17.7F, -20F) * Matrix.CreateScale(70f));
-                mesh.Draw();
+            /*  foreach (var mesh in Model.Meshes)
+              {
+                  // Obtain the world matrix for that mesh (relative to the parent)
+                  EffectMesa.Parameters["DiffuseColor"].SetValue(new Vector3(0.8f, 0.8f, 0.8f));
+                  EffectMesa.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(10F, -17.7F, -20F) * Matrix.CreateScale(70f));
+                  mesh.Draw();
 
-                /*var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+                  /*var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
 
-                // Then for each world matrix
-                foreach (var worldMatrix in WorldMatrices)
-                {
-                    // We set the main matrices for each mesh to draw
-                    Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
+                  // Then for each world matrix
+                  foreach (var worldMatrix in WorldMatrices)
+                  {
+                      // We set the main matrices for each mesh to draw
+                      Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
 
-                    // Draw the mesh
-                    mesh.Draw();
-                }*/
+                      // Draw the mesh
+                      mesh.Draw();
+                  }*/
             //}
-            var traslacion = new Vector3(0f,0f,0f);
+            var traslacion = new Vector3(0f, 0f, 0f);
             var rotacion = 0f;
             var escala = 1f;
-            var worldFinal = Matrix.Identity; 
-            var color = new Vector3(1f,1f,1f);
-            var random = new Random(Seed:0);
+            var worldFinal = Matrix.Identity;
+            var color = new Vector3(1f, 1f, 1f);
+            var random = new Random(Seed: 0);
 
-            for (int i = 0; i < listaCombinada.Count; i++){
+            for (int i = 0; i < listaCombinada.Count; i++)
+            {
 
-                traslacion = new Vector3(0f,0f,0f);
+                traslacion = new Vector3(0f, 0f, 0f);
                 rotacion = 0f;
                 escala = 1f;
-                worldFinal = Matrix.Identity; 
-                color = new Vector3(1f,1f,1f);
-                
-                if (listaCombinada[i].Item1 == carpet){
+                worldFinal = Matrix.Identity;
+                color = new Vector3(1f, 1f, 1f);
+
+                if (listaCombinada[i].Item1 == carpet)
+                {
                     traslacion = new Vector3(-900f, -1f, -1100f);
                     escala = 10f;
                     texture = textureCarpet;
                 }
 
-                if (listaCombinada[i].Item1 == rampaDoble){
+                if (listaCombinada[i].Item1 == rampaDoble)
+                {
                     traslacion = new Vector3(-1400f, 0f, -1000f);
                     escala = 4f;
                     color = new Vector3(0.8f, 0.8f, 0.8f);
                     texture = textureMadera;
                 }     
-
-                if (listaCombinada[i].Item1 == rampa){
+                if (listaCombinada[i].Item1 == rampa)
+                {
                     traslacion = new Vector3(0f, 0f, 1000f);
                     escala = 10f;
-                    rotacion = (float)Math.PI/2;
+                    rotacion = (float)Math.PI / 2;
                     color = new Vector3(1f, 0.3f, 0f);
                     texture = textureMadera;
                 }
 
-                if (listaCombinada[i].Item1 == rampaPanza){
+                if (listaCombinada[i].Item1 == rampaPanza)
+                {
                     traslacion = new Vector3(-1200f, 10f, 0f);
                     escala = 300f;
-                    rotacion = (float)Math.PI/3;
+                    rotacion = (float)Math.PI / 3;
                     color = new Vector3(0.8f, 0.8f, 0.8f);
                     texture = textureRampa;
                 } 
 
-                if (listaCombinada[i].Item1 == caballo1){
+                if (listaCombinada[i].Item1 == caballo1)
+                {
                     traslacion = new Vector3(1000f, 730f, 300f);
                     escala = 130f;
-                    rotacion = -(float)Math.PI * (5/4);
+                    rotacion = -(float)Math.PI * (5 / 4);
                     color = new Vector3(0f, 1f, 0.5f);
                     texture = textureCaballo2;
                 }   
@@ -319,43 +503,47 @@ namespace TGC.MonoGame.TP.Content.Models
                 if (listaCombinada[i].Item1 == caballo2){
                     traslacion = new Vector3(1200f, 730f, -100f);
                     escala = 130f;
-                    rotacion = -(float)Math.PI/4;
+                    rotacion = -(float)Math.PI / 4;
                     color = new Vector3(0f, 0.5f, 1f);
                     texture = textureCaballo1;
                 }   
 
-                if (listaCombinada[i].Item1 == Ajedrez){
-                     traslacion = new Vector3(-1200f, 2f, 1700f);
+                if (listaCombinada[i].Item1 == Ajedrez)
+                {
+                    traslacion = new Vector3(-1200f, 2f, 1700f);
                     escala = 0.4f;
-                    rotacion = -(float)Math.PI/4;
+                    rotacion = -(float)Math.PI / 4;
                     color = new Vector3(0.5f, 0.5f, 1f);
                 }
 
-                if (listaCombinada[i].Item1 == LegoPJ){
-                     traslacion = new Vector3(1200f, 2f, 1700f);
+                if (listaCombinada[i].Item1 == LegoPJ)
+                {
+                    traslacion = new Vector3(1200f, 2f, 1700f);
                     escala = 0.1f;
-                    rotacion = -(float)Math.PI/4;
+                    rotacion = -(float)Math.PI / 4;
                     color = new Vector3(0f, 0.5f, 1f);
                     texture = textureLegoPJ;
                 }
 
-                if (listaCombinada[i].Item1 == Puente){
+                if (listaCombinada[i].Item1 == Puente)
+                {
                     traslacion = new Vector3(360F, 2f, -1700f);
                     escala = 100f;
-                    rotacion = (float)Math.PI/4;
+                    rotacion = (float)Math.PI / 4;
                     color = new Vector3(1f, 1f, 0f);
                     texture = textureMadera2;
                 }
 
-                if (listaCombinada[i].Item1 == Torre){
+                if (listaCombinada[i].Item1 == Torre)
+                {
                     traslacion = new Vector3(-1300f, 1f, 700f);
                     escala = 1.5f;
-                    rotacion = (float)Math.PI/10;
+                    rotacion = (float)Math.PI / 10;
                     color = new Vector3(0.2f, 0.2f, 1f);
                     texture = textureMetal;
                 }
 
-               
+
 
 
                 //  dibujarLego();
@@ -366,61 +554,76 @@ namespace TGC.MonoGame.TP.Content.Models
                         worldFinal = modellegoPileMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
 
                     }
-                */ 
+                */
                 //dibujarLegoPile();
 
-              if(listaCombinada[i].Item1 != LegoPile || listaCombinada[i].Item1 != Lego){
-                    foreach (var mesh in listaCombinada[i].Item1.Meshes){                    
-                    if (listaCombinada[i].Item1 == carpet){
-                        worldFinal = modelCarpetMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+
+                if (listaCombinada[i].Item1 != LegoPile || listaCombinada[i].Item1 != Lego)
+                {
+                    foreach (var mesh in listaCombinada[i].Item1.Meshes)
+                    {
+                        if (listaCombinada[i].Item1 == carpet)
+                        {
+                            worldFinal = modelCarpetMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == rampaDoble){
-                        worldFinal = modelrampaDobleMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                        if (listaCombinada[i].Item1 == rampaDoble)
+                        {
+                            worldFinal = modelrampaDobleMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == rampa){
-                        worldFinal = modelrampaMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationX(-(float)Math.PI/2)  * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                        if (listaCombinada[i].Item1 == rampa)
+                        {
+                            worldFinal = modelrampaMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationX(-(float)Math.PI / 2) * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == rampaPanza){
-                        worldFinal = modelrampaPanzaMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+
+                        if (listaCombinada[i].Item1 == rampaPanza)
+                        {
+                            worldFinal = modelrampaPanzaMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == caballo1){
-                        worldFinal = modelCaballo1MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                        if (listaCombinada[i].Item1 == caballo1)
+                        {
+                            worldFinal = modelCaballo1MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == caballo2){
-                        worldFinal = modelCaballo2MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                        if (listaCombinada[i].Item1 == caballo2)
+                        {
+                            worldFinal = modelCaballo2MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == Ajedrez){
-                        worldFinal = modelChessMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                            EfectoComun.Parameters["DiffuseColor"].SetValue(color);
-                        }
-
-                    if (listaCombinada[i].Item1 == LegoPJ){
-                        worldFinal = modelLegoPJMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
-                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
-                        }
-                    
-                    if (listaCombinada[i].Item1 == Puente){
-                        worldFinal = modelPuenteMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationX((float)Math.PI/-2) * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                        if (listaCombinada[i].Item1 == Ajedrez)
+                        {
+                            worldFinal = modelChessMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
 
-                    if (listaCombinada[i].Item1 == Torre){
-                        worldFinal = modelTorreMeshesBaseTransforms[mesh.ParentBone.Index] *  Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                        if (listaCombinada[i].Item1 == LegoPJ)
+                        {
+                            worldFinal = modelLegoPJMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
-        
+
+                        if (listaCombinada[i].Item1 == Puente)
+                        {
+                            worldFinal = modelPuenteMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationX((float)Math.PI / -2) * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
+
+                        if (listaCombinada[i].Item1 == Torre)
+                        {
+                            worldFinal = modelTorreMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                            EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
+                        }
+
+                        EfectoComun.Parameters["DiffuseColor"].SetValue(color);
                         //EffectCar.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateRotationY(angulo) * Matrix.CreateScale(scala) * Matrix.CreateTranslation(traslaciones[i]) );
                         EfectoComun.Parameters["World"].SetValue(worldFinal);
                         EfectoTexture.Parameters["World"].SetValue(worldFinal);
@@ -428,8 +631,10 @@ namespace TGC.MonoGame.TP.Content.Models
                     }
                 }
 
-                if (listaCombinada[i].Item1 == Lego){
-                    for (int j = 0; j < 10; j++){
+                if (listaCombinada[i].Item1 == Lego)
+                {
+                    for (int j = 0; j < 10; j++)
+                    {
                         traslacion = new Vector3(
                         -1600f + (-100f - (-1600f)) * random.NextSingle(),
                         0,
@@ -437,72 +642,35 @@ namespace TGC.MonoGame.TP.Content.Models
                         );
                         escala = 0.7f + (0.7f - 1f) * random.NextSingle();
                         color = new Vector3(0.6f, random.NextSingle(), random.NextSingle());
-                        
-                       foreach (var mesh in listaCombinada[i].Item1.Meshes){
+
+                        foreach (var mesh in listaCombinada[i].Item1.Meshes)
+                        {
                             worldFinal = modelLegoMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoComun.Parameters["DiffuseColor"].SetValue(color);
                             EfectoComun.Parameters["World"].SetValue(worldFinal);
                             mesh.Draw();
-                       }
+                        }
                     }
                     traslacion = new Vector3(-600f, 2f, 1400f);
                     escala = 1f;
 
-            // -1600 -2000 a -100 a -2200
-            // 400 2200 a -600 1400
-            //1800 -500 a 100 300
+                    // -1600 -2000 a -100 a -2200
+                    // 400 2200 a -600 1400
+                    //1800 -500 a 100 300
 
-                if (listaCombinada[i].Item1 == LegoPile){
+                    if (listaCombinada[i].Item1 == LegoPile)
+                    {
                         traslacion = new Vector3(1000f, 2f, -1200f);
                         escala = 1f;
                     }
                 }
 
             }
-/*
-             
+
+            // dibujar las cajas de colisiones de todos los objetos
+            // si se quiere dibujar un convexHull hay que usar el mtodo DrawConvexHull (esta medio cursed ese)
+            DrawCollisionBoxes(view, projection);
             
-            for (int i = 0; i < 15; i++){
-                
-               var scala = 0.01f + (0.1f - 0.01f) * random.NextSingle();
-               var color = new Vector3(random.NextSingle(), random.NextSingle(), 0.6f);
-
-                var traslacion = new Vector3(
-                -770f + (1500f - (-770f)) * random.NextSingle(),
-                0,
-                -1200f + (1000f - (-1200f)) * random.NextSingle()
-                );
-
-//SCALA DE 0.5 A 1
-//-770 A 650
-//-1200 A 1000
-
-
-            for (int i = 0; i < 50; i++){
-                
-               var scala = 0.2f + (0.5f - 0.2f) * random.NextSingle();
-               var color = new Vector3(random.NextSingle(), 0, random.NextSingle());
-
-                var traslacion = new Vector3(
-                -770f + (150f - (-770f)) * random.NextSingle(),
-                0,
-                -1200f + (1000f - (-1200f)) * random.NextSingle()
-                );
-
-//SCALA DE 0.5 A 1
-//-770 A 650
-//-1200 A 1000
-
-                foreach (var mesh in Lego.Meshes)
-                {
-                    var meshWorldLego = modelLegoMeshesBaseTransforms[mesh.ParentBone.Index];
-                    // Obtain the world matrix for that mesh (relative to the parent)
-                    EfectoComun.Parameters["DiffuseColor"].SetValue(color);
-                    EfectoComun.Parameters["World"].SetValue(meshWorldLego *  Matrix.CreateTranslation(traslacion)  * Matrix.CreateScale(scala));
-                    mesh.Draw();
-                }
-            
-            }*/
         }
         // Función para extraer vértices de un modelo 3D (similar a la que se usó en el Jugador)
         private List<System.Numerics.Vector3> ExtractVertices(Model model)
@@ -530,19 +698,13 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
-        public List<System.Numerics.Vector3> ObtenerVerticesTransformados(Model model, System.Numerics.Vector3 traslacion, float escala, float rotacionX,float rotacionY)
+        public List<System.Numerics.Vector3> ObtenerVerticesTransformados(Model model, System.Numerics.Vector3 traslacion, float escala, float rotacionX, float rotacionY)
         {
             var verticesOriginales = ExtractVertices(model);
             List<System.Numerics.Vector3> verticesTransformados = new List<System.Numerics.Vector3>();
 
-            // Crear matrices de transformación
-            System.Numerics.Matrix4x4 matrizEscala = System.Numerics.Matrix4x4.CreateScale(escala);
-            System.Numerics.Matrix4x4 matrizRotacionX = System.Numerics.Matrix4x4.CreateRotationX(rotacionX); // Rotación alrededor del eje Y (ajusta según sea necesario)
-            System.Numerics.Matrix4x4 matrizRotacionY = System.Numerics.Matrix4x4.CreateRotationY(rotacionY); // Rotación alrededor del eje Y (ajusta según sea necesario)
-            System.Numerics.Matrix4x4 matrizTraslacion = System.Numerics.Matrix4x4.CreateTranslation(traslacion);
-
             // Combinar las matrices en el orden correcto
-            System.Numerics.Matrix4x4 matrizTransformacion = matrizRotacionX * matrizRotacionY * matrizEscala * matrizTraslacion;
+            System.Numerics.Matrix4x4 matrizTransformacion = ObtenerMatrizTransformada(rotacionX, rotacionY, escala, traslacion);
 
             // Aplicar la transformación a cada vértice
             foreach (var vertice in verticesOriginales)
@@ -554,6 +716,142 @@ namespace TGC.MonoGame.TP.Content.Models
 
             return verticesTransformados;
         }
+        public System.Numerics.Matrix4x4 ObtenerMatrizTransformada(float rotX, float rotY, float esc, System.Numerics.Vector3 tras)
+        {
+            // Crear matrices de transformación
+            System.Numerics.Matrix4x4 matrizEscala = System.Numerics.Matrix4x4.CreateScale(esc);
+            System.Numerics.Matrix4x4 matrizTraslacion = System.Numerics.Matrix4x4.CreateTranslation(tras);
+            return System.Numerics.Matrix4x4.CreateFromYawPitchRoll(rotX, rotY, 0) * matrizEscala * matrizTraslacion;
+        }
+        public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            // Dibujar la caja de colisión del plano
+            DrawBox(Matrix.CreateTranslation(0, -50, 0), new Vector3(5000f, 100f, 5000f), viewMatrix, projectionMatrix);
+            // Dibujar la caja de colisión de la torre
+            DrawBox(Matrix.CreateTranslation(-1300f, 1f, 700f), new Vector3(200f, 500f, 200f), viewMatrix, projectionMatrix);
+            // Dibujar caja de colision de la rampa
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 6, 0)*Matrix.CreateTranslation(-200f, 50f, 900f), new Vector3(900f, 600f, 1800f), viewMatrix, projectionMatrix);
+            // Dibujar Rampa doble
+            DrawBox(Matrix.CreateTranslation(-900f, 0f, -1100f), new Vector3(1000f, 100f, 300f), viewMatrix, projectionMatrix);
+            // Dibujar Rampa panza
+            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, 0, 0)*Matrix.CreateTranslation(-1200f, 10f, 0f), new Vector3(350f, 100f, 500f), viewMatrix, projectionMatrix);
+            // Dibujar caballo1
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI * (5/4), 0, 0)*Matrix.CreateTranslation(1000f, 730f, 300f), new Vector3(100f, 500f, 260f), viewMatrix, projectionMatrix);
+            // Dibujar caballo2
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(1200f, 730f, -100f), new Vector3(100f, 550f, 260f), viewMatrix, projectionMatrix);
+            // Dibujar ajedrez
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(-1200f, 2f, 1700f), new Vector3(500f, 100f, 500f), viewMatrix, projectionMatrix);
+            // Dibujar lego
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(1200f, 2f, 1700f), new Vector3(150f, 100f, 150f), viewMatrix, projectionMatrix);
+            // Dibujar puente
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, (float)Math.PI / -2)*Matrix.CreateTranslation(360F, 2f, -1700f), new Vector3(500f, 200f, 500f), viewMatrix, projectionMatrix);
+            
+        }
+        public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            // Crear un efecto básico para dibujar la caja
+            BasicEffect effect = new BasicEffect(graphicsDevice);
+            effect.World = worldMatrix;
+            effect.View = viewMatrix;
+            effect.Projection = projectionMatrix;
+            effect.VertexColorEnabled = true;
 
+            // Definir los vértices de una caja (un cubo unitario que escalaremos)
+            VertexPositionColor[] vertices = new VertexPositionColor[8];
+            vertices[0] = new VertexPositionColor(new Vector3(-1, 1, 1), Color.Red);   // Front top left
+            vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1), Color.Red);    // Front top right
+            vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1), Color.Red);  // Front bottom left
+            vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1), Color.Red);   // Front bottom right
+            vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1), Color.Red);  // Back top left
+            vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1), Color.Red);   // Back top right
+            vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1), Color.Red); // Back bottom left
+            vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1), Color.Red);  // Back bottom right
+
+            // Escalar la caja en función del tamaño dado
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].Position *= size / 2f;
+            }
+
+            // Definir los índices que forman las líneas de la caja
+            int[] indices = new int[]
+            {
+        0, 1, 1, 3, 3, 2, 2, 0,  // Front face
+        4, 5, 5, 7, 7, 6, 6, 4,  // Back face
+        0, 4, 1, 5, 2, 6, 3, 7   // Connecting edges
+            };
+
+            // Dibujar la caja usando el efecto básico
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserIndexedPrimitives(
+                    PrimitiveType.LineList,
+                    vertices,
+                    0,
+                    vertices.Length,
+                    indices,
+                    0,
+                    indices.Length / 2
+                );
+            }
+        }
+        
+        public void DrawConvexHull(ConvexHull hull, Matrix worldMatrix, Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            BasicEffect effect = new BasicEffect(graphicsDevice);
+            effect.World = worldMatrix;
+            effect.View = viewMatrix;
+            effect.Projection = projectionMatrix;
+            effect.VertexColorEnabled = true;
+
+            // Obtener los vértices del hull
+            var vertices = hull.Points;
+            VertexPositionColor[] vertexColors = new VertexPositionColor[vertices.Length];
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                // Extraer cada componente del Vector3Wide y convertirlo a Vector3
+                System.Numerics.Vector3 vertex;
+                BepuUtilities.Vector3Wide.ReadFirst(vertices[i], out vertex);
+
+                // Convertir el vector de Bepu a Microsoft.Xna.Framework.Vector3 y asignar el color
+                vertexColors[i] = new VertexPositionColor(
+                    new Microsoft.Xna.Framework.Vector3(
+                        vertex.X, // X
+                        vertex.Y, // Y
+                        vertex.Z  // Z
+                    ),
+                    Color.Green
+                );
+            }
+
+            // Crear los índices para las líneas que forman el convex hull
+            List<int> indices = new List<int>();
+            for (int i = 0; i < vertices.Length - 1; i++)
+            {
+                indices.Add(i);
+                indices.Add(i + 1);
+            }
+            // Cerrar el convex hull conectando el último vértice con el primero
+            indices.Add(vertices.Length - 1);
+            indices.Add(0);
+
+            // Dibujar el convex hull
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserIndexedPrimitives(
+                    PrimitiveType.LineList,
+                    vertexColors,
+                    0,
+                    vertexColors.Length,
+                    indices.ToArray(),
+                    0,
+                    indices.Count / 2
+                );
+            }
+        }
+        
     }
 }

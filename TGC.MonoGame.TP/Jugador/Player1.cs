@@ -12,6 +12,7 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
+using Vector3 = Microsoft.Xna.Framework.Vector3;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -21,19 +22,15 @@ namespace TGC.MonoGame.TP.Content.Models
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
-
-        // Modelos y Efectos
         private Model Model { get; set; }
         private Effect effectAuto { get; set; }
-
-        private List<ModelMesh> ruedas;
-        private List<ModelMesh> restoAuto;
 
         // Jugabilidad
         private Microsoft.Xna.Framework.Vector3 direccionFrontal { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
 
         public Matrix carWorld { get; set; }
+        private float carSpeed = 0f;
         private float carVerticalSpeed = 0f;
         private const float carAcceleration = 500f;
         //    private const float carAcceleratioSpeedMax = 0;
@@ -42,32 +39,26 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpeedMin = -700f;
         private const float carJumpSpeed = 50f;
         private const float gravity = 98f;
-        private const float carSpinSpeed = 0.4f;
-
-        private float rotacionRuedasDelanterasY {get; set;}
-        private float CarSpeed;
-
-        private float angle;
+        private const float carSpinSpeed = 0.3f;
+        private float angle = 0f;
 
         private System.Numerics.Vector3 carPosition { get; set; }
-
-        private const float CarMaxSpeed = 1000f;
+        private float CarSpeed;
+        private const float CarMaxSpeed = 500f;
         private const float CarAcceleration = 500f;
-        private const float CarBrakeForce = 800f;
+        private const float CarBrakeForce = 5000f;
         private float CarDeceleration = 500f;
+
+        private float wheelRotationAngle;
+        private float wheelSteeringAngle;
+        private float maxWheelSteer = 0.7f;
+        private float wheelSteerDelta = 0.2f;
 
         private float CarRotationY;
         private float CarVerticalVelocity;
         private const float CarjumpStrength = 300f;
         private float elapsedTime;
 
-        private Matrix ruedaDelanteraIzqTransform {get; set;}
-        private Matrix ruedaDelanteraDerTransform {get; set;}
-        private Matrix ruedaTraseraIzqTransform {get; set;}
-        private Matrix ruedaTraseraDerTransform {get; set;}
-        
-        
-        
         private Matrix ruedaDelanteraTransform;
 
         private Matrix ruedaTraseraTransform;
@@ -76,20 +67,20 @@ namespace TGC.MonoGame.TP.Content.Models
         private BodyHandle carBodyHandle;
         private BodyHandle wheelBodyHandle;
 
+        private List<ModelMesh> ruedas;
+        private List<ModelMesh> restoAuto;
+        private GraphicsDevice graphicsDevice;
 
 
-        public Jugador(ContentManager content, Simulation simulation)
+
+        public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
         {
-            carPosition = new System.Numerics.Vector3(0f, 10f, 0f);
-            direccionFrontal = Microsoft.Xna.Framework.Vector3.Forward;
+            carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
+            direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            //effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
-            var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
-            effectAuto.Parameters["ModelTexture"].SetValue(texture);
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
-            rotacionRuedasDelanterasY = 0;
-            CarSpeed = 0f;
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
 
@@ -110,27 +101,31 @@ namespace TGC.MonoGame.TP.Content.Models
 
             }
 
+            // LOGICA DE SIMULACION, TODO LO QUE ESTA ACA SON LOS OBJETOS DE COLISION LOGICOS
+            // utilizo el graphicsDevice para dibujar las cajas
+            this.graphicsDevice = graphicsDevice;
             this.simulation = simulation;
             // Crear una caja de colisión para el cuerpo principal del auto
-            var carBox = new Box(2f, 1f, 4f); // Cambia las dimensiones según tu modelo
-            carBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(carPosition), carBox.ComputeInertia(1000f),
+            var carBox = new Box(200f, 10f, 500f); // Dimension del auto
+            carBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(carPosition + new System.Numerics.Vector3(0, 80f, 0)), carBox.ComputeInertia(50f),
             simulation.Shapes.Add(carBox), 1f));
+
 
             // Crear cajas de colisión para cada rueda
             foreach (var rueda in ruedas)
             {
                 // Extraer la posición local de la rueda desde el modelo
                 var wheelMatrix = rueda.ParentBone.Transform;
-                var wheelPosition = Microsoft.Xna.Framework.Vector3.Transform(carPosition, wheelMatrix); // Convertir la posición de la rueda al espacio del mundo
-                // Ajusta las posiciones y dimensiones de las cajas según tus necesidades
-                var wheelBox = new Box(0.5f, 0.5f, 0.5f); // Cambia las dimensiones según tu modelo
-                //System.Numerics.Vector3 wheelPosition = carPosition + new System.Numerics.Vector3(0, -0.5f, 1); // Ejemplo de posición
+                var wheelPosition = Vector3.Transform(carPosition, wheelMatrix); // Convertir la posición de la rueda al espacio del mundo
+                var wheelBox = new Box(100f, 100f, 100f); // Dimension de las ruedas
 
                 // Agregar cada rueda a la simulación
                 wheelBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(PositionToNumerics(wheelPosition)),
-                wheelBox.ComputeInertia(10f), // Cambia la masa según sea necesario
+                wheelBox.ComputeInertia(1f), // para la masa de las ruedas
                 simulation.Shapes.Add(wheelBox), 1f));
+
             }
+
         }
 
         public void Update(GameTime gameTime)
@@ -141,141 +136,134 @@ namespace TGC.MonoGame.TP.Content.Models
             // La logica debe ir aca.
             elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
-
             // Obtener la referencia del cuerpo del auto en la simulación
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
-            // Capturar el estado del teclado
+            carBodyReference.Awake = true;
 
+            // Capturar el estado del teclado
 
             // Movimiento hacia adelante
             if (keyboardState.IsKeyDown(Keys.W))
             {
                 CarSpeed += CarAcceleration * elapsedTime;
                 if (CarSpeed > CarMaxSpeed) CarSpeed = CarMaxSpeed; // Limitar velocidad máxima
+                Console.WriteLine("CarSpeed (W): " + CarSpeed);
             }
             else if (keyboardState.IsKeyDown(Keys.S))
             {
-                CarSpeed -= CarAcceleration * elapsedTime;
+                CarSpeed -= CarAcceleration * elapsedTime * CarBrakeForce;
                 if (CarSpeed < -CarMaxSpeed / 2) CarSpeed = -CarMaxSpeed / 2; // Limitar reversa
+                Console.WriteLine("CarSpeed (S): " + CarSpeed);
             }
             else
             {
                 // Desacelerar cuando no se presionan las teclas
-                if (CarSpeed > 0f)
-                {
-                    CarSpeed -= CarDeceleration * elapsedTime;
-                }
-                else if (CarSpeed < 0f)
-                {
-                    CarSpeed += CarDeceleration * elapsedTime; // Sumar para desacelerar en reversa
-                }
-
-                if (Math.Abs(CarSpeed) < 5f)        // Hay que probar varios valores. 0.1f no funciona bien, es casi imposible hacer que se detenga el auto 
-                {
-                    CarSpeed = 0f; // Detener el auto cuando está casi en reposo
-                }
+                CarSpeed -= CarSpeed > 0 ? CarDeceleration * elapsedTime : -CarDeceleration * elapsedTime;
+                if (Math.Abs(CarSpeed) < 0.1f) CarSpeed = 0; // Detener el auto cuando está casi en reposo
+                Console.WriteLine("CarSpeed (no key): " + CarSpeed);
             }
-            // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
-            var forwardDirection = System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ,
-            System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
-            carBodyReference.Velocity.Linear = forwardDirection * CarSpeed;
 
-
-            // Almacenar las transformaciones de las ruedas delanteras y traseras
-                                    
+            // Actualizar rotación del coche
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                CarRotationY += carSpinSpeed * elapsedTime;  // Girar el coche a la izquierda
-                rotacionRuedasDelanterasY = MathHelper.Clamp(rotacionRuedasDelanterasY + 1f, -0.05f, 0.05f); // Ajustar rotación de las ruedas delanteras
+                if (CarSpeed != 0)
+                {
+                    if (CarSpeed >= 0)
+                    {
+                        CarRotationY += carSpinSpeed * elapsedTime;
+                    }
+                    else
+                    {
+                        CarRotationY += carSpinSpeed * elapsedTime;
+                    }
+                }
+                wheelSteeringAngle = Math.Min(wheelSteeringAngle + wheelSteerDelta, maxWheelSteer);
+
             }
             else if (keyboardState.IsKeyDown(Keys.D))
             {
-                CarRotationY -= carSpinSpeed * elapsedTime;  // Girar el coche a la derecha
-                rotacionRuedasDelanterasY = MathHelper.Clamp(rotacionRuedasDelanterasY - 1f, -0.05f, 0.05f); // Ajustar rotación de las ruedas delanteras
-
+                if (CarSpeed != 0)
+                {
+                    if (CarSpeed >= 0)
+                    {
+                        CarRotationY -= carSpinSpeed * elapsedTime;
+                    }
+                    else
+                    {
+                        CarRotationY += carSpinSpeed * elapsedTime;
+                    }
+                }
+                wheelSteeringAngle = Math.Max(wheelSteeringAngle - wheelSteerDelta, -maxWheelSteer);
             }
             else
             {
-                rotacionRuedasDelanterasY = 0;  // Las ruedas vuelven a su rotación original (cuando no se gira)
+                wheelSteeringAngle = 0;
             }
-        
-            float radioRueda = 0.5f; // Ajusta el radio de la rueda
-            float ruedaGiroVelocidad =  (CarSpeed * elapsedTime) / radioRueda;
 
-            float distanciaEje = 0f; // Distancia lateral entre las ruedas (izquierda y derecha)
-            float distanciaDelantera = 0f; // Distancia del centro del coche a las ruedas delanteras (eje Z)
-            float distanciaTrasera = 0f; // Distancia del centro del coche a las ruedas traseras (eje Z)
+            float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
+            wheelRotationAngle += wheelRotationDelta;
 
-            ruedaTraseraIzqTransform = 
-            Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-            Matrix.CreateTranslation(-distanciaEje, 0, distanciaTrasera) *  // 2. Coloca la rueda trasera izquierda en su lugar
-            Matrix.CreateRotationY(CarRotationY) *  // 3. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(carPosition);  // 4. Traslada el coche completo a su posición en el mundo
+            // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
+            var forwardDirection = System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ,
+            System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
 
-                    // Rueda trasera derecha
-            ruedaTraseraDerTransform =
-            Matrix.CreateRotationX(ruedaGiroVelocidad) * // 1. Rota la rueda sobre su eje X
-            Matrix.CreateTranslation(distanciaEje, 0, distanciaTrasera)*  // 2. Coloca la rueda trasera derecha en su lugar
-            Matrix.CreateRotationY(CarRotationY)*  // 3. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(carPosition);  // 4. Traslada el coche completo a su posición en el mundo
+            // ESTA LOGICA ES PARA EVITAR PROBLEMAS CON LA GRAVEDAD Y ESAS COSAS, CUANDO APLICA LA VELOCIDAD, DESCARTA LA COMPONENTE VERTICAL
+            // Proyectar la velocidad actual en la dirección hacia adelante
+            var currentVelocity = carBodyReference.Velocity.Linear;
+            // Separar la componente vertical (gravedad)
+            var verticalVelocity = new System.Numerics.Vector3(0, currentVelocity.Y, 0);
+            // Obtener la velocidad en el plano horizontal (XZ)
+            var horizontalVelocity = new System.Numerics.Vector3(currentVelocity.X, 0, currentVelocity.Z);
+            var forwardVelocity = System.Numerics.Vector3.Dot(horizontalVelocity, forwardDirection);
+            // Eliminar el componente lateral para evitar deslizamiento, solo en el plano XZ
+            var lateralDirection = horizontalVelocity - forwardVelocity * forwardDirection;
+            horizontalVelocity -= lateralDirection * 0.9f; // Ajusta el valor para controlar el deslizamiento
+            // Volver a combinar la velocidad horizontal con la vertical
+            carBodyReference.Velocity.Linear = horizontalVelocity + verticalVelocity;
 
-            // Rueda delantera izquierda
-            ruedaDelanteraIzqTransform = 
-            Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-            Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
-            Matrix.CreateTranslation(-distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera izquierda en su lugar
-            Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(carPosition);  // 5. Traslada el coche completo a su posición en el mundo
 
-            // Rueda delantera derecha
-            ruedaDelanteraDerTransform = 
-            Matrix.CreateRotationX(ruedaGiroVelocidad) *  // 1. Rota la rueda sobre su eje X
-            Matrix.CreateRotationY(rotacionRuedasDelanterasY) *  // 2. Aplica la rotación de la rueda delantera cuando gira el coche
-            Matrix.CreateTranslation(distanciaEje, 0, distanciaDelantera) *  // 3. Coloca la rueda delantera derecha en su lugar
-            Matrix.CreateRotationY(CarRotationY) *  // 4. Aplica la rotación del coche completo
-            Matrix.CreateTranslation(carPosition); 
-
-            // Movimiento del coche en base a la velocidad
-
-            //carPosition += System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ * CarSpeed * elapsedTime, Matrix4x4.CreateRotationY(CarRotationY));
+            // Aplicar la nueva velocidad en la dirección hacia adelante
+            carBodyReference.ApplyLinearImpulse(forwardDirection * CarSpeed);
             // Aplicar la rotación al cuerpo físico
             carBodyReference.Pose.Orientation = System.Numerics.Quaternion.CreateFromAxisAngle(new System.Numerics.Vector3(0, 1, 0), CarRotationY);
+            // Actualizar la posición y la matriz de mundo del auto
             carPosition = carBodyReference.Pose.Position;
-            // Actualizar la posición de las ruedas basadas en la posición general del auto
-            // Actualizar la matriz del mundo del auto
             var rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
             carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
+
+
+
+
+            var frontLeftWheelPosition = Vector3.Transform(ruedas[0].ParentBone.Transform.Translation, carWorld);
+            var frontRightWheelPosition = Vector3.Transform(ruedas[1].ParentBone.Transform.Translation, carWorld);
+            var backLeftWheelPosition = Vector3.Transform(ruedas[2].ParentBone.Transform.Translation, carWorld);
+            var backRightWheelPosition = Vector3.Transform(ruedas[3].ParentBone.Transform.Translation, carWorld);
+
+            var vector1 = frontRightWheelPosition - frontLeftWheelPosition;
+            var vector2 = backLeftWheelPosition - frontLeftWheelPosition;
+
+            var normal = Vector3.Cross(vector1, vector2);
+            normal.Normalize(); // Asegúrate de normalizar el vector normal
+
+            normal.Y = 0;
+
+            var targetOrientation = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(Vector3.Zero, normal, Vector3.Up));
+
+            System.Numerics.Quaternion targetOrientationNumerics = new System.Numerics.Quaternion(
+                targetOrientation.X,
+                targetOrientation.Y,
+                targetOrientation.Z,
+                targetOrientation.W
+            );
+
+            carBodyReference.Pose.Orientation = targetOrientationNumerics;
+
+            carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
+            Console.WriteLine("posicion del auto: " + carPosition);
         }
 
-
         public void Draw(Matrix View, Matrix Projection)
-{
-    var random = new Random(Seed: 0);
-    var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
-    var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
-
-    effectAuto.Parameters["View"].SetValue(View);
-    effectAuto.Parameters["Projection"].SetValue(Projection);
-
-    // Dibujar el cuerpo del coche
-    foreach (ModelMesh mesh in restoAuto)
-    {
-        //effectAuto.Parameters["DiffuseColor"].SetValue(color);
-        effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
-        mesh.Draw();
-    }
-
-    // Dibujar cada rueda con su respectiva transformació
-    foreach (ModelMesh rueda in ruedas)
-    {
-        //effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
-      
-        if (rueda.Name.Contains("WheelA"))
         {
-            // HEAD Aplicar transformación de la rueda delantera izquierda
-            
-            effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaDelanteraIzqTransform);
-/*
             var random = new Random(Seed: 0);
             var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
@@ -283,59 +271,130 @@ namespace TGC.MonoGame.TP.Content.Models
             effectAuto.Parameters["Projection"].SetValue(Projection);
 
 
-            foreach (ModelMesh mesh in Model.Meshes)
+            foreach (ModelMesh mesh in restoAuto)
             {
-                //effectAuto.Parameters["DiffuseColor"].SetValue(color);
-                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
-
-
-
+                effectAuto.Parameters["DiffuseColor"].SetValue(color);
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
                 mesh.Draw();
             }
 
-            */
-
-            /*
             foreach (ModelMesh rueda in ruedas)
             {
                 effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
-                    effectAuto.Parameters["World"].SetValue(ruedaDelanteraTransform);
+                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
                 }
                 else
                 {
-                    effectAuto.Parameters["World"].SetValue(ruedaTraseraTransform);
+                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld);
                 }
                 rueda.Draw();
-            }*/
+            }
+
+            // Dibujar las cajas de colisión del auto y las ruedas
+            DrawCollisionBoxes(View, Projection);
         }
 
-        
-        else if (rueda.Name.Contains("WheelB"))
-        {
-            // Aplicar transformación de la rueda delantera derecha
-            effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaDelanteraDerTransform);
-        }
-        else if (rueda.Name.Contains("WheelC"))
-        {
-            // Aplicar transformación de la rueda trasera izquierda
-            effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaTraseraIzqTransform);
-        }
-        else if (rueda.Name.Contains("WheelD"))
-        {
-            // Aplicar transformación de la rueda trasera derecha
-            effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * ruedaTraseraDerTransform);
-        }
-        
-        rueda.Draw();
-    }
-    
-        }
         public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
-
         }
+
+        public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            // Obtener la matriz de rotación del auto (supongo que tienes una variable CarRotationY para la rotación en Y)
+            var carRotationMatrix = Matrix.CreateRotationY(CarRotationY); // Rotación del auto en Y (ajusta esto si tienes más rotaciones en otros ejes)
+
+            // Crear la matriz de mundo del coche, que incluye rotación y traslación
+            var carWorldMatrix = carRotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
+
+            // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
+            DrawBox(carWorldMatrix, new Vector3(200f, 100f, 550f), viewMatrix, projectionMatrix);
+            // Dibujar las cajas de colisión de las ruedas
+            foreach (var rueda in ruedas)
+            {
+                // Obtener la matriz de transformación local de la rueda dentro del coche
+                var wheelMatrix = rueda.ParentBone.Transform;
+
+                // Obtener la matriz de mundo del coche (posición + rotación)
+                var carRotationMatrixWheels = Matrix.CreateRotationY(CarRotationY); // Supongo que tienes una variable CarRotationY para la rotación del coche en Y
+                var carWorldMatrixWheels = carRotationMatrixWheels * Matrix.CreateTranslation(carPosition);
+
+                // Transformar la posición local de la rueda a la posición en el mundo
+                var wheelPositionInWorld = Vector3.Transform(Vector3.Zero, wheelMatrix * carWorldMatrixWheels);
+
+                // Ajusta las dimensiones de las cajas de colisión según tus necesidades
+                var wheelBox = new Box(100f, 100f, 100f); // Cambia las dimensiones según tu modelo
+
+                // Dibujar la caja de colisión para cada rueda
+                DrawBox(Matrix.CreateTranslation(wheelPositionInWorld), new Vector3(100f, 100f, 100f), viewMatrix, projectionMatrix);
+            }
+        }
+
+        private void ElevateWheel(BodyReference wheelBodyReference)
+        {
+            // Aquí ajustas la posición de la rueda en función de la colisión
+            var wheelPosition = wheelBodyReference.Pose.Position;
+
+            // Simula que la rueda se eleva al subir la rampa
+            wheelPosition.Y += 50f;  // Puedes ajustar este valor en función de la altura de la rampa
+
+            // Actualiza la nueva posición de la rueda en la simulación
+            wheelBodyReference.Pose.Position = wheelPosition;
+        }
+
+        public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            // Crear un efecto básico para dibujar la caja
+            BasicEffect effect = new BasicEffect(graphicsDevice);
+            effect.World = worldMatrix;
+            effect.View = viewMatrix;
+            effect.Projection = projectionMatrix;
+            effect.VertexColorEnabled = true;
+
+            // Definir los vértices de una caja (un cubo unitario que escalaremos)
+            VertexPositionColor[] vertices = new VertexPositionColor[8];
+            vertices[0] = new VertexPositionColor(new Vector3(-1, 1, 1), Color.Red);   // Front top left
+            vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1), Color.Red);    // Front top right
+            vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1), Color.Red);  // Front bottom left
+            vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1), Color.Red);   // Front bottom right
+            vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1), Color.Red);  // Back top left
+            vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1), Color.Red);   // Back top right
+            vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1), Color.Red); // Back bottom left
+            vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1), Color.Red);  // Back bottom right
+
+            // Escalar la caja en función del tamaño dado
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].Position *= size / 2f;
+            }
+
+            // Definir los índices que forman las líneas de la caja
+            int[] indices = new int[]
+            {
+        0, 1, 1, 3, 3, 2, 2, 0,  // Front face
+        4, 5, 5, 7, 7, 6, 6, 4,  // Back face
+        0, 4, 1, 5, 2, 6, 3, 7   // Connecting edges
+            };
+
+            // Dibujar la caja usando el efecto básico
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserIndexedPrimitives(
+                    PrimitiveType.LineList,
+                    vertices,
+                    0,
+                    vertices.Length,
+                    indices,
+                    0,
+                    indices.Length / 2
+                );
+            }
+        }
+
+
+
     }
 }
