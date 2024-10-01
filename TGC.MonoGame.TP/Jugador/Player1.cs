@@ -36,7 +36,7 @@ namespace TGC.MonoGame.TP.Content.Models
         //    private const float carAcceleratioSpeedMin = 0;
         private const float carSpeedMax = 1000f;
         private const float carSpeedMin = -700f;
-        private const float carJumpSpeed = 50f;
+        private const float carJumpSpeed = 1000f;
         private const float gravity = 98f;
         private const float carSpinSpeed = 0.3f;
 
@@ -138,6 +138,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Obtener la referencia del cuerpo del auto en la simulación
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
+            
 
             // Capturar el estado del teclado
 
@@ -173,7 +174,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     }
                     else
                     {
-                        CarRotationY += carSpinSpeed * elapsedTime;
+                        CarRotationY -= carSpinSpeed * elapsedTime;
                     }
                 }
                 wheelSteeringAngle = Math.Min(wheelSteeringAngle + wheelSteerDelta, maxWheelSteer);
@@ -199,16 +200,20 @@ namespace TGC.MonoGame.TP.Content.Models
                 wheelSteeringAngle = 0;
             }
 
+            if (keyboardState.IsKeyDown(Keys.Space) && carPosition.Y<100f){
+                carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
+            }
+
             float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
             wheelRotationAngle += wheelRotationDelta;
-
+            var currentVelocity = carBodyReference.Velocity.Linear;
             // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
             var forwardDirection = System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ,
             System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
 
             // ESTA LOGICA ES PARA EVITAR PROBLEMAS CON LA GRAVEDAD Y ESAS COSAS, CUANDO APLICA LA VELOCIDAD, DESCARTA LA COMPONENTE VERTICAL
             // Proyectar la velocidad actual en la dirección hacia adelante
-            var currentVelocity = carBodyReference.Velocity.Linear;
+            
             // Separar la componente vertical (gravedad)
             var verticalVelocity = new System.Numerics.Vector3(0, currentVelocity.Y, 0);
             // Obtener la velocidad en el plano horizontal (XZ)
