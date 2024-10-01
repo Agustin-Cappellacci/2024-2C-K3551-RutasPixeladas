@@ -39,7 +39,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpeedMin = -700f;
         private const float carJumpSpeed = 50f;
         private const float gravity = 98f;
-        private const float carSpinSpeed = 0.8f;
+        private const float carSpinSpeed = 0.3f;
         private float angle = 0f;
 
         private System.Numerics.Vector3 carPosition { get; set; }
@@ -48,6 +48,11 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float CarAcceleration = 500f;
         private const float CarBrakeForce = 5000f;
         private float CarDeceleration = 500f;
+
+        private float wheelRotationAngle;
+        private float wheelSteeringAngle;
+        private float maxWheelSteer = 0.7f;
+        private float wheelSteerDelta = 0.2f;
 
         private float CarRotationY;
         private float CarVerticalVelocity;
@@ -65,6 +70,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
         private GraphicsDevice graphicsDevice;
+
+
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
         {
@@ -116,6 +123,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 wheelBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(PositionToNumerics(wheelPosition)),
                 wheelBox.ComputeInertia(1f), // para la masa de las ruedas
                 simulation.Shapes.Add(wheelBox), 1f));
+                
             }
 
         }
@@ -139,32 +147,54 @@ namespace TGC.MonoGame.TP.Content.Models
             {
                 CarSpeed += CarAcceleration * elapsedTime;
                 if (CarSpeed > CarMaxSpeed) CarSpeed = CarMaxSpeed; // Limitar velocidad máxima
+                Console.WriteLine("CarSpeed (W): " + CarSpeed);
             }
             else if (keyboardState.IsKeyDown(Keys.S))
             {
                 CarSpeed -= CarAcceleration * elapsedTime * CarBrakeForce;
                 if (CarSpeed < -CarMaxSpeed / 2) CarSpeed = -CarMaxSpeed / 2; // Limitar reversa
+                Console.WriteLine("CarSpeed (S): " + CarSpeed);
             }
             else
             {
                 // Desacelerar cuando no se presionan las teclas
                 CarSpeed -= CarSpeed > 0 ? CarDeceleration * elapsedTime : -CarDeceleration * elapsedTime;
                 if (Math.Abs(CarSpeed) < 0.1f) CarSpeed = 0; // Detener el auto cuando está casi en reposo
+                Console.WriteLine("CarSpeed (no key): " + CarSpeed);
             }
 
             // Actualizar rotación del coche
             if (keyboardState.IsKeyDown(Keys.A))
-            {
-                CarRotationY += carSpinSpeed * elapsedTime;
+            {   
+                if (CarSpeed != 0){
+                    if (CarSpeed >= 0) {
+                        CarRotationY += carSpinSpeed * elapsedTime;
+                    } else {
+                        CarRotationY += carSpinSpeed * elapsedTime;
+                    }
+                }
+                wheelSteeringAngle = Math.Min(wheelSteeringAngle + wheelSteerDelta, maxWheelSteer);
+                
+            } else if (keyboardState.IsKeyDown(Keys.D))
+            {   
+                if (CarSpeed != 0){
+                    if (CarSpeed >= 0) {
+                        CarRotationY -= carSpinSpeed * elapsedTime;
+                    } else {
+                        CarRotationY += carSpinSpeed * elapsedTime;
+                    }
+                }
+                wheelSteeringAngle = Math.Max(wheelSteeringAngle - wheelSteerDelta, -maxWheelSteer);
+            } else {
+                wheelSteeringAngle = 0;
             }
-            else if (keyboardState.IsKeyDown(Keys.D))
-            {
-                CarRotationY -= carSpinSpeed * elapsedTime;
-            }
+
+            float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
+            wheelRotationAngle += wheelRotationDelta;
 
             // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
             var forwardDirection = System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ,
-       System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
+            System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
             
             // ESTA LOGICA ES PARA EVITAR PROBLEMAS CON LA GRAVEDAD Y ESAS COSAS, CUANDO APLICA LA VELOCIDAD, DESCARTA LA COMPONENTE VERTICAL
             // Proyectar la velocidad actual en la dirección hacia adelante
@@ -185,16 +215,38 @@ namespace TGC.MonoGame.TP.Content.Models
             carBodyReference.ApplyLinearImpulse(forwardDirection * CarSpeed);
             // Aplicar la rotación al cuerpo físico
             carBodyReference.Pose.Orientation = System.Numerics.Quaternion.CreateFromAxisAngle(new System.Numerics.Vector3(0, 1, 0), CarRotationY);
-            foreach (var rueda in ruedas){
-                var wheelBodyReference = simulation.Bodies.GetBodyReference(wheelBodyHandle);
-                wheelBodyReference.Pose.Orientation = carBodyReference.Pose.Orientation;
-            }
             // Actualizar la posición y la matriz de mundo del auto
             carPosition = carBodyReference.Pose.Position;
             var rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
             carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
 
             
+
+
+            var frontLeftWheelPosition = Vector3.Transform(ruedas[0].ParentBone.Transform.Translation, carWorld);
+            var frontRightWheelPosition = Vector3.Transform(ruedas[1].ParentBone.Transform.Translation, carWorld);
+            var backLeftWheelPosition = Vector3.Transform(ruedas[2].ParentBone.Transform.Translation, carWorld);
+            var backRightWheelPosition = Vector3.Transform(ruedas[3].ParentBone.Transform.Translation, carWorld);
+
+            var vector1 = frontRightWheelPosition - frontLeftWheelPosition;
+            var vector2 = backLeftWheelPosition - frontLeftWheelPosition;
+
+            var normal = Vector3.Cross(vector1, vector2);
+            normal.Normalize(); // Asegúrate de normalizar el vector normal
+
+            normal.Y = 0;
+
+            var targetOrientation = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(Vector3.Zero, normal, Vector3.Up));
+            
+            System.Numerics.Quaternion targetOrientationNumerics = new System.Numerics.Quaternion(
+                targetOrientation.X, 
+                targetOrientation.Y, 
+                targetOrientation.Z, 
+                targetOrientation.W
+            );
+
+            carBodyReference.Pose.Orientation = targetOrientationNumerics;
+
             carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
             Console.WriteLine("posicion del auto: " + carPosition);
         }
@@ -220,11 +272,11 @@ namespace TGC.MonoGame.TP.Content.Models
                 effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
-                    effectAuto.Parameters["World"].SetValue(ruedaDelanteraTransform);
+                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
                 }
                 else
                 {
-                    effectAuto.Parameters["World"].SetValue(ruedaTraseraTransform);
+                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld);
                 }
                 rueda.Draw();
             }
@@ -267,6 +319,18 @@ namespace TGC.MonoGame.TP.Content.Models
                 // Dibujar la caja de colisión para cada rueda
                 DrawBox(Matrix.CreateTranslation(wheelPositionInWorld), new Vector3(100f, 100f, 100f), viewMatrix, projectionMatrix);
             }
+        }
+
+        private void ElevateWheel(BodyReference wheelBodyReference)
+        {
+            // Aquí ajustas la posición de la rueda en función de la colisión
+            var wheelPosition = wheelBodyReference.Pose.Position;
+
+            // Simula que la rueda se eleva al subir la rampa
+            wheelPosition.Y += 50f;  // Puedes ajustar este valor en función de la altura de la rampa
+
+            // Actualiza la nueva posición de la rueda en la simulación
+            wheelBodyReference.Pose.Position = wheelPosition;
         }
 
         public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
@@ -318,5 +382,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 );
             }
         }
+
+        
+
     }
 }
