@@ -26,8 +26,8 @@ TGC, Tgcito  |  Apellido, Nombre
 
 ## Capturas
 
-![screenshot1](https://github.com/Agustin-Cappellacci/2024-2C-K3551-RutasPixeladas/blob/master/TGC.MonoGame.TP/Captura_1)
-![screenshot2](https://github.com/Agustin-Cappellacci/2024-2C-K3551-RutasPixeladas/blob/master/TGC.MonoGame.TP/Captura_2)
+![screenshot1](https://github.com/Agustin-Cappellacci/2024-2C-K3551-RutasPixeladas/blob/master/TGC.MonoGame.TP/Captura_1.png)
+![screenshot2](https://github.com/Agustin-Cappellacci/2024-2C-K3551-RutasPixeladas/blob/master/TGC.MonoGame.TP/Captura_2.png)
 ![screenshot3](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
 ![screenshot4](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
 ![screenshot5](https://github.com/tgc-utn/tgc-monogame-tp/blob/master/TGC.MonoGame.TP/Icon.bmp)
