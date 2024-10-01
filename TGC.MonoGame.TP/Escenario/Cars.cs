@@ -51,8 +51,8 @@ namespace TGC.MonoGame.TP.Content.Models
         }
 
         public void Draw(GameTime gametime, Matrix View, Matrix Projection) {
-            EffectCar2.Parameters["View"].SetValue(View);
-            EffectCar2.Parameters["Projection"].SetValue(Projection);
+            EffectCar.Parameters["View"].SetValue(View);
+            EffectCar.Parameters["Projection"].SetValue(Projection);
 
             var meshBaseAuto = new Matrix[Modelo.Bones.Count];
             Modelo.CopyAbsoluteBoneTransformsTo(meshBaseAuto);
@@ -61,7 +61,7 @@ namespace TGC.MonoGame.TP.Content.Models
                
                 WorldMatrix = meshBaseAuto[mesh.ParentBone.Index] * Matrix.CreateRotationY(anguloInicial) * Matrix.CreateScale(Escala) * Matrix.CreateTranslation(PosicionInicial);
 
-                EffectCar2.Parameters["World"].SetValue(WorldMatrix);
+                EffectCar.Parameters["World"].SetValue(WorldMatrix);
 
                 mesh.Draw();
             }

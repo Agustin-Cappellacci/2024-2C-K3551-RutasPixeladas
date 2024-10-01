@@ -30,8 +30,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Matrix carRotation = Matrix.CreateRotationY(0f);
 
         public Matrix carWorld { get; set; }
-        private float carSpeed = 0f;
-        private float carVerticalSpeed = 0f;
+
         private const float carAcceleration = 500f;
         //    private const float carAcceleratioSpeedMax = 0;
         //    private const float carAcceleratioSpeedMin = 0;
@@ -40,7 +39,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carJumpSpeed = 50f;
         private const float gravity = 98f;
         private const float carSpinSpeed = 0.3f;
-        private float angle = 0f;
+
 
         private System.Numerics.Vector3 carPosition { get; set; }
         private float CarSpeed;
@@ -55,13 +54,13 @@ namespace TGC.MonoGame.TP.Content.Models
         private float wheelSteerDelta = 0.2f;
 
         private float CarRotationY;
-        private float CarVerticalVelocity;
+
         private const float CarjumpStrength = 300f;
         private float elapsedTime;
 
-        private Matrix ruedaDelanteraTransform;
 
-        private Matrix ruedaTraseraTransform;
+
+
         private Simulation simulation;
 
         private BodyHandle carBodyHandle;
@@ -258,8 +257,16 @@ namespace TGC.MonoGame.TP.Content.Models
 
             carBodyReference.Pose.Orientation = targetOrientationNumerics;
 
-            carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
-            Console.WriteLine("posicion del auto: " + carPosition);
+            if (carPosition.Y < -3f)
+            {
+                carWorld = Matrix.Identity * Matrix.CreateTranslation(new Vector3(0f,300f,0f));
+
+            }
+            else
+            {
+                carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
+            }
+                Console.WriteLine("posicion del auto: " + carPosition);
         }
 
         public void Draw(Matrix View, Matrix Projection)

@@ -56,7 +56,7 @@ namespace TGC.MonoGame.TP
         private Toys Toys { get; set; }
         private Cuarto Cuarto { get; set; }
 
-
+        private Logo Logo {  get; set; }
         // Matrices
         private Matrix View { get; set; }
         private Matrix Projection { get; set; }
@@ -194,7 +194,7 @@ namespace TGC.MonoGame.TP
             autoJugador = new Jugador(Content, simulation,GraphicsDevice);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content);
-
+            Logo = new Logo(Content, simulation, GraphicsDevice);
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -274,6 +274,7 @@ namespace TGC.MonoGame.TP
             autoJugador.Draw(View, Projection);
             Toys.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
+            Logo.Draw(gameTime, View, Projection);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             
 
