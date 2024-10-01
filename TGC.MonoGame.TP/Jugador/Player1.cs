@@ -36,15 +36,15 @@ namespace TGC.MonoGame.TP.Content.Models
         //    private const float carAcceleratioSpeedMin = 0;
         private const float carSpeedMax = 1000f;
         private const float carSpeedMin = -700f;
-        private const float carJumpSpeed = 1000f;
+        public float carJumpSpeed {get; set;}
         private const float gravity = 98f;
         private const float carSpinSpeed = 0.3f;
 
 
         private System.Numerics.Vector3 carPosition { get; set; }
-        private float CarSpeed;
+        public float CarSpeed {get; set;}
         private const float CarMaxSpeed = 500f;
-        private const float CarAcceleration = 500f;
+        public float CarAcceleration {get; set;}
         private const float CarBrakeForce = 5000f;
         private float CarDeceleration = 500f;
 
@@ -52,23 +52,18 @@ namespace TGC.MonoGame.TP.Content.Models
         private float wheelSteeringAngle;
         private float maxWheelSteer = 0.7f;
         private float wheelSteerDelta = 0.2f;
-
         private float CarRotationY;
-
         private const float CarjumpStrength = 300f;
         private float elapsedTime;
-
-
-
-
         private Simulation simulation;
-
         private BodyHandle carBodyHandle;
         private BodyHandle wheelBodyHandle;
 
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
         private GraphicsDevice graphicsDevice;
+
+        private IPowerUp powerUp;
 
 
 
@@ -82,6 +77,13 @@ namespace TGC.MonoGame.TP.Content.Models
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
+            //powerUp = new SuperJump(this);
+            powerUp = new SuperSpeed(this);
+
+
+            CarAcceleration = 500f;
+            carJumpSpeed = 500f;
+            
 
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -141,7 +143,9 @@ namespace TGC.MonoGame.TP.Content.Models
             
 
             // Capturar el estado del teclado
-
+            if (keyboardState.IsKeyDown(Keys.Q)){
+                powerUp.Apply();
+            }
             // Movimiento hacia adelante
             if (keyboardState.IsKeyDown(Keys.W))
             {
