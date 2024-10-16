@@ -34,6 +34,7 @@ namespace TGC.MonoGame.TP
         public const string ContentFolderTextures = "Textures/";
         public const string ContenidoAutoCombate = "Models/CombatVehicle";
         public const string ContenidoAutoCarrera = "Models/RacingCarA";
+        SpriteFont myFont;
 
         private GraphicsDeviceManager Graphics { get; }
         private SpriteBatch SpriteBatch { get; set; }
@@ -78,6 +79,13 @@ namespace TGC.MonoGame.TP
         private Simulation simulation;
         private BufferPool bufferPool;
         private SimpleThreadDispatcher threadDispatcher;
+
+        // -----
+
+        Texture2D texturaBarraVida;
+        Texture2D texturaCuadroItem;
+        Texture2D texturaItem;
+        Texture2D Circulo;
 
         public TGCGame()
         {
@@ -138,7 +146,14 @@ namespace TGC.MonoGame.TP
         ///     que podemos pre calcular para nuestro juego.
         /// </summary>
         protected override void LoadContent()
-        {
+        {   
+
+            texturaBarraVida = Content.Load<Texture2D>("HUD/textura-vida");
+            texturaCuadroItem = Content.Load<Texture2D>("HUD/marco");
+            Circulo = Content.Load<Texture2D>("HUD/circulo");
+
+            myFont = Content.Load<SpriteFont>("myFont");  // Carga la fuente
+
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
@@ -219,6 +234,19 @@ namespace TGC.MonoGame.TP
             {
                 Exit();
             }
+
+            texturaItem = Content.Load<Texture2D>("HUD/textura-cohete");
+            
+
+            if (autoJugador.power == 0){
+                texturaItem = Content.Load<Texture2D>("HUD/textura-cohete");
+            }
+            if (autoJugador.power == 1){
+                texturaItem = Content.Load<Texture2D>("HUD/textura-nitro");
+            }
+            if (autoJugador.power == 2){
+                texturaItem = Content.Load<Texture2D>("HUD/textura-arma");
+            }
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
@@ -260,7 +288,8 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
-           
+           GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque ;
@@ -278,6 +307,41 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             
 
+            GraphicsDevice.DepthStencilState = DepthStencilState.None;
+            SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+
+            // Dibuja texto en la pantalla
+            double tiempoTotal = gameTime.TotalGameTime.TotalSeconds;
+
+            // Mostrar el tiempo transcurrido desde el inicio en pantalla
+            string tiempoDesdeInicio = $"{tiempoTotal:F2}"; 
+            Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
+            Color textColor = Color.White;
+
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(12, 12, 200, 20), Color.White);
+
+    // Dibuja el ítem
+            SpriteBatch.Draw(texturaCuadroItem, new Rectangle(10, 40, 70, 70), Color.White);
+            
+            if (autoJugador.power != -1){
+                SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
+            }
+            if (autoJugador.isOnCooldown){
+                float cooldownProgress = autoJugador.cooldownTimer / autoJugador.cooldownTime;  // Porcentaje de carga (0.0 a 1.0)
+        
+        // Puedes dibujar el círculo dependiendo del progreso
+        // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
+                Rectangle circleRect = new Rectangle(13, 43, 65, 65);
+                
+                // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
+                SpriteBatch.Draw(Circulo, circleRect, Color.White * (1 - cooldownProgress));
+            }
+
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 150, 40), Color.Black * 0.5f);
+            SpriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
+
+            SpriteBatch.End();
             
             
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.

@@ -65,6 +65,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private IPowerUp powerUp;
 
+        public int power = -1;
+        public float cooldownTime = 1.5f;  // Tiempo de cooldown (1.5 segundos)
+        public float cooldownTimer = 0f;   // Contador para el cooldown
+        public bool isOnCooldown = false;
 
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
@@ -142,10 +146,35 @@ namespace TGC.MonoGame.TP.Content.Models
             carBodyReference.Awake = true;
             
 
+
             // Capturar el estado del teclado
-            if (keyboardState.IsKeyDown(Keys.Q)){
-                powerUp.Apply();
+            if (keyboardState.IsKeyDown(Keys.Q) && !isOnCooldown)
+            {
+                powerUp.Apply();  // Aplica el power up
+                // Incrementar el poder, pero resetearlo si excede 3
+                if (power < 2){
+                    power++;
+                } else {
+                    power = 0;
+                }
+                // Activar el cooldown
+                isOnCooldown = true;
+                cooldownTimer = 0f;  // Reiniciar el temporizador
             }
+
+            // Si está en cooldown, actualizar el temporizador
+            if (isOnCooldown)
+            {
+                // Incrementar el temporizador con el tiempo transcurrido
+                cooldownTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                // Si el cooldown ha terminado (supera 1.5 segundos)
+                if (cooldownTimer >= cooldownTime)
+                {
+                    isOnCooldown = false;  // Desactivar el cooldown
+                }
+            }
+
             // Movimiento hacia adelante
             if (keyboardState.IsKeyDown(Keys.W))
             {
