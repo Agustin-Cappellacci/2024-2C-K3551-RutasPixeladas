@@ -151,34 +151,34 @@ namespace TGC.MonoGame.TP
 
             var properties = new CollidableProperty<CarBodyProperties>();
             bufferPool = new BufferPool();
-            simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -10, 0)), new SolveDescription(8, 1));
+            simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
 
 
 
 
-            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
-            builder.Add(new Box(1.85f, 0.7f, 4.73f), RigidPose.Identity, 10);
-            builder.Add(new Box(1.85f, 0.6f, 2.5f), new System.Numerics.Vector3(0, 0.65f, -0.35f), 0.5f);
+            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 1);
+            builder.Add(new Box(40f, 30f, 100f), RigidPose.Identity, 300);
+            //builder.Add(new Box(40f, 25f, 50f), new System.Numerics.Vector3(0, 12.5f, -5f), 5f);
             builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
             builder.Dispose();
             var bodyShape = new Compound(children);
             var bodyShapeIndex = simulation.Shapes.Add(bodyShape);
-            var wheelShape = new Cylinder(0.4f, 0.18f);
-            var wheelInertia = wheelShape.ComputeInertia(0.25f);
+            var wheelShape = new Cylinder(5f, 5f);
+            var wheelInertia = wheelShape.ComputeInertia(5f);
             var wheelShapeIndex = simulation.Shapes.Add(wheelShape);
 
-            const float x = 0.90f;
-            const float y = -0.10f;
-            const float frontZ = 1.70f;
-            const float backZ = -1.70f;
+            const float x = 30f;
+            const float y = -10f;
+            const float frontZ = 35f;
+            const float backZ = -35f;
             const float wheelBaseWidth = x * 2.5f;
             const float wheelBaseLength = frontZ - backZ;
 
             Console.WriteLine("Inertia: " + bodyInertia);
-            playerController = new SimpleCarController(SimpleCar.Create(simulation, properties, new System.Numerics.Vector3(0, 50, 0), bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2f,
+            playerController = new SimpleCarController(SimpleCar.Create(simulation, properties, new System.Numerics.Vector3(0, 20, 0), bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-            new SpringSettings(12f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f)),
-            forwardSpeed: 125, forwardForce: 6 * 15, zoomMultiplier: 2, backwardSpeed: 80, backwardForce: 4 * 15, idleForce: 10f, brakeForce: 80, steeringSpeed: 1.50f, maximumSteeringAngle: MathF.PI * 0.23f,
+            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f)),
+            forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
 

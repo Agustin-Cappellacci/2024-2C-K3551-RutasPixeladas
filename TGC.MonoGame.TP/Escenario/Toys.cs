@@ -228,10 +228,10 @@ namespace TGC.MonoGame.TP.Content.Models
                 rampPosition, // Posición inicial de la rampa
                 rampOrientation,
                 rampShapeIndex
-            ));
+            )); 
             
             
-            /* ESTA IMPLEMENTACION ES CON UN CONVEX HULL, ES LA IDEAL PERO NO PUDE HACERLA FUNCIONAR MUY BIEN
+            /* ESTA IMPLEMENTACION ES CON UN CONVEX HULL, ES LA IDEAL PERO NO PUDE HACERLA FUNCIONAR MUY BIEN 
             // Crear colisiones para la rampa
             var rampVerticesTrasladados = ObtenerVerticesTransformados(rampa, new System.Numerics.Vector3(0f, -10f, 1000f), 10f, -(float)Math.PI / 2, (float)Math.PI / 2);
             // transformo lista a span para parametro de convexHull
@@ -245,9 +245,9 @@ namespace TGC.MonoGame.TP.Content.Models
             rampaBodyHandle = simulation.Statics.Add(new StaticDescription(
             rampCenter, // Posición inicial de la rampa
             rampShapeIndex
-            ));
-            */
-
+            )); */
+            
+            
             // Crear colisiones con rampa doble
             // Definir las dimensiones de la rampa
             var rampaDobleSize = new System.Numerics.Vector3(1000f, 100f, 300f); //Tamaño
