@@ -4,7 +4,7 @@ using System.Threading;
 using BepuUtilities;
 using BepuUtilities.Memory;
 
-namespace TGC.MonoGame.TP.Content.Models;
+namespace TGC.MonoGame.TP;
 
 /// <summary>
 ///     Provides a <see cref="IThreadDispatcher" /> implementation. Not reentrant.

@@ -58,6 +58,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Simulation simulation;
         private BodyHandle carBodyHandle;
         private BodyHandle wheelBodyHandle;
+        SimpleCarController playerController;
 
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
@@ -67,10 +68,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
 
-        public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
+        public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController)
         {
-            carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
-            direccionFrontal = Vector3.Forward;
+            //carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
+            //direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
@@ -82,8 +83,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             CarAcceleration = 500f;
-            carJumpSpeed = 500f;
-            
+            carJumpSpeed = 5f;
+             
 
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -106,8 +107,9 @@ namespace TGC.MonoGame.TP.Content.Models
             // utilizo el graphicsDevice para dibujar las cajas
             this.graphicsDevice = graphicsDevice;
             this.simulation = simulation;
+            this.playerController = playerController;
             // Crear una caja de colisión para el cuerpo principal del auto
-            var carBox = new Box(200f, 10f, 500f); // Dimension del auto
+            /* var carBox = new Box(200f, 10f, 500f); // Dimension del auto
             carBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(carPosition + new System.Numerics.Vector3(0, 80f, 0)), carBox.ComputeInertia(50f),
             simulation.Shapes.Add(carBox), 1f));
 
@@ -125,11 +127,11 @@ namespace TGC.MonoGame.TP.Content.Models
                 wheelBox.ComputeInertia(1f), // para la masa de las ruedas
                 simulation.Shapes.Add(wheelBox), 1f));
 
-            }
+            } */
 
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(GameTime gameTime, Simulation simulation)
         {
 
             // Caputo el estado del teclado.
@@ -141,74 +143,29 @@ namespace TGC.MonoGame.TP.Content.Models
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
             
-
-            // Capturar el estado del teclado
-            if (keyboardState.IsKeyDown(Keys.Q)){
-                powerUp.Apply();
-            }
-            // Movimiento hacia adelante
-            if (keyboardState.IsKeyDown(Keys.W))
-            {
-                CarSpeed += CarAcceleration * elapsedTime;
-                if (CarSpeed > CarMaxSpeed) CarSpeed = CarMaxSpeed; // Limitar velocidad máxima
-                Console.WriteLine("CarSpeed (W): " + CarSpeed);
-            }
-            else if (keyboardState.IsKeyDown(Keys.S))
-            {
-                CarSpeed -= CarAcceleration * elapsedTime * CarBrakeForce;
-                if (CarSpeed < -CarMaxSpeed / 2) CarSpeed = -CarMaxSpeed / 2; // Limitar reversa
-                Console.WriteLine("CarSpeed (S): " + CarSpeed);
-            }
-            else
-            {
-                // Desacelerar cuando no se presionan las teclas
-                CarSpeed -= CarSpeed > 0 ? CarDeceleration * elapsedTime : -CarDeceleration * elapsedTime;
-                if (Math.Abs(CarSpeed) < 0.1f) CarSpeed = 0; // Detener el auto cuando está casi en reposo
-                Console.WriteLine("CarSpeed (no key): " + CarSpeed);
-            }
+            float steeringSum = 0;
 
             // Actualizar rotación del coche
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                if (CarSpeed != 0)
-                {
-                    if (CarSpeed >= 0)
-                    {
-                        CarRotationY += carSpinSpeed * elapsedTime;
-                    }
-                    else
-                    {
-                        CarRotationY -= carSpinSpeed * elapsedTime;
-                    }
-                }
-                wheelSteeringAngle = Math.Min(wheelSteeringAngle + wheelSteerDelta, maxWheelSteer);
+                steeringSum += 1;
 
             }
-            else if (keyboardState.IsKeyDown(Keys.D))
+            if (keyboardState.IsKeyDown(Keys.D))
             {
-                if (CarSpeed != 0)
-                {
-                    if (CarSpeed >= 0)
-                    {
-                        CarRotationY -= carSpinSpeed * elapsedTime;
-                    }
-                    else
-                    {
-                        CarRotationY += carSpinSpeed * elapsedTime;
-                    }
-                }
-                wheelSteeringAngle = Math.Max(wheelSteeringAngle - wheelSteerDelta, -maxWheelSteer);
+                steeringSum -= 1;
             }
-            else
-            {
-                wheelSteeringAngle = 0;
-            }
+        
 
             if (keyboardState.IsKeyDown(Keys.Space) && carPosition.Y<100f){
                 carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
             }
 
-            float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
+            var targetSpeedFraction = keyboardState.IsKeyDown(Keys.W) ? 1f: keyboardState.IsKeyDown(Keys.S) ? -1f: 0;
+
+
+
+/*             float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
             wheelRotationAngle += wheelRotationDelta;
             var currentVelocity = carBodyReference.Velocity.Linear;
             // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
@@ -231,17 +188,20 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             // Aplicar la nueva velocidad en la dirección hacia adelante
-            carBodyReference.ApplyLinearImpulse(forwardDirection * CarSpeed);
+            carBodyReference.ApplyLinearImpulse(forwardDirection * CarSpeed); */
             // Aplicar la rotación al cuerpo físico
-            carBodyReference.Pose.Orientation = System.Numerics.Quaternion.CreateFromAxisAngle(new System.Numerics.Vector3(0, 1, 0), CarRotationY);
+//            carBodyReference.Pose.Orientation = System.Numerics.Quaternion.CreateFromAxisAngle(new System.Numerics.Vector3(0, 1, 0), CarRotationY);
+            Console.WriteLine("TargetSpeed " + targetSpeedFraction);
+            playerController.Update(simulation, 1/60f, steeringSum, targetSpeedFraction, keyboardState.IsKeyDown(Keys.LeftAlt));
             // Actualizar la posición y la matriz de mundo del auto
             carPosition = carBodyReference.Pose.Position;
             var rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
-            carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
+            carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
 
+           
+            
 
-
-
+/* 
             var frontLeftWheelPosition = Vector3.Transform(ruedas[0].ParentBone.Transform.Translation, carWorld);
             var frontRightWheelPosition = Vector3.Transform(ruedas[1].ParentBone.Transform.Translation, carWorld);
             var backLeftWheelPosition = Vector3.Transform(ruedas[2].ParentBone.Transform.Translation, carWorld);
@@ -264,8 +224,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 targetOrientation.W
             );
 
-            carBodyReference.Pose.Orientation = targetOrientationNumerics;
-
+            carBodyReference.Pose.Orientation = targetOrientationNumerics; */
+/* 
             if (carPosition.Y < -3f)
             {
                 carWorld = Matrix.Identity * Matrix.CreateTranslation(new Vector3(0f,300f,0f));
@@ -274,7 +234,7 @@ namespace TGC.MonoGame.TP.Content.Models
             else
             {
                 carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
-            }
+            } */
                 Console.WriteLine("posicion del auto: " + carPosition);
         }
 
