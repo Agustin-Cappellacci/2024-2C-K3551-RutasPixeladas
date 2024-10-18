@@ -157,8 +157,8 @@ namespace TGC.MonoGame.TP
 
 
             var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 1);
-            builder.Add(new Box(40f, 30f, 100f), RigidPose.Identity, 300);
-            //builder.Add(new Box(40f, 25f, 50f), new System.Numerics.Vector3(0, 12.5f, -5f), 5f);
+            builder.Add(new Box(50f, 30f, 100f), RigidPose.Identity, 300);
+            builder.Add(new Box(40f, 30f, 50f), new System.Numerics.Vector3(0, 20f, -5f), 1f);
             builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
             builder.Dispose();
             var bodyShape = new Compound(children);
@@ -171,7 +171,7 @@ namespace TGC.MonoGame.TP
             const float y = -10f;
             const float frontZ = 35f;
             const float backZ = -35f;
-            const float wheelBaseWidth = x * 2.5f;
+            const float wheelBaseWidth = x * 3f;
             const float wheelBaseLength = frontZ - backZ;
 
             Console.WriteLine("Inertia: " + bodyInertia);
