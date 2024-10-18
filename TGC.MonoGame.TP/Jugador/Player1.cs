@@ -294,7 +294,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Crear la matriz de mundo del coche, que incluye rotación y traslación
             var carWorldMatrix = carRotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
-
+/* 
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
             DrawBox(carWorldMatrix, new Vector3(40f, 30f, 100f), viewMatrix, projectionMatrix);
             // Dibujar las cajas de colisión de las ruedas
@@ -315,7 +315,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 // Dibujar la caja de colisión para cada rueda
                 DrawBox(Matrix.CreateTranslation(wheelPositionInWorld), new Vector3(100f, 100f, 100f), viewMatrix, projectionMatrix);
-            }
+            } */
         }
 
         private void ElevateWheel(BodyReference wheelBodyReference)

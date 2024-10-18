@@ -65,7 +65,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private StaticHandle floorHandle;
         private StaticHandle torreHandle;
-        private StaticHandle rampaBodyHandle;
+        private StaticHandle rampa1BodyHandle;
+        private StaticHandle rampa2BodyHandle;
+        private StaticHandle rampa3BodyHandle;
+        private StaticHandle rampa4BodyHandle;
+        private StaticHandle rampa5BodyHandle;
+        private StaticHandle rampa6BodyHandle;
+        private StaticHandle rampa7BodyHandle;
+        private StaticHandle rampa8BodyHandle;
         private StaticHandle rampaDobleBodyHandle;
         private StaticHandle caballo1BodyHandle;
         private StaticHandle caballo2BodyHandle;
@@ -214,21 +221,137 @@ namespace TGC.MonoGame.TP.Content.Models
 
             
             // Definir las dimensiones de la rampa
-            var rampSize = new System.Numerics.Vector3(900f, 600f, 2500f); // Ejemplo de tamaño
+        
+            var ramp1Size = new System.Numerics.Vector3(900f, 100f, 230f); // Ejemplo de tamaño
             // Calcular la posición y la rotación
-            var rampPosition = new System.Numerics.Vector3(-200f, 50f, 900f); // Posición de la rampa
-            var rampOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 6, 0); // Rotación
-            var rampShape = new Box(rampSize.X, rampSize.Y, rampSize.Z);
+            var ramp1Position = new System.Numerics.Vector3(455f, 620f, 900f); // Posición de la rampa
+            var ramp1Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 5f, 0); // Rotación
+            var ramp1Shape = new Box(ramp1Size.X, ramp1Size.Y, ramp1Size.Z);
 
             // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
-            var rampShapeIndex = simulation.Shapes.Add(rampShape);
+            var ramp1ShapeIndex = simulation.Shapes.Add(ramp1Shape);
 
             // Crear el cuerpo estático para la rampa
-            rampaBodyHandle = simulation.Statics.Add(new StaticDescription(
-                rampPosition, // Posición inicial de la rampa
-                rampOrientation,
-                rampShapeIndex
+            rampa1BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp1Position, // Posición inicial de la rampa
+                ramp1Orientation,
+                ramp1ShapeIndex
+            ));
+
+            var ramp2Size = new System.Numerics.Vector3(900f, 100f, 280f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp2Position = new System.Numerics.Vector3(290f, 480f, 900f); // Posición de la rampa
+            var ramp2Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 4, 0); // Rotación
+            var ramp2Shape = new Box(ramp2Size.X, ramp2Size.Y, ramp2Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp2ShapeIndex = simulation.Shapes.Add(ramp2Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa2BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp2Position, // Posición inicial de la rampa
+                ramp2Orientation,
+                ramp2ShapeIndex
             )); 
+            
+            var ramp3Size = new System.Numerics.Vector3(900f, 100f, 280f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp3Position = new System.Numerics.Vector3(100f, 320f, 900f); // Posición de la rampa
+            var ramp3Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 5, 0); // Rotación
+            var ramp3Shape = new Box(ramp3Size.X, ramp3Size.Y, ramp3Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp3ShapeIndex = simulation.Shapes.Add(ramp3Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa3BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp3Position, // Posición inicial de la rampa
+                ramp3Orientation,
+                ramp3ShapeIndex
+            )); 
+
+            var ramp4Size = new System.Numerics.Vector3(900f, 100f, 280f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp4Position = new System.Numerics.Vector3(-25f, 235f, 900f); // Posición de la rampa
+            var ramp4Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 6, 0); // Rotación
+            var ramp4Shape = new Box(ramp4Size.X, ramp4Size.Y, ramp4Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp4ShapeIndex = simulation.Shapes.Add(ramp4Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa4BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp4Position, // Posición inicial de la rampa
+                ramp4Orientation,
+                ramp4ShapeIndex
+            )); 
+
+            var ramp5Size = new System.Numerics.Vector3(900f, 100f, 280f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp5Position = new System.Numerics.Vector3(-245f, 135f, 900f); // Posición de la rampa
+            var ramp5Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 9, 0); // Rotación
+            var ramp5Shape = new Box(ramp5Size.X, ramp5Size.Y, ramp5Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp5ShapeIndex = simulation.Shapes.Add(ramp5Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa5BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp5Position, // Posición inicial de la rampa
+                ramp5Orientation,
+                ramp5ShapeIndex
+            )); 
+
+            
+            var ramp6Size = new System.Numerics.Vector3(900f, 100f, 280f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp6Position = new System.Numerics.Vector3(-480f, 65f, 900f); // Posición de la rampa
+            var ramp6Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 13, 0); // Rotación
+            var ramp6Shape = new Box(ramp6Size.X, ramp6Size.Y, ramp6Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp6ShapeIndex = simulation.Shapes.Add(ramp6Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa6BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp6Position, // Posición inicial de la rampa
+                ramp6Orientation,
+                ramp6ShapeIndex
+            )); 
+
+
+            var ramp7Size = new System.Numerics.Vector3(900f, 95f, 280f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp7Position = new System.Numerics.Vector3(-720f, 15f, 900f); // Posición de la rampa
+            var ramp7Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 16, 0); // Rotación
+            var ramp7Shape = new Box(ramp7Size.X, ramp7Size.Y, ramp7Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp7ShapeIndex = simulation.Shapes.Add(ramp7Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa7BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp7Position, // Posición inicial de la rampa
+                ramp7Orientation,
+                ramp7ShapeIndex
+            )); 
+
+            var ramp8Size = new System.Numerics.Vector3(900f, 100f, 260f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var ramp8Position = new System.Numerics.Vector3(-950f, -32f, 900f); // Posición de la rampa
+            var ramp8Orientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 17, 0); // Rotación
+            var ramp8Shape = new Box(ramp8Size.X, ramp8Size.Y, ramp8Size.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var ramp8ShapeIndex = simulation.Shapes.Add(ramp8Shape);
+
+            // Crear el cuerpo estático para la rampa
+            rampa8BodyHandle = simulation.Statics.Add(new StaticDescription(
+                ramp8Position, // Posición inicial de la rampa
+                ramp8Orientation,
+                ramp8ShapeIndex
+            )); 
+
             
             
             /* ESTA IMPLEMENTACION ES CON UN CONVEX HULL, ES LA IDEAL PERO NO PUDE HACERLA FUNCIONAR MUY BIEN 
@@ -729,8 +852,9 @@ namespace TGC.MonoGame.TP.Content.Models
             DrawBox(Matrix.CreateTranslation(0, -50, 0), new Vector3(5000f, 100f, 5000f), viewMatrix, projectionMatrix);
             // Dibujar la caja de colisión de la torre
             DrawBox(Matrix.CreateTranslation(-1300f, 1f, 700f), new Vector3(200f, 500f, 200f), viewMatrix, projectionMatrix);
-            // Dibujar caja de colision de la rampa
-            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 6, 0)*Matrix.CreateTranslation(-200f, 50f, 900f), new Vector3(900f, 600f, 1800f), viewMatrix, projectionMatrix);
+            // Dibujar cajas de colision de la rampa
+            this.DrawCollisionBoxesRampaGrande(viewMatrix,projectionMatrix);
+            
             // Dibujar Rampa doble
             DrawBox(Matrix.CreateTranslation(-900f, 0f, -1100f), new Vector3(1000f, 100f, 300f), viewMatrix, projectionMatrix);
             // Dibujar Rampa panza
@@ -747,6 +871,20 @@ namespace TGC.MonoGame.TP.Content.Models
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, (float)Math.PI / -2)*Matrix.CreateTranslation(360F, 2f, -1700f), new Vector3(500f, 200f, 500f), viewMatrix, projectionMatrix);
             
         }
+
+        private void DrawCollisionBoxesRampaGrande(Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 5f, 0)*Matrix.CreateTranslation(455f, 620f, 900f), new Vector3(900f, 100f, 230f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 4, 0)*Matrix.CreateTranslation(290f, 480f, 900f), new Vector3(900f, 100f, 280f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 5, 0)*Matrix.CreateTranslation(100f, 320f, 900f), new Vector3(900f, 100f, 280f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 6, 0)*Matrix.CreateTranslation(-25f, 235f, 900f), new Vector3(900f, 100f, 280f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 9, 0)*Matrix.CreateTranslation(-245f, 135f, 900f), new Vector3(900f, 100f, 280f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 13, 0)*Matrix.CreateTranslation(-480f, 65f, 900f), new Vector3(900f, 100f, 280f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 16, 0)*Matrix.CreateTranslation(-720f, 15f, 900f), new Vector3(900f, 95f, 280f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 17, 0)*Matrix.CreateTranslation(-950f, -32f, 900f), new Vector3(900f, 100f, 260f), viewMatrix, projectionMatrix);
+            
+        }
+
         public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
         {
             // Crear un efecto básico para dibujar la caja
