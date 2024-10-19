@@ -73,6 +73,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private StaticHandle rampa6BodyHandle;
         private StaticHandle rampa7BodyHandle;
         private StaticHandle rampa8BodyHandle;
+        private StaticHandle rampaParedBodyHandle;
         private StaticHandle rampaDobleBodyHandle;
         private StaticHandle caballo1BodyHandle;
         private StaticHandle caballo2BodyHandle;
@@ -83,7 +84,7 @@ namespace TGC.MonoGame.TP.Content.Models
         
         private Simulation simulation;
         private GraphicsDevice graphicsDevice;
-        private ConvexHull rampHull;
+        //private ConvexHull rampHull;
 
 
 
@@ -209,14 +210,18 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Crear colisiones para la torre eiffel
             // Define el tamaño del box (ancho, alto, profundo)
-            System.Numerics.Vector3 torreSize = new System.Numerics.Vector3(200f, 500f, 200f);
+            System.Numerics.Vector3 torreSize = new System.Numerics.Vector3(180f, 500f, 180f);
             // Crear el Collidable Box
             var torreShape = new Box(torreSize.X, torreSize.Y, torreSize.Z); // Crea la forma del box
+            var torreOrientation =  BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 10,0, 0);
             var torreShapeIndex = simulation.Shapes.Add(torreShape); // Registra la forma en el sistema de colisiones
+
             // Crear el objeto estático para el suelo
             torreHandle = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(-1300f, 1f, 700f), // Posición inicial del box
+                torreOrientation,
                 torreShapeIndex // Fricción
+                
             ));
 
             
@@ -351,8 +356,22 @@ namespace TGC.MonoGame.TP.Content.Models
                 ramp8Orientation,
                 ramp8ShapeIndex
             )); 
-
             
+            var rampParedSize = new System.Numerics.Vector3(1000f, 200f, 900f); // Ejemplo de tamaño
+            // Calcular la posición y la rotación
+            var rampParedPosition = new System.Numerics.Vector3(-30f, 50f, 900f); // Posición de la rampa
+            var rampParedShape = new Box(rampParedSize.X, rampParedSize.Y, rampParedSize.Z);
+
+            // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
+            var rampParedShapeIndex = simulation.Shapes.Add(rampParedShape);
+
+            // Crear el cuerpo estático para la rampa
+            rampaParedBodyHandle = simulation.Statics.Add(new StaticDescription(
+                rampParedPosition, // Posición inicial de la rampa
+                rampParedShapeIndex
+            )); 
+            
+
             
             /* ESTA IMPLEMENTACION ES CON UN CONVEX HULL, ES LA IDEAL PERO NO PUDE HACERLA FUNCIONAR MUY BIEN 
             // Crear colisiones para la rampa
@@ -851,7 +870,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Dibujar la caja de colisión del plano
             DrawBox(Matrix.CreateTranslation(0, -50, 0), new Vector3(5000f, 100f, 5000f), viewMatrix, projectionMatrix);
             // Dibujar la caja de colisión de la torre
-            DrawBox(Matrix.CreateTranslation(-1300f, 1f, 700f), new Vector3(200f, 500f, 200f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 10,0,0) * Matrix.CreateTranslation(-1300f, 1f, 700f), new Vector3(180f, 500f, 180f), viewMatrix, projectionMatrix);
             // Dibujar cajas de colision de la rampa
             this.DrawCollisionBoxesRampaGrande(viewMatrix,projectionMatrix);
             
@@ -882,6 +901,7 @@ namespace TGC.MonoGame.TP.Content.Models
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 13, 0)*Matrix.CreateTranslation(-480f, 65f, 900f), new Vector3(900f, 100f, 280f), viewMatrix, projectionMatrix);
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 16, 0)*Matrix.CreateTranslation(-720f, 15f, 900f), new Vector3(900f, 95f, 280f), viewMatrix, projectionMatrix);
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 2, (float)Math.PI / 17, 0)*Matrix.CreateTranslation(-950f, -32f, 900f), new Vector3(900f, 100f, 260f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateTranslation(-30f, 50f, 900f), new Vector3(1000f, 100f, 900f), viewMatrix, projectionMatrix);
             
         }
 
