@@ -28,6 +28,7 @@ namespace TGC.MonoGame.TP.Content.Models
         // Jugabilidad
         private Microsoft.Xna.Framework.Vector3 direccionFrontal { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
+        private Matrix rotationMatrix;
 
         public Matrix carWorld { get; set; }
 
@@ -204,8 +205,9 @@ namespace TGC.MonoGame.TP.Content.Models
             Console.WriteLine("TargetSpeed " + targetSpeedFraction);
             playerController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, keyboardState.IsKeyDown(Keys.LeftAlt));
             // Actualizar la posición y la matriz de mundo del auto
+            carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
-            var rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
+            rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition - new System.Numerics.Vector3(0,15f,0));
 
 
@@ -290,13 +292,15 @@ namespace TGC.MonoGame.TP.Content.Models
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
         {
             // Obtener la matriz de rotación del auto (supongo que tienes una variable CarRotationY para la rotación en Y)
-            var carRotationMatrix = Matrix.CreateRotationY(CarRotationY); // Rotación del auto en Y (ajusta esto si tienes más rotaciones en otros ejes)
+            //var carRotationMatrix = Matrix.CreateRotationY(rotationMatrix); // Rotación del auto en Y (ajusta esto si tienes más rotaciones en otros ejes)
 
             // Crear la matriz de mundo del coche, que incluye rotación y traslación
-            var carWorldMatrix = carRotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
-/* 
+            var carWorldMatrix = rotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
+
+            
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
-            DrawBox(carWorldMatrix, new Vector3(40f, 30f, 100f), viewMatrix, projectionMatrix);
+            //DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
+            /*
             // Dibujar las cajas de colisión de las ruedas
             foreach (var rueda in ruedas)
             {

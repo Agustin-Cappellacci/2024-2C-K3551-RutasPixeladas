@@ -357,7 +357,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 ramp8ShapeIndex
             )); 
             
-            var rampParedSize = new System.Numerics.Vector3(1000f, 200f, 900f); // Ejemplo de tamaño
+            var rampParedSize = new System.Numerics.Vector3(1000f, 100f, 900f); // Ejemplo de tamaño
             // Calcular la posición y la rotación
             var rampParedPosition = new System.Numerics.Vector3(-30f, 50f, 900f); // Posición de la rampa
             var rampParedShape = new Box(rampParedSize.X, rampParedSize.Y, rampParedSize.Z);
