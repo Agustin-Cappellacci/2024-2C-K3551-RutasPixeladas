@@ -82,6 +82,15 @@ namespace TGC.MonoGame.TP
         private SimpleThreadDispatcher threadDispatcher;
         SimpleCarController playerController;
 
+               // -----
+
+        Texture2D texturaBarraVida;
+        Texture2D texturaCuadroItem;
+        Texture2D texturaItem;
+        Texture2D Circulo;
+
+        SpriteFont myFont;
+
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -140,6 +149,14 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {
+
+            texturaBarraVida = Content.Load<Texture2D>("HUD/textura-vida");
+            texturaCuadroItem = Content.Load<Texture2D>("HUD/marco");
+            Circulo = Content.Load<Texture2D>("HUD/circulo");
+            texturaItem = Content.Load<Texture2D>("HUD/textura-nitro");
+
+            myFont = Content.Load<SpriteFont>("myFont");  // Carga la fuente
+
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
@@ -210,21 +227,21 @@ namespace TGC.MonoGame.TP
             {
                 if (listaModelos[i] == TipoAuto.tipoCarrera)
                 {
-                    listaAutos.Add(new AutoEnemigoCarrera(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
                 }
                 if (listaModelos[i] == TipoAuto.tipoCombate)
                 {
-                    listaAutos.Add(new AutoEnemigoCombate(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
 
 
             // Cargo Clases
-            autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController);
+            autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content);
-            Logo = new Logo(Content, simulation, GraphicsDevice);
+           // Logo = new Logo(Content, simulation, GraphicsDevice);
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -292,7 +309,7 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
-
+         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
@@ -307,8 +324,41 @@ namespace TGC.MonoGame.TP
             autoJugador.Draw(View, Projection);
             Toys.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
-            Logo.Draw(gameTime, View, Projection);
-            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+        //    Logo.Draw(gameTime, View, Projection);
+           GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            
+
+            GraphicsDevice.DepthStencilState = DepthStencilState.None;
+            SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+
+            // Dibuja texto en la pantalla
+            double tiempoTotal = gameTime.TotalGameTime.TotalSeconds;
+
+            // Mostrar el tiempo transcurrido desde el inicio en pantalla
+            string tiempoDesdeInicio = $"{tiempoTotal:F2}"; 
+            Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
+            Color textColor = Color.White;
+
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(12, 12, 200, 20), Color.White);
+
+    // Dibuja el ítem
+            SpriteBatch.Draw(texturaCuadroItem, new Rectangle(10, 40, 70, 70), Color.White);
+            SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
+            
+         
+        // Puedes dibujar el círculo dependiendo del progreso
+        // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
+                Rectangle circleRect = new Rectangle(13, 43, 65, 65);
+                
+                // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
+               
+            
+
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 150, 40), Color.Black * 0.5f);
+            SpriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
+
+            SpriteBatch.End();
 
 
 
