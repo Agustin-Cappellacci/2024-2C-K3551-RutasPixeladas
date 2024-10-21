@@ -86,7 +86,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             CarAcceleration = 500f;
-            carJumpSpeed = 5f;
+            carJumpSpeed = 2000f;
 
             
 
@@ -114,7 +114,7 @@ namespace TGC.MonoGame.TP.Content.Models
             this.simulation = simulation;
             this.playerController = playerController;
 
-            carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
+            //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
 
         }

@@ -73,7 +73,7 @@ namespace TGC.MonoGame.TP
         private float CantidadDeAutos { get; set; }
         public List<TipoAuto> listaModelos { get; set; }
         public List<AutoEnemigo> listaAutos { get; set; }
-        private List<Vector3> traslacionesIniciales { get; set; }
+        private List<System.Numerics.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
         // ------
 
@@ -170,10 +170,7 @@ namespace TGC.MonoGame.TP
             bufferPool = new BufferPool();
             simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
 
-
-
-
-            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 1);
+            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
             builder.Add(new Box(50f, 30f, 100f), RigidPose.Identity, 300);
             builder.Add(new Box(40f, 30f, 50f), new System.Numerics.Vector3(0, 20f, -5f), 1f);
             builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
@@ -191,11 +188,14 @@ namespace TGC.MonoGame.TP
             const float wheelBaseWidth = x * 3f;
             const float wheelBaseLength = frontZ - backZ;
 
-            Console.WriteLine("Inertia: " + bodyInertia);
-            playerController = new SimpleCarController(SimpleCar.Create(simulation, properties, new System.Numerics.Vector3(0, 20, 0), bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
+            var pose = new RigidPose(traslacionesIniciales[0],  System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
+
+            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f)),
-            forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
+
+            Console.WriteLine("Inertia: " + bodyInertia);
+            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
 
@@ -391,9 +391,9 @@ namespace TGC.MonoGame.TP
             base.UnloadContent();
         }
 
-        public List<Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
+        public List<System.Numerics.Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
         {
-            List<Vector3> puntos = new List<Vector3>();
+            List<System.Numerics.Vector3> puntos = new List<System.Numerics.Vector3>();
             float anguloIncremento = Microsoft.Xna.Framework.MathHelper.TwoPi / numPuntos; // Divide el círculo en partes iguales
             float centroX = -900f; // Desplazamiento en X
             float centroZ = -1100f; // Desplazamiento en Z
@@ -405,13 +405,13 @@ namespace TGC.MonoGame.TP
                 float z = centroZ + radio * (float)Math.Sin(angulo); // Coordenada Z con desplazamiento
                 float y = 5; // Coordenada Y fija
 
-                puntos.Add(new Vector3(x, y, z));
+                puntos.Add(new System.Numerics.Vector3(x, y, z));
             }
 
             return puntos;
         }
 
-        public List<float> CalcularAngulosHaciaCentro(List<Vector3> posiciones)     // Gira los autos para que miren al centro
+        public List<float> CalcularAngulosHaciaCentro(List<System.Numerics.Vector3> posiciones)     // Gira los autos para que miren al centro
         {
             List<float> angulos = new List<float>();
 
