@@ -58,7 +58,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Simulation simulation;
         private BodyHandle carBodyHandle;
         private BodyHandle wheelBodyHandle;
-        SimpleCarController playerController;
+        SimpleCarController playerControllers;
 
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
@@ -73,7 +73,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
         // Constructor abstracto
-        protected AutoEnemigo(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, /*SimpleCarController playerController,*/ Vector3 posicion, float angulo) {
+        protected AutoEnemigo(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice,/* SimpleCarController playerController,*/ Vector3 posicion, float angulo) {
+            
             carWorld = Matrix.Identity;
             var random = new Random();  // No hace falta un seed porque se usa una sola vez y se guarda en una variable.
             
@@ -88,7 +89,7 @@ namespace TGC.MonoGame.TP.Content.Models
             texture = content.Load<Texture2D>(ContentFolder3D + "autos/CombatVehicle/TEX"); // Asegúrate de usar la ruta correcta
             EffectCar2.Parameters["ModelTexture"].SetValue(texture);
         */  
-            carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
+            //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
         }
 
         private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
@@ -153,9 +154,11 @@ namespace TGC.MonoGame.TP.Content.Models
         float Escala;
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
-        public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, /*SimpleCarController playerController,*/ Vector3 posicion, float angulo)
-            : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2) // Ajustar ángulo si es necesario
+        SimpleCarController playerController;
+        public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
+            : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2) //Ajustar ángulo si es necesario
         {   
+            this.playerController = playerController;
 
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
@@ -168,7 +171,7 @@ namespace TGC.MonoGame.TP.Content.Models
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
 
-            carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
+            //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
         }
 
         private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
@@ -191,10 +194,12 @@ namespace TGC.MonoGame.TP.Content.Models
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
             
+            playerController.Update(simulation, 1 / 60f, 0, 0, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition - new System.Numerics.Vector3(0,15f,0));
+            
         }
 
         protected override void CargarModelo(ContentManager content) {
@@ -232,9 +237,12 @@ namespace TGC.MonoGame.TP.Content.Models
         float Escala;
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
-        public AutoEnemigoCarrera(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, /*SimpleCarController playerController,*/ Vector3 posicion, float angulo)
+        SimpleCarController playerController;
+        public AutoEnemigoCarrera(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
             : base(content, simulation, graphicsDevice, posicion, angulo) // Ajustar ángulo si es necesario
         {   
+
+            this.playerController = playerController;
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             ruedas = new List<ModelMesh>();
@@ -251,6 +259,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
 
+            playerController.Update(simulation, 1 / 60f, 0, 0, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);

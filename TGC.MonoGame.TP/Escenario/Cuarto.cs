@@ -1,3 +1,5 @@
+using BepuPhysics;
+using BepuPhysics.Collidables;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -24,15 +26,35 @@ namespace TGC.MonoGame.TP.Content.Models
         private Effect EffectBed { get; set; }
         private Texture2D textureFloor { get; set; }
         private Texture2D textureChair { get; set; }
-
         private List<Matrix> WorldMatrices { get; set; }
+
+        // colisiones
+        private Simulation simulation;
+        private GraphicsDevice graphicsDevice;
+        private StaticHandle pata1Cama;
+        private StaticHandle pata2Cama;
+        private StaticHandle pata3Cama;
+        private StaticHandle pata4Cama;
+        private StaticHandle cama;
+        private StaticHandle respaldoCama;
+        private StaticHandle almohadaCama;
+        
+        private StaticHandle pata1Silla;
+        private StaticHandle pata2Silla;
+        private StaticHandle pata3Silla;
+        private StaticHandle pata4Silla;
+        private StaticHandle respaldoSilla;
+        private StaticHandle respaldoPared1Silla;
+        private StaticHandle respaldoPared2Silla;
+        private StaticHandle silla;
+
 
 
         // <summary>
         /// Creates a Car Model with a content manager to load resources.
         /// </summary>
         /// <param name="content">The Content Manager to load resources</param>
-        public Cuarto (ContentManager content)
+        public Cuarto (ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
         {
             // Load the Car Model
             Model = content.Load<Model>(ContentFolder3D+"escenario/Floor");
@@ -49,8 +71,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // load texture
 
-            textureChair = content.Load<Texture2D>(ContentFolder3D + "chair/chair_tex"); // Aseg�rate de usar la ruta correcta
-            textureFloor = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/piso"); // Aseg�rate de usar la ruta correcta
+            textureChair = content.Load<Texture2D>(ContentFolder3D + "chair/chair_tex"); // Aseg�rate de usar la ruta correcta
+            textureFloor = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/piso"); // Aseg�rate de usar la ruta correcta
             
 
 
@@ -108,6 +130,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left *2f* 75f),
             };
 
+            inicializadorColisionables(simulation, graphicsDevice);
+
 
         }
 
@@ -132,7 +156,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             var scala = 10f; // Escala entre 1.0 y 11.0
             // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
-            //var color = new Vector3(1.0f, 1.0f, 1.0f); //color marr�n
+            //var color = new Vector3(1.0f, 1.0f, 1.0f); //color marr�n
             //.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
                 
             var traslacion = new Vector3(0f, -1f, 0f);
@@ -198,5 +222,185 @@ namespace TGC.MonoGame.TP.Content.Models
             }
         
         }
+
+        public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
+        {
+            // Crear un efecto básico para dibujar la caja
+            BasicEffect effect = new BasicEffect(graphicsDevice);
+            effect.World = worldMatrix;
+            effect.View = viewMatrix;
+            effect.Projection = projectionMatrix;
+            effect.VertexColorEnabled = true;
+
+            // Definir los vértices de una caja (un cubo unitario que escalaremos)
+            VertexPositionColor[] vertices = new VertexPositionColor[8];
+            vertices[0] = new VertexPositionColor(new Vector3(-1, 1, 1), Color.Red);   // Front top left
+            vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1), Color.Red);    // Front top right
+            vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1), Color.Red);  // Front bottom left
+            vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1), Color.Red);   // Front bottom right
+            vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1), Color.Red);  // Back top left
+            vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1), Color.Red);   // Back top right
+            vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1), Color.Red); // Back bottom left
+            vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1), Color.Red);  // Back bottom right
+
+            // Escalar la caja en función del tamaño dado
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                vertices[i].Position *= size / 2f;
+            }
+
+            // Definir los índices que forman las líneas de la caja
+            int[] indices = new int[]
+            {
+        0, 1, 1, 3, 3, 2, 2, 0,  // Front face
+        4, 5, 5, 7, 7, 6, 6, 4,  // Back face
+        0, 4, 1, 5, 2, 6, 3, 7   // Connecting edges
+            };
+
+            // Dibujar la caja usando el efecto básico
+            foreach (var pass in effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserIndexedPrimitives(
+                    PrimitiveType.LineList,
+                    vertices,
+                    0,
+                    vertices.Length,
+                    indices,
+                    0,
+                    indices.Length / 2
+                );
+            }
+        }
+
+        private void inicializadorColisionables(Simulation simulation, GraphicsDevice graphicsDevice){
+            this.simulation = simulation;
+            this.graphicsDevice = graphicsDevice;
+
+            // Crear colisiones
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 camaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var camaShape = new Box(camaSize.X, camaSize.Y, camaSize.Z); // Crea la forma del box
+            var camaShapeIndex = simulation.Shapes.Add(camaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para la cama
+            cama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                camaShapeIndex // Fricción
+            ));
+
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 pataCamaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var pataCamaShape = new Box(pataCamaSize.X, pataCamaSize.Y, pataCamaSize.Z); // Crea la forma del box
+            var pataCamaShapeIndex = simulation.Shapes.Add(pataCamaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para las patas de la cama
+            pata1Cama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataCamaShapeIndex // Fricción
+            ));
+            pata2Cama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataCamaShapeIndex // Fricción
+            ));
+            pata3Cama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataCamaShapeIndex // Fricción
+            ));
+            pata4Cama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataCamaShapeIndex // Fricción
+            ));
+            
+
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 almohadaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var almohadaShape = new Box(almohadaSize.X, almohadaSize.Y, almohadaSize.Z); // Crea la forma del box
+            var almohadaShapeIndex = simulation.Shapes.Add(almohadaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para la cama
+            almohadaCama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                almohadaShapeIndex // Fricción
+            ));
+
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 respaldoCamaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var respaldoCamaShape = new Box(respaldoCamaSize.X, respaldoCamaSize.Y, respaldoCamaSize.Z); // Crea la forma del box
+            var respaldoCamaShapeIndex = simulation.Shapes.Add(respaldoCamaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para la cama
+            respaldoCama = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                respaldoCamaShapeIndex // Fricción
+            ));
+
+
+
+
+            
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 sillaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var sillaShape = new Box(sillaSize.X, sillaSize.Y, sillaSize.Z); // Crea la forma del box
+            var sillaShapeIndex = simulation.Shapes.Add(sillaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para la cama
+            silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                sillaShapeIndex // Fricción
+            ));
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 pataSillaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var pataSillaShape = new Box(pataCamaSize.X, pataCamaSize.Y, pataCamaSize.Z); // Crea la forma del box
+            var pataSillaShapeIndex = simulation.Shapes.Add(pataSillaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para las patas de la cama
+            pata1Silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataSillaShapeIndex // Fricción
+            ));
+            pata2Silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataSillaShapeIndex // Fricción
+            ));
+            pata3Silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataSillaShapeIndex // Fricción
+            ));
+            pata4Silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial de la pata
+                pataSillaShapeIndex // Fricción
+            ));
+
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 respaldo1SillaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var respaldo1SillaShape = new Box(respaldo1SillaSize.X, respaldo1SillaSize.Y, respaldo1SillaSize.Z); // Crea la forma del box
+            var respaldo1SillaShapeIndex = simulation.Shapes.Add(respaldo1SillaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para la cama
+            respaldoSilla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                respaldo1SillaShapeIndex // Fricción
+            ));
+            // Define el tamaño del box (ancho, alto, profundo)
+            System.Numerics.Vector3 respaldoParedSillaSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
+            // Crear el Collidable Box
+            var respaldoParedSillaShape = new Box(respaldoParedSillaSize.X, respaldoParedSillaSize.Y, respaldoParedSillaSize.Z); // Crea la forma del box
+            var respaldoParedSillaShapeIndex = simulation.Shapes.Add(respaldoParedSillaShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para la cama
+            respaldoPared1Silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                respaldoParedSillaShapeIndex // Fricción
+            ));
+            // Crear el objeto estático para la cama
+            respaldoPared2Silla = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
+                respaldoParedSillaShapeIndex // Fricción
+            ));
+            
+
+
+        }
+        
     }
 }

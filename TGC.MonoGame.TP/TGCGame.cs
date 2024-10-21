@@ -70,17 +70,27 @@ namespace TGC.MonoGame.TP
             tipoCarrera,
             tipoCombate
         }
-        private float CantidadDeAutos { get; set; }
+        private int CantidadDeAutos { get; set; }
         public List<TipoAuto> listaModelos { get; set; }
         public List<AutoEnemigo> listaAutos { get; set; }
         private List<System.Numerics.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
+        
+        public int aiCount = 1;
+
         // ------
 
         private Simulation simulation;
         private BufferPool bufferPool;
         private SimpleThreadDispatcher threadDispatcher;
-        SimpleCarController playerController;
+        private SimpleCarController playerController;
+
+    /*    struct AIController
+        {*/
+           /* public float LaneOffset;
+        }*/
+        Buffer<SimpleCarController> aiControllers;
+
 
                // -----
 
@@ -115,6 +125,7 @@ namespace TGC.MonoGame.TP
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
             CantidadDeAutos = 70;
+            
             traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
             angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales);
 
@@ -139,6 +150,31 @@ namespace TGC.MonoGame.TP
 
             // Configuramos nuestras matrices de la escena.
 
+            int tessellation = 2;
+            if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
+                throw new ArgumentOutOfRangeException(nameof(tessellation));
+
+            listaModelos.Add(TipoAuto.tipoJugador);
+            for (int i = 0; i < CantidadDeAutos / tessellation; i++)
+            {
+                listaModelos.Add(TipoAuto.tipoCarrera);
+                listaModelos.Add(TipoAuto.tipoCombate);
+                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
+            }
+            // mezclar posiciones
+            var random = new Random(0);
+            for (int i = listaModelos.Count - 1; i > 1; i--) // Empezar desde el último índice y detenerse en el índice 1
+            {
+                int j = random.Next(1, i + 1); // Limitar la mezcla a los elementos a partir del índice 1
+                var temp = listaModelos[i];
+                listaModelos[i] = listaModelos[j];
+                listaModelos[j] = temp;
+            }
+            
+            // INICIALIZO LOGICA DE BEPU
+            iniciarSimulacion();
+
+
             base.Initialize();
         }
 
@@ -160,66 +196,8 @@ namespace TGC.MonoGame.TP
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // inicializo logica de bepu
-            // setea el threadCount para el update de la simulacion de bepu
-            var targetThreadCount = Math.Max(1,
-                Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
-            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
-
-            var properties = new CollidableProperty<CarBodyProperties>();
-            bufferPool = new BufferPool();
-            simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
-
-            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
-            builder.Add(new Box(50f, 30f, 100f), RigidPose.Identity, 300);
-            builder.Add(new Box(40f, 30f, 50f), new System.Numerics.Vector3(0, 20f, -5f), 1f);
-            builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
-            builder.Dispose();
-            var bodyShape = new Compound(children);
-            var bodyShapeIndex = simulation.Shapes.Add(bodyShape);
-            var wheelShape = new Cylinder(5f, 5f);
-            var wheelInertia = wheelShape.ComputeInertia(5f);
-            var wheelShapeIndex = simulation.Shapes.Add(wheelShape);
-
-            const float x = 30f;
-            const float y = -10f;
-            const float frontZ = 35f;
-            const float backZ = -35f;
-            const float wheelBaseWidth = x * 3f;
-            const float wheelBaseLength = frontZ - backZ;
-
-            var pose = new RigidPose(traslacionesIniciales[0],  System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
-
-            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
-            new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
-
-            Console.WriteLine("Inertia: " + bodyInertia);
-            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
-            wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
 
-
-            int tessellation = 2;
-            if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
-                throw new ArgumentOutOfRangeException(nameof(tessellation));
-
-            listaModelos.Add(TipoAuto.tipoJugador);
-            for (int i = 0; i < CantidadDeAutos / tessellation; i++)
-            {
-                listaModelos.Add(TipoAuto.tipoCarrera);
-                listaModelos.Add(TipoAuto.tipoCombate);
-                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
-            }
-            // mezclar posiciones
-            var random = new Random(0);
-            for (int i = listaModelos.Count - 1; i > 1; i--) // Empezar desde el último índice y detenerse en el índice 1
-            {
-                int j = random.Next(1, i + 1); // Limitar la mezcla a los elementos a partir del índice 1
-                var temp = listaModelos[i];
-                listaModelos[i] = listaModelos[j];
-                listaModelos[j] = temp;
-            }
 
 
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
@@ -227,11 +205,11 @@ namespace TGC.MonoGame.TP
             {
                 if (listaModelos[i] == TipoAuto.tipoCarrera)
                 {
-                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, aiControllers[i], traslacionesIniciales[i], angulosIniciales[i]));
                 }
                 if (listaModelos[i] == TipoAuto.tipoCombate)
                 {
-                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, aiControllers[i] ,traslacionesIniciales[i], angulosIniciales[i]));
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
@@ -240,7 +218,7 @@ namespace TGC.MonoGame.TP
             // Cargo Clases
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
             Toys = new Toys(Content, simulation, GraphicsDevice);
-            Cuarto = new Cuarto(Content);
+            Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
            // Logo = new Logo(Content, simulation, GraphicsDevice);
 
 
@@ -433,5 +411,83 @@ namespace TGC.MonoGame.TP
 
             return angulos;
         }
+
+        private void iniciarSimulacion()
+        {
+            
+            // inicializo logica de bepu
+            // setea el threadCount para el update de la simulacion de bepu
+            var targetThreadCount = Math.Max(1,
+                Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
+            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
+
+            var properties = new CollidableProperty<CarBodyProperties>();
+            bufferPool = new BufferPool();
+            simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
+
+            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
+            builder.Add(new Box(50f, 30f, 100f), RigidPose.Identity, 300);
+            builder.Add(new Box(40f, 30f, 50f), new System.Numerics.Vector3(0, 20f, -5f), 1f);
+            builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
+            builder.Dispose();
+            var bodyShape = new Compound(children);
+            var bodyShapeIndex = simulation.Shapes.Add(bodyShape);
+            var wheelShape = new Cylinder(5f, 5f);
+            var wheelInertia = wheelShape.ComputeInertia(5f);
+            var wheelShapeIndex = simulation.Shapes.Add(wheelShape);
+
+            const float x = 30f;
+            const float y = -10f;
+            const float frontZ = 35f;
+            const float backZ = -35f;
+            const float wheelBaseWidth = x * 3f;
+            const float wheelBaseLength = frontZ - backZ;
+
+            var pose = new RigidPose(traslacionesIniciales[0],  System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
+
+            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
+            new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
+            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
+
+            Console.WriteLine("Inertia: " + bodyInertia);
+            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+            wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
+
+            // ACA SE INICIALIZAN LOS AUTOS DE IA
+            bufferPool.Take(CantidadDeAutos-1, out aiControllers);
+            var random = new Random(5);
+            for (int i = 1; i < CantidadDeAutos; ++i)
+            {
+                var position = traslacionesIniciales[i];
+                var orientation = System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[i]);
+                aiControllers[i] = new SimpleCarController(SimpleCar.Create(simulation, properties, new RigidPose(position, orientation), bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2f,
+                    new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
+                    new SpringSettings(5, 0.7f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f)),
+                    forwardSpeed: 50, forwardForce: 5, zoomMultiplier: 2, backwardSpeed: 10, backwardForce: 4, idleForce: 0.25f, brakeForce: 7, steeringSpeed: 1.5f, maximumSteeringAngle: MathF.PI * 0.23f,
+                    wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
+
+                //aiControllers[i].LaneOffset = random.NextSingle() * 20 - 10;
+            }
+
+        }
+
+
+        /*
+            // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
+            for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
+            {
+                if (listaModelos[i] == TipoAuto.tipoCarrera)
+                {
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
+                }
+                if (listaModelos[i] == TipoAuto.tipoCombate)
+                {
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
+                }
+                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
+            }
+        */
+
+        
     }
 }
