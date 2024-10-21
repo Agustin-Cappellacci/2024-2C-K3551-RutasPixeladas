@@ -56,6 +56,8 @@ namespace TGC.MonoGame.TP
         private Jugador autoJugador {get; set;}
         private Toys Toys { get; set; }
         private Cuarto Cuarto { get; set; }
+        private ToyCity ToyCity { get; set; }
+        private SimpleTerrain SimpleTerrain { get; set; }
 
         private Logo Logo {  get; set; }
         // Matrices
@@ -207,9 +209,12 @@ namespace TGC.MonoGame.TP
 
             // Cargo Clases
             autoJugador = new Jugador(Content, simulation,GraphicsDevice);
+            ToyCity = new ToyCity(Content);
+            SimpleTerrain = new SimpleTerrain(GraphicsDevice, Content);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content);
             Logo = new Logo(Content, simulation, GraphicsDevice);
+            
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -301,6 +306,8 @@ namespace TGC.MonoGame.TP
 
             
             autoJugador.Draw(View, Projection);
+            ToyCity.Draw(gameTime, View, Projection);
+            SimpleTerrain.Draw(gameTime, View, Projection);
             Toys.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
             Logo.Draw(gameTime, View, Projection);
