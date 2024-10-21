@@ -56,6 +56,7 @@ namespace TGC.MonoGame.TP.Content.Models
             }
 
             // Create a list of places where the city model will be drawn
+            /*
             WorldMatrices = new List<Matrix>()
             {
                 Matrix.Identity,
@@ -68,6 +69,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 Matrix.CreateTranslation((Vector3.Backward + Vector3.Right) * DistanceBetweenCities),
                 Matrix.CreateTranslation((Vector3.Backward + Vector3.Left) * DistanceBetweenCities),
             };
+            */
             /*
             float scaleZ = 1.37f; // Escalar en Z por 2, ajusta según sea necesario
 
@@ -113,6 +115,13 @@ namespace TGC.MonoGame.TP.Content.Models
                 // Obtain the world matrix for that mesh (relative to the parent)
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
 
+                // We set the main matrices for each mesh to draw
+                Effect.Parameters["World"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion));
+
+                // Draw the mesh
+                mesh.Draw();
+                /*
+
                 // Then for each world matrix
                 foreach (var worldMatrix in WorldMatrices)
                 {
@@ -121,7 +130,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                     // Draw the mesh
                     mesh.Draw();
-                }
+                }*/
             }
 
         }

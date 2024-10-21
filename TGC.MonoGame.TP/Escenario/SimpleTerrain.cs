@@ -72,14 +72,26 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             var graphicsDevice = Effect.GraphicsDevice;
-            var traslacion = new Vector3(-2920f, 350f, 70f);
+            var traslacion = new Vector3(-2920f, 350f, 1200f);
 
             Effect.Parameters["texColorMap"].SetValue(colorMapTexture);
             Effect.Parameters["texDiffuseMap"].SetValue(terrainTexture);
             Effect.Parameters["texDiffuseMap2"].SetValue(terrainTexture2);
-            Effect.Parameters["World"].SetValue(Matrix.Identity * Matrix.CreateScale(1f, 1f, 2.11f) * Matrix.CreateRotationX(MathHelper.Pi) * Matrix.CreateRotationY(MathHelper.Pi) * Matrix.CreateScale(0.35f) * Matrix.CreateTranslation(traslacion));
+            Effect.Parameters["World"].SetValue(Matrix.Identity * Matrix.CreateScale(1f, 1f, 1.055f) * Matrix.CreateRotationX(MathHelper.Pi) * Matrix.CreateRotationY(-MathHelper.Pi) * Matrix.CreateScale(0.35f) * Matrix.CreateTranslation(traslacion));
             Effect.Parameters["View"].SetValue(view);
             Effect.Parameters["Projection"].SetValue(projection);
+
+            graphicsDevice.SetVertexBuffer(vbTerrain);
+
+            //Render con shader
+            foreach (var pass in Effect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawPrimitives(PrimitiveType.TriangleList, 0, vbTerrain.VertexCount / 3);
+            }
+
+            var traslacion2 = new Vector3(-2920f, 350f, -1120f);
+            Effect.Parameters["World"].SetValue(Matrix.Identity * Matrix.CreateScale(1f, 1f, 1.055f) * Matrix.CreateRotationX(MathHelper.Pi) * Matrix.CreateRotationY(-MathHelper.Pi) * Matrix.CreateScale(0.35f) * Matrix.CreateTranslation(traslacion2));
 
             graphicsDevice.SetVertexBuffer(vbTerrain);
 
