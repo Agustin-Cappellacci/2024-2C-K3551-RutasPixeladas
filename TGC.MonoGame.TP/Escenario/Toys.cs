@@ -598,13 +598,13 @@ namespace TGC.MonoGame.TP.Content.Models
                             worldFinal = modelCaballo2MeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
-
+                        /*
                         if (listaCombinada[i].Item1 == Ajedrez)
                         {
                             worldFinal = modelChessMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                             EfectoTexture.Parameters["ModelTexture"].SetValue(texture);
                         }
-
+                        */
                         if (listaCombinada[i].Item1 == LegoPJ)
                         {
                             worldFinal = modelLegoPJMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateRotationY(rotacion) * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
