@@ -155,6 +155,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
                     // Draw the mesh
                     mesh.Draw();
+
+                    traslacion += new Vector3(0f, -0.001f, 0f);
                 }
             }
 
