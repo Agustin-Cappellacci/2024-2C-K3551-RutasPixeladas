@@ -91,6 +91,10 @@ namespace TGC.MonoGame.TP
 
         Buffer<SimpleCarController> aiControllers;
 
+        IPowerUp nitro;
+        IPowerUp hamster;
+        IPowerUp arma;
+
 
        // -----
 
@@ -169,6 +173,10 @@ namespace TGC.MonoGame.TP
                 listaModelos[i] = listaModelos[j];
                 listaModelos[j] = temp;
             }
+
+            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0,0,0));
+            hamster = new Hamster(Content, autoJugador, new Vector3(50,10,50));
+            arma = new Gun(Content, autoJugador, new Vector3(-50,24,50));
             
             // INICIALIZO LOGICA DE BEPU
             iniciarSimulacion();
@@ -203,7 +211,7 @@ namespace TGC.MonoGame.TP
 
 
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
-            
+          
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
                 if (listaModelos[i] == TipoAuto.tipoCarrera)
@@ -216,11 +224,11 @@ namespace TGC.MonoGame.TP
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
-            
+           
 
             // Cargo Clases
             Hub = new Hub(Content);   
-            Logo = new Logo(Content);
+            //Logo = new Logo(Content);
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
             ToyCity = new ToyCity(Content);
             SimpleTerrain = new SimpleTerrain(Content, GraphicsDevice);
@@ -283,6 +291,9 @@ namespace TGC.MonoGame.TP
             }
 
             oldState = keyboardState;
+
+            arma.Update(gameTime);
+            hamster.Update(gameTime);
           
             base.Update(gameTime);
         }
@@ -298,17 +309,21 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
             
-            foreach (var Auto in listaAutos)
-            {
-                Auto.Draw(gameTime, View, Projection);
-            }
             
             Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(View, Projection);
             ToyCity.Draw(gameTime,View, Projection);
             SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
-            Logo.Draw(gameTime, View, Projection);
+            foreach (var Auto in listaAutos)
+            {
+                Auto.Draw(gameTime, View, Projection);
+            }
+            //Logo.Draw(gameTime, View, Projection);
+
+            arma.Draw(gameTime, View, Projection);
+            hamster.Draw(gameTime, View, Projection);
+
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;

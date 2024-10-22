@@ -140,6 +140,8 @@ namespace TGC.MonoGame.TP.Content.Models
             foreach (var position in positionMatrix)
             {
                 WorldMatrices.Add(position * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(10f));
+
+                traslacion += new Vector3(0f, -0.001f, 0f);
             }
             ChairWorld = Matrix.CreateRotationY(-MathHelper.Pi / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(traslacionChair);
             BedWorld = Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed);

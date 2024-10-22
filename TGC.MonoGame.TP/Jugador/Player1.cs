@@ -74,6 +74,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private float vida = 200;
 
+        Texture2D texturaAuto;
+        Texture2D texturaRueda;
+
 
 
 
@@ -83,13 +86,15 @@ namespace TGC.MonoGame.TP.Content.Models
             //direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
             //powerUp = new SuperJump(this);
-            powerUp = new SuperSpeed(this);
+            
 
+            texturaAuto = content.Load<Texture2D>("texturas/colorRojo");
+            texturaRueda = content.Load<Texture2D>("texturas/rueda");
 
             CarAcceleration = 500f;
             carJumpSpeed = 2000f;
@@ -253,15 +258,17 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             foreach (ModelMesh mesh in restoAuto)
-            {
-                effectAuto.Parameters["DiffuseColor"].SetValue(color);
+            {   
+                effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
+                //effectAuto.Parameters["DiffuseColor"].SetValue(color);
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
                 mesh.Draw();
             }
 
             foreach (ModelMesh rueda in ruedas)
-            {
-                effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
+            {   
+                effectAuto.Parameters["ModelTexture"].SetValue(texturaRueda);
+                //effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
                     effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
