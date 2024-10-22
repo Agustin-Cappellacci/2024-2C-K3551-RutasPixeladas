@@ -27,6 +27,11 @@ namespace TGC.MonoGame.TP.Content.Models
         private Texture2D textureFloor { get; set; }
         private Texture2D textureChair { get; set; }
         private List<Matrix> WorldMatrices { get; set; }
+        private Matrix ChairWorld { get; set; }
+        private Matrix BedWorld { get; set; }
+
+
+
 
         // colisiones
         private Simulation simulation;
@@ -61,12 +66,10 @@ namespace TGC.MonoGame.TP.Content.Models
             ChairModel = content.Load<Model>(ContentFolder3D + "chair/chair");
             BedModel = content.Load<Model>(ContentFolder3D + "Cama/bedSingle");
 
-            Effect = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
-            //Effect = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             // Load an effect that will be used to draw the scene
+            Effect = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
             EffectBed = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
-
             EffectChair = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             // load texture
@@ -102,16 +105,12 @@ namespace TGC.MonoGame.TP.Content.Models
                 // Un mesh puede tener mas de 1 mesh part (cada 1 puede tener su propio efecto).
                 foreach (var meshPart in mesh.MeshParts)
                 {
-                    // Set the texture from the mesh part, if available
-                    //EffectBed.Parameters["Texture0"].SetValue(meshPart.Effect.Parameters["Texture"].GetValueTexture2D());
-
                     meshPart.Effect = EffectBed;
-
                 }
             }
 
 
-            WorldMatrices = new List<Matrix>()
+            List<Matrix> positionMatrix = new List<Matrix>()
             {
                 Matrix.Identity,
                 Matrix.CreateTranslation(Vector3.Right *75f),
@@ -130,8 +129,22 @@ namespace TGC.MonoGame.TP.Content.Models
                 Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left *2f* 75f),
             };
 
-            inicializadorColisionables(simulation, graphicsDevice);
 
+
+            Vector3 traslacion = new Vector3(0f, -1f, 0f);
+            Vector3 traslacionChair = new Vector3(1500f, 400f, -1900f);
+            Vector3 traslacionBed = new Vector3(3300f, -20f, -1000f);
+
+            WorldMatrices = new List<Matrix>();
+
+            foreach (var position in positionMatrix)
+            {
+                WorldMatrices.Add(position * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(10f));
+            }
+            ChairWorld = Matrix.CreateRotationY(-MathHelper.Pi / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(traslacionChair);
+            BedWorld = Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed);
+
+            inicializadorColisionables(simulation, graphicsDevice);
 
         }
 
@@ -154,62 +167,46 @@ namespace TGC.MonoGame.TP.Content.Models
 
             var random = new Random(Seed: 0);
 
-            var scala = 10f; // Escala entre 1.0 y 11.0
-                             // var colorcito = new Vector3((CameraPosition.X) + random.NextSingle(), CameraPosition.Y + random.NextSingle(), CameraPosition.Z + random.NextSingle());
-                             //var color = new Vector3(1.0f, 1.0f, 1.0f); //color marr�n
-                             //.Parameters["DiffuseColor"].SetValue(color);        /*Usamos verto3 porque es BasicEffect. Se usa vector4 si tenemos activado el AlphaShader*/
-
-            var traslacion = new Vector3(0f, -1f, 0f);
-
+            // Piso
             var modelMeshesBaseTransforms = new Matrix[Model.Bones.Count];
             Model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
 
             foreach (var mesh in Model.Meshes)
             {
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-                //  Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
-
-                //    mesh.Draw();
 
                 foreach (var worldMatrix in WorldMatrices)
                 {
                     Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                     // We set the main matrices for each mesh to draw
-                    Effect.Parameters["World"].SetValue(meshWorld * worldMatrix * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(scala));
+                    Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
 
                     // Draw the mesh
                     mesh.Draw();
 
-                    traslacion += new Vector3(0f, -0.001f, 0f);
+               
                 }
-
-                DrawCollisionBoxes(view, projection);
             }
 
+            // Silla
             var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
             ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
 
-            var colorRojo = new Vector3(1.0f, 0.0f, 0.0f); //color rojo puro
-            var traslacionChair = new Vector3(1500f, 400f, -1900f);
-            //Effect.Parameters["DiffuseColor"].SetValue(colorRojo); 
+            
 
             foreach (var mesh in ChairModel.Meshes)
             {
                 EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
                 var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
                 // We set the main matrices for each mesh to draw
-                EffectChair.Parameters["World"].SetValue(meshWorldChair * Matrix.CreateRotationY(-MathHelper.Pi / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(traslacionChair));
+                EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
                 // Draw the mesh
                 mesh.Draw();
             }
 
+            // Cama
             var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
             BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
-
-
-            //var colorAzul = new Vector3(0.0f, 0.0f, 1.0f); //color azul puro
-            var traslacionBed = new Vector3(3300f, -20f, -1000f);
-            //EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul); 
 
             foreach (var mesh in BedModel.Meshes)
             {
@@ -219,12 +216,12 @@ namespace TGC.MonoGame.TP.Content.Models
                     EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
                     var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
                     // We set the main matrices for each mesh to draw
-                    EffectBed.Parameters["World"].SetValue(meshWorldBed * Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed));
+                    EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
                 }
                 // Draw the mesh
                 mesh.Draw();
             }
-
+            
         }
 
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
@@ -319,6 +316,7 @@ namespace TGC.MonoGame.TP.Content.Models
             this.graphicsDevice = graphicsDevice;
 
             // Crear colisiones
+            
             // Define el tamaño del box (ancho, alto, profundo)
             System.Numerics.Vector3 camaSize = new System.Numerics.Vector3(1680f, 570f, 3380f);
             // Crear el Collidable Box
@@ -329,6 +327,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 new System.Numerics.Vector3(1350f, 440f, 680f), // Posición inicial del box
                 camaShapeIndex // Fricción
             ));
+
 
             // Define el tamaño del box (ancho, alto, profundo)
             System.Numerics.Vector3 pataCamaSize = new System.Numerics.Vector3(315f, 170f, 224f);

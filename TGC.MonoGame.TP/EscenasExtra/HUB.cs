@@ -67,7 +67,7 @@ namespace TGC.MonoGame.TP.Content.Models
             */
         }
 
-        public void Draw(SpriteBatch spriteBatch, string tiempoDesdeInicio) {
+        public void Draw(SpriteBatch spriteBatch, GameTime gameTime) {
             Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
             Color textColor = Color.White;      
 
@@ -79,20 +79,25 @@ namespace TGC.MonoGame.TP.Content.Models
             // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
             // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
 
+            // Puedes dibujar el círculo dependiendo del progreso
+            // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
+
             // Rectangle circleRect = new Rectangle(13, 43, 65, 65);
             // SpriteBatch.Draw(Circulo, circleRect, Color.White * (1 - cooldownProgress));
 
             spriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
 
-
-            // Puedes dibujar el círculo dependiendo del progreso
-            // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
-            Rectangle circleRect = new Rectangle(13, 43, 65, 65);
-
-            
-            
             // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
-            spriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 150, 40), Color.Black * 0.5f);
+            spriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 400, 100), Color.Black * 0.5f);
+
+            // Dibuja texto en la pantalla
+            var tiempoTotal = Convert.ToSingle(gameTime.TotalGameTime.TotalSeconds);
+            var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            float fps = 1f / elapsedTime;
+
+            // Mostrar el tiempo transcurrido desde el inicio en pantalla
+            string tiempoDesdeInicio = $"Seg:{tiempoTotal:F2}\nFPS:{fps}";
+
             spriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
 
         }

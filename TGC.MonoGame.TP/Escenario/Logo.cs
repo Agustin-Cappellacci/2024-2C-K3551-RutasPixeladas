@@ -21,9 +21,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private Effect Effect;
 
         private Microsoft.Xna.Framework.Matrix World;
-        private Simulation simulation;
-        private GraphicsDevice graphicsDevice;
-        public Logo(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
+
+        public Logo(ContentManager content)
         {
             Model = content.Load<Model>(ContentFolder3D + "tgc-logo/tgc-logo");
             Effect = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");

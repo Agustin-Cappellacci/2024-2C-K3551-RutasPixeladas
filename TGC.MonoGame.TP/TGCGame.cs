@@ -46,6 +46,7 @@ namespace TGC.MonoGame.TP
         FreeCamera FreeCamera { get; set; }
 
         private bool liberarCamara = false;
+        private bool debugColisiones = true;
         private KeyboardState oldState { get; set; }
 
         // Modelos y efectos
@@ -87,14 +88,11 @@ namespace TGC.MonoGame.TP
         private SimpleThreadDispatcher threadDispatcher;
         private SimpleCarController playerController;
 
-        /*    struct AIController
-        {*/
-           /* public float LaneOffset;
-        }*/
+
         Buffer<SimpleCarController> aiControllers;
 
 
-               // -----
+       // -----
 
 
 
@@ -146,45 +144,22 @@ namespace TGC.MonoGame.TP
             IsometricCamera = new IsometricCamera(Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight);
 
             // Configuramos nuestras matrices de la escena.
-            /*
-<<<<<<< HEAD
-           
-            base.Initialize();
-        }
-
-        /// <summary>
-        ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
-        ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
-        ///     que podemos pre calcular para nuestro juego.
-        /// </summary>
-        protected override void LoadContent()
-        {   
-            // setea el threadCount para el update de la simulacion de bepu
-            var targetThreadCount = Math.Max(1,
-            Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
-            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
-            
-             // Inicializar la simulación de física de Bepu
-            bufferPool = new BufferPool();
-            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(60, 1)); // Callback para manejar colisiones, rebotes, etc
-            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -500, 0)); // Callback para manejar gravedad
-            var solveDescription = new SolveDescription(8,1);
-            simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
-
-*/
-
 
             int tessellation = 2;
             if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
 
             listaModelos.Add(TipoAuto.tipoJugador);
+            
+            
             for (int i = 0; i < CantidadDeAutos / tessellation; i++)
             {
                 listaModelos.Add(TipoAuto.tipoCarrera);
                 listaModelos.Add(TipoAuto.tipoCombate);
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
+
+
             // mezclar posiciones
             var random = new Random(0);
             for (int i = listaModelos.Count - 1; i > 1; i--) // Empezar desde el último índice y detenerse en el índice 1
@@ -209,7 +184,26 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {
+            /*
+              // setea el threadCount para el update de la simulacion de bepu
+            var targetThreadCount = Math.Max(1,
+            Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
+            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
+            
+             // Inicializar la simulación de física de Bepu
+            bufferPool = new BufferPool();
+            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(60, 1)); // Callback para manejar colisiones, rebotes, etc
+            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -500, 0)); // Callback para manejar gravedad
+            var solveDescription = new SolveDescription(8,1);
+            simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
+            */
+
+
+
+
+
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
+            
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
                 if (listaModelos[i] == TipoAuto.tipoCarrera)
@@ -222,20 +216,11 @@ namespace TGC.MonoGame.TP
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
-
+            
 
             // Cargo Clases
-            /*
-            <<<<<<< HEAD
-                        autoJugador = new Jugador(Content, simulation,GraphicsDevice);
-                        ToyCity = new ToyCity(Content);
-                        SimpleTerrain = new SimpleTerrain(GraphicsDevice, Content);
-                        Toys = new Toys(Content, simulation, GraphicsDevice);
-                        Cuarto = new Cuarto(Content);
-                        */
-
             Hub = new Hub(Content);   
-            Logo = new Logo(Content, simulation, GraphicsDevice);
+            Logo = new Logo(Content);
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
@@ -260,21 +245,22 @@ namespace TGC.MonoGame.TP
 
             Console.WriteLine("Number of bodies: " + simulation.Bodies.ActiveSet.Count);
             simulation.Timestep(1f / 60f, threadDispatcher);
+            
+            
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
+            // EXIT
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
                 Exit();
             }
-
-            
-
-
-            // Aca deberiamos poner toda la logica de actualizacion del juego.
-
-            // Capturar Input teclado
-
+            // DEBUG
+            if (keyboardState.IsKeyDown(Keys.C) & oldState.IsKeyUp(Keys.C))
+            {
+                debugColisiones = !debugColisiones;
+            }
+            // CAMBIO DE CAMARA
             if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
             {
                 liberarCamara = !liberarCamara;
@@ -285,6 +271,7 @@ namespace TGC.MonoGame.TP
                 IsometricCamera.Update(gameTime, autoJugador.carWorld);
                 View = IsometricCamera.View;
                 Projection = IsometricCamera.Projection;
+                Hub.Update(autoJugador);
             }
             else
             {
@@ -293,17 +280,8 @@ namespace TGC.MonoGame.TP
                 Projection = FreeCamera.Projection;
             }
 
-            Hub.Update(autoJugador);
-
-            /*  
-            foreach ( var Auto in listaAutos){
-                Auto.Update();
-            }
-            */
-
             oldState = keyboardState;
-            float fps = 1f / elapsedTime;
-            Console.WriteLine("FPS: " + fps);
+          
             base.Update(gameTime);
         }
 
@@ -315,42 +293,40 @@ namespace TGC.MonoGame.TP
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
-
-
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
-
+            
             foreach (var Auto in listaAutos)
             {
                 Auto.Draw(gameTime, View, Projection);
             }
-
-
-
+            
+            Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(View, Projection);
            
-            Toys.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
             Logo.Draw(gameTime, View, Projection);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
 
-            // Dibuja texto en la pantalla
-            double tiempoTotal = gameTime.TotalGameTime.TotalSeconds;
+            if (debugColisiones)
+            {
+                // dibujar las cajas de colisiones de todos los objetos
+                // si se quiere dibujar un convexHull hay que usar el mtodo DrawConvexHull (esta medio cursed ese)
+                Toys.DrawCollisionBoxes(View, Projection);
+                Cuarto.DrawCollisionBoxes(View, Projection);
+            }
 
-            // Mostrar el tiempo transcurrido desde el inicio en pantalla
-            string tiempoDesdeInicio = $"{tiempoTotal:F2}";
-
-            
             //Podríamos hacer un método para SpriteBatch de ser necesario.
             SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
-            
-            Hub.Draw(SpriteBatch, tiempoDesdeInicio);
-           
+
+            Hub.Draw(SpriteBatch, gameTime);
+
             SpriteBatch.End();
 
             base.Draw(gameTime);
+
         }
 
         /// <summary>
@@ -360,7 +336,9 @@ namespace TGC.MonoGame.TP
         {
             // Libero los recursos.
             Content.Unload();
-
+            simulation.Dispose();
+            threadDispatcher.Dispose();
+            bufferPool.Clear();
             base.UnloadContent();
         }
 
