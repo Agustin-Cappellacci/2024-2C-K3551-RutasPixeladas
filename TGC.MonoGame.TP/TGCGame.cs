@@ -12,6 +12,9 @@ using BepuPhysics.Constraints;
 using BepuUtilities.Memory;
 using BepuPhysics.Collidables;
 using BepuUtilities;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
+
 
 namespace TGC.MonoGame.TP
 {
@@ -39,6 +42,10 @@ namespace TGC.MonoGame.TP
 
         private GraphicsDeviceManager Graphics { get; }
         private SpriteBatch SpriteBatch { get; set; }
+
+        // Menu
+        MainMenu menu;
+        private bool _isMenuOpen = false;
 
         // Cámara
         FollowCamera Camera { get; set; }
@@ -78,7 +85,7 @@ namespace TGC.MonoGame.TP
         public List<AutoEnemigo> listaAutos { get; set; }
         private List<System.Numerics.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
-        
+
         public int aiCount = 1;
 
         // ------
@@ -86,6 +93,7 @@ namespace TGC.MonoGame.TP
         private Simulation simulation;
         private BufferPool bufferPool;
         private SimpleThreadDispatcher threadDispatcher;
+
         private SimpleCarController playerController;
 
 
@@ -95,11 +103,8 @@ namespace TGC.MonoGame.TP
         IPowerUp hamster;
         IPowerUp arma;
 
-
-       // -----
-
-
-
+        private bool soundIsPaused = false;
+        private Song _backgroundMusic;
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -124,7 +129,7 @@ namespace TGC.MonoGame.TP
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
             CantidadDeAutos = 70;
-            
+
             traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
             angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales);
 
@@ -148,14 +153,13 @@ namespace TGC.MonoGame.TP
             IsometricCamera = new IsometricCamera(Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight);
 
             // Configuramos nuestras matrices de la escena.
-
             int tessellation = 2;
             if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
 
             listaModelos.Add(TipoAuto.tipoJugador);
-            
-            
+
+
             for (int i = 0; i < CantidadDeAutos / tessellation; i++)
             {
                 listaModelos.Add(TipoAuto.tipoCarrera);
@@ -174,10 +178,10 @@ namespace TGC.MonoGame.TP
                 listaModelos[j] = temp;
             }
 
-            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0,0,0));
-            hamster = new Hamster(Content, autoJugador, new Vector3(50,10,50));
-            arma = new Gun(Content, autoJugador, new Vector3(-50,24,50));
-            
+            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
+            hamster = new Hamster(Content, autoJugador, new Vector3(50, 10, 50));
+            arma = new Gun(Content, autoJugador, new Vector3(-50, 24, 50));
+
             // INICIALIZO LOGICA DE BEPU
             iniciarSimulacion();
 
@@ -192,24 +196,13 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {
-            /*
-              // setea el threadCount para el update de la simulacion de bepu
-            var targetThreadCount = Math.Max(1,
-            Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
-            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
             
-             // Inicializar la simulación de física de Bepu
-            bufferPool = new BufferPool();
-            var narrowPhaseCallbacks = new NarrowPhaseCallbacks(new SpringSettings(60, 1)); // Callback para manejar colisiones, rebotes, etc
-            var poseIntegratorCallbacks = new PoseIntegratorCallbacks(new System.Numerics.Vector3(0, -500, 0)); // Callback para manejar gravedad
-            var solveDescription = new SolveDescription(8,1);
-            simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
-            */
 
-
-
-
-
+            // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
+            _backgroundMusic = Content.Load<Song>(ContentFolder3D + "autos/RacingCarA/backgroundmusic");
+            MediaPlayer.IsRepeating = true;
+            MediaPlayer.Play(_backgroundMusic);
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
@@ -219,28 +212,28 @@ namespace TGC.MonoGame.TP
                 }
                 if (listaModelos[i] == TipoAuto.tipoCombate)
                 {
-                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, aiControllers[i] ,traslacionesIniciales[i], angulosIniciales[i]));
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, aiControllers[i], traslacionesIniciales[i], angulosIniciales[i]));
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
-           
+
 
             // Cargo Clases
-            Hub = new Hub(Content);   
+            Hub = new Hub(Content);
             //Logo = new Logo(Content);
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
             ToyCity = new ToyCity(Content);
             SimpleTerrain = new SimpleTerrain(Content, GraphicsDevice);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
-            SpriteBatch = new SpriteBatch(GraphicsDevice); 
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
 
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
 
-
+            menu = new MainMenu(/*autoJugador,*/ SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
             base.LoadContent();
         }
 
@@ -254,16 +247,10 @@ namespace TGC.MonoGame.TP
 
             Console.WriteLine("Number of bodies: " + simulation.Bodies.ActiveSet.Count);
             simulation.Timestep(1f / 60f, threadDispatcher);
-            
-            
+
+
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-            // EXIT
-            if (keyboardState.IsKeyDown(Keys.Escape))
-            {
-                Exit();
-            }
             // DEBUG
             if (keyboardState.IsKeyDown(Keys.C) & oldState.IsKeyUp(Keys.C))
             {
@@ -288,12 +275,44 @@ namespace TGC.MonoGame.TP
                 View = FreeCamera.View;
                 Projection = FreeCamera.Projection;
             }
+            
+            if (keyboardState.IsKeyDown(Keys.Escape) && !oldState.IsKeyDown(Keys.Escape))
+            {
+                _isMenuOpen = !_isMenuOpen;
+            }
 
+            if (_isMenuOpen)
+            {
+                _isMenuOpen = menu.HandleMenuInput(keyboardState);
+            }
+
+            if (keyboardState.IsKeyDown(Keys.P) && !oldState.IsKeyDown(Keys.P))
+            {
+                soundIsPaused = !soundIsPaused;
+                if (soundIsPaused)
+                    MediaPlayer.Pause();
+                else
+                    MediaPlayer.Resume();
+            }
+
+                // Capturar Input teclado
+                
+                if (keyboardState.IsKeyDown(Keys.Tab) & oldState.IsKeyUp(Keys.Tab))
+                {
+                    liberarCamara = !liberarCamara;
+                }
+                
+
+                /*  
+                foreach ( var Auto in listaAutos){
+                    Auto.Update();
+                }
+                */
             oldState = keyboardState;
 
             arma.Update(gameTime);
             hamster.Update(gameTime);
-          
+
             base.Update(gameTime);
         }
 
@@ -307,11 +326,11 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
-            
-            
+
+
             Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(View, Projection);
-            ToyCity.Draw(gameTime,View, Projection);
+            ToyCity.Draw(gameTime, View, Projection);
             SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
             foreach (var Auto in listaAutos)
@@ -324,6 +343,8 @@ namespace TGC.MonoGame.TP
             hamster.Draw(gameTime, View, Projection);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
 
@@ -342,8 +363,19 @@ namespace TGC.MonoGame.TP
 
             SpriteBatch.End();
 
+        
+            if (_isMenuOpen)
+            {
+                menu.DrawMenuOverlay();
+            }
+        
             base.Draw(gameTime);
 
+        }
+
+        public void ToggleMusic()
+        {
+            MediaPlayer.IsMuted = !MediaPlayer.IsMuted;
         }
 
         /// <summary>
@@ -401,10 +433,9 @@ namespace TGC.MonoGame.TP
 
             return angulos;
         }
-
         private void iniciarSimulacion()
         {
-            
+
             // inicializo logica de bepu
             // setea el threadCount para el update de la simulacion de bepu
             var targetThreadCount = Math.Max(1,
@@ -433,18 +464,18 @@ namespace TGC.MonoGame.TP
             const float wheelBaseWidth = x * 3f;
             const float wheelBaseLength = frontZ - backZ;
 
-            var pose = new RigidPose(traslacionesIniciales[0],  System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
+            var pose = new RigidPose(traslacionesIniciales[0], System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
 
-            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
+            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
             new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
 
             Console.WriteLine("Inertia: " + bodyInertia);
-            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce: 50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
-             // ACA SE INICIALIZAN LOS AUTOS DE IA
-            bufferPool.Take(CantidadDeAutos-1, out aiControllers);
+            // ACA SE INICIALIZAN LOS AUTOS DE IA
+            bufferPool.Take(CantidadDeAutos - 1, out aiControllers);
             /* var random = new Random(5);
             for (int i = 1; i < CantidadDeAutos; ++i)
             {
@@ -478,6 +509,5 @@ namespace TGC.MonoGame.TP
             }
         */
 
-        
     }
 }

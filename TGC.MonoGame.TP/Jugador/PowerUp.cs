@@ -1,3 +1,4 @@
+
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -10,9 +11,9 @@ using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
-
-
-
+using System.Runtime.CompilerServices;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -26,6 +27,9 @@ namespace TGC.MonoGame.TP.Content.Models
     private float maxHeight = 20f; // Altura máxima del movimiento vertical
     private float currentHeight = 0f;
     private bool goingUp = true;
+    private SoundEffect _powerUpSound;
+    public SoundEffectInstance _powerUpSoundInstance;
+    private bool isMuted = false;
 
     public Matrix world;
 
@@ -46,6 +50,8 @@ namespace TGC.MonoGame.TP.Content.Models
             this.PosicionInicial = posInicial;
             CargarModelo(content);
             efectoPwUP = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            _powerUpSound = content.Load<SoundEffect>("Models/autos/RacingCarA/powerup");
+            _powerUpSoundInstance = _powerUpSound.CreateInstance();
         }
         public abstract void Apply();
     }
@@ -60,6 +66,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public override void Apply()
         {
+            _powerUpSoundInstance.Play();
             jugador.CarSpeed = 10000;
         }
 

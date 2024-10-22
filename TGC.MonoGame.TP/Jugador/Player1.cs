@@ -13,6 +13,8 @@ using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -66,6 +68,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private GraphicsDevice graphicsDevice;
 
         private IPowerUp powerUp;
+        private SoundEffect _engineSound;
+        private SoundEffectInstance _engineSoundInstance;
+        private bool isMuted = false;
 
         public int power = -1;
         public float cooldownTime = 1.5f;  // Tiempo de cooldown (1.5 segundos)
@@ -85,13 +90,18 @@ namespace TGC.MonoGame.TP.Content.Models
             //carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
             //direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
+            _engineSound = content.Load<SoundEffect>(ContentFolder3D + "autos/RacingCarA/high ACC");
+            _engineSoundInstance = _engineSound.CreateInstance();
+            _engineSoundInstance.IsLooped = true;
+            _engineSoundInstance.Play();
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
             //powerUp = new SuperJump(this);
-            
+            //powerUp = new SuperSpeed(content, this);
+
 
             texturaAuto = content.Load<Texture2D>("texturas/colorRojo");
             texturaRueda = content.Load<Texture2D>("texturas/rueda");
@@ -156,58 +166,6 @@ namespace TGC.MonoGame.TP.Content.Models
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
 
-/*
-<<<<<<< HEAD
-
-            // Capturar el estado del teclado
-            if (keyboardState.IsKeyDown(Keys.Q) && !isOnCooldown)
-            {
-                powerUp.Apply();  // Aplica el power up
-                // Incrementar el poder, pero resetearlo si excede 3
-                if (power < 2){
-                    power++;
-                } else {
-                    power = 0;
-                }
-                // Activar el cooldown
-                isOnCooldown = true;
-                cooldownTimer = 0f;  // Reiniciar el temporizador
-            }
-
-            // Si está en cooldown, actualizar el temporizador
-            if (isOnCooldown)
-            {
-                // Incrementar el temporizador con el tiempo transcurrido
-                cooldownTimer += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-                // Si el cooldown ha terminado (supera 1.5 segundos)
-                if (cooldownTimer >= cooldownTime)
-                {
-                    isOnCooldown = false;  // Desactivar el cooldown
-                }
-            }
-
-            // Movimiento hacia adelante
-            if (keyboardState.IsKeyDown(Keys.W))
-            {
-                CarSpeed += CarAcceleration * elapsedTime;
-                if (CarSpeed > CarMaxSpeed) CarSpeed = CarMaxSpeed; // Limitar velocidad máxima
-                Console.WriteLine("CarSpeed (W): " + CarSpeed);
-            }
-            else if (keyboardState.IsKeyDown(Keys.S))
-            {
-                CarSpeed -= CarAcceleration * elapsedTime * CarBrakeForce;
-                if (CarSpeed < -CarMaxSpeed / 2) CarSpeed = -CarMaxSpeed / 2; // Limitar reversa
-                Console.WriteLine("CarSpeed (S): " + CarSpeed);
-            }
-            else
-            {
-                // Desacelerar cuando no se presionan las teclas
-                CarSpeed -= CarSpeed > 0 ? CarDeceleration * elapsedTime : -CarDeceleration * elapsedTime;
-                if (Math.Abs(CarSpeed) < 0.1f) CarSpeed = 0; // Detener el auto cuando está casi en reposo
-                Console.WriteLine("CarSpeed (no key): " + CarSpeed);
-            }
-*/
             float steeringSum = 0;
 
             // Actualizar rotación del coche
@@ -236,9 +194,13 @@ namespace TGC.MonoGame.TP.Content.Models
                 carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
             }
 
+
             var targetSpeedFraction = keyboardState.IsKeyDown(Keys.W) ? 10f : keyboardState.IsKeyDown(Keys.S) ? -10f : 0;
             Console.WriteLine("TargetSpeed " + targetSpeedFraction);
             playerController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, keyboardState.IsKeyDown(Keys.LeftAlt));
+
+            _engineSoundInstance.Pitch = steeringSum* 0.00000000002f;
+            
             // Actualizar la posición y la matriz de mundo del auto
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
@@ -282,6 +244,18 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Dibujar las cajas de colisión del auto y las ruedas
             DrawCollisionBoxes(View, Projection);
+        }
+
+        public void ToggleSound()
+        {
+            if (isMuted) {
+                _engineSoundInstance.Play();
+                isMuted = false;
+                return;
+            }
+            _engineSoundInstance.Stop();
+            isMuted = true;
+            return;
         }
 
         public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
