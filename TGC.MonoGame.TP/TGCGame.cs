@@ -222,6 +222,8 @@ namespace TGC.MonoGame.TP
             Hub = new Hub(Content);   
             Logo = new Logo(Content);
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
+            ToyCity = new ToyCity(Content);
+            SimpleTerrain = new SimpleTerrain(Content, GraphicsDevice);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
             SpriteBatch = new SpriteBatch(GraphicsDevice); 
@@ -303,7 +305,8 @@ namespace TGC.MonoGame.TP
             
             Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(View, Projection);
-           
+            ToyCity.Draw(gameTime,View, Projection);
+            SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
             Logo.Draw(gameTime, View, Projection);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;

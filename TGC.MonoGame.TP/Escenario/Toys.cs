@@ -21,18 +21,14 @@ namespace TGC.MonoGame.TP.Content.Models
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
-
         public const float DistanceBetweenCities = 2100f;
-
-
-
+        private Model Lego { get; set; }
+        private Model Ajedrez { get; set; }
+        private Matrix worldAjedrez { get; set; }
+        private Vector3 colorAjedrez = new Vector3(0.5f, 0.5f, 1f);
         private Effect EfectoComun { get; set; }
         private Effect EfectoTexture { get; set; }
         public List<Tuple<Model, Texture2D,Matrix>> listaCombinada;
-        
-        private Model Lego {  get; set; }
-        //Load textures
-
 
         private StaticHandle floorHandle;
         private StaticHandle torreHandle;
@@ -71,8 +67,9 @@ namespace TGC.MonoGame.TP.Content.Models
         public Toys(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
 
         {
-
-
+            // Load an effect that will be used to draw the scene
+            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             // ESTA INTERESANTE PERO NO HACE NADA
             listaCombinada = new List<Tuple<Model, Texture2D, Matrix>>()
@@ -81,7 +78,8 @@ namespace TGC.MonoGame.TP.Content.Models
             };
             // Load the City Model
             Lego = content.Load<Model>(ContentFolder3D + "escenario/legoBrick");
-            Model Ajedrez = content.Load<Model>(ContentFolder3D + "escenario/chess");
+
+
             Model Torre = content.Load<Model>(ContentFolder3D + "escenario/torre");
             Model LegoPJ = content.Load<Model>(ContentFolder3D + "escenario/legoPJ/FireNinjaBlueOcatpus2/Fireninja_blueninja");
             Model Puente = content.Load<Model>(ContentFolder3D + "escenario/puente");
@@ -112,13 +110,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 textureMetal,textureLegoPJ,textureMadera2,textureMadera,textureRampa,textureMadera,textureCarpet,textureCaballo2,textureCaballo1
             };
 
-            // Load an effect that will be used to draw the scene
-            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
-
             List<Matrix> WorldMatrix = new List<Matrix>()
             {
-                //Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(0.4f) * Matrix.CreateTranslation(new Vector3(-1200f, 2f, 1700f)),  //Ajedrez
                 Matrix.CreateRotationY((float)Math.PI / 10) * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(new Vector3(-1300f, 1f, 700f)),   //Torre
                 Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(0.1f) * Matrix.CreateTranslation(new Vector3(1200f, 2f, 1700f)),   //LegoPJ
                 Matrix.CreateRotationX((float)Math.PI / -2) * Matrix.CreateRotationY((float)Math.PI / 4) * Matrix.CreateScale(100f) * Matrix.CreateTranslation(new Vector3(360F, 2f, -1700f)),    //Puente
@@ -129,9 +122,6 @@ namespace TGC.MonoGame.TP.Content.Models
                 Matrix.CreateRotationY(-(float)Math.PI * (5 / 4)) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1000f, 730f, 300f)),//Caballo1
                 Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1200f, 730f, -100f))//Caballo2
             };
-
-            //EfectoComun.Parameters["DiffuseColor"].SetValue(new Vector3(0.5f, 0.5f, 1f));
-            //listaEfectos.Add(EfectoComun);
 
 
             for (int i = 0; i < listaModelos.Count; i++)
@@ -151,8 +141,6 @@ namespace TGC.MonoGame.TP.Content.Models
             {
                 foreach (var meshPart in mesh.MeshParts) meshPart.Effect = EfectoComun;
             }
-            // Create a list of places where the city model will be drawn
-
 
             inicializadorColisionables(simulation, graphicsDevice);
         }
@@ -209,6 +197,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     mesh.Draw();
                 }
             }
+
         }
         // Función para extraer vértices de un modelo 3D (similar a la que se usó en el Jugador)
         private List<System.Numerics.Vector3> ExtractVertices(Model model)
