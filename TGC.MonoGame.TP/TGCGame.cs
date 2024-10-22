@@ -386,50 +386,5 @@ namespace TGC.MonoGame.TP
             return angulos;
         }
 
-        /* private void HandleMenuInput(KeyboardState keyboardState)
-        {
-            if (keyboardState.IsKeyDown(Keys.Down))
-            {
-                _selectedIndex = (_selectedIndex + 1) % _menuItems.Length;
-            }
-            else if (keyboardState.IsKeyDown(Keys.Up))
-            {
-                _selectedIndex = (_selectedIndex - 1 + _menuItems.Length) % _menuItems.Length;
-            }
-
-            if (keyboardState.IsKeyDown(Keys.Enter))
-            {
-                if (_menuItems[_selectedIndex] == "Resume")
-                {
-                    _isMenuOpen = false; // Close the menu.
-                }
-                if (_menuItems[_selectedIndex] == "Toggle Sound")
-                {
-                    _isMenuOpen = false; // Close the menu.
-                    _isSoundMenuOpen = true;
-                    autoJugador.ToggleSound();
-                }
-                else if (_menuItems[_selectedIndex] == "Exit")
-                {
-                    Exit();
-                }
-            }
-        }
-
-        private void DrawMenuOverlay()
-        {
-            // Draw a semi-transparent background for the menu.
-            Texture2D overlay = new Texture2D(GraphicsDevice, 1, 1);
-            overlay.SetData(new[] { Color.Black * 0.5f }); // 50% transparent black.
-            SpriteBatch.Draw(overlay, new Rectangle(0, 0, Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight), Color.White);
-
-            // Draw menu items.
-            for (int i = 0; i < _menuItems.Length; i++)
-            {
-                Color color = (i == _selectedIndex) ? Color.Yellow : Color.White;
-                Vector2 position = new Vector2(850, 450 + i * 40);
-                SpriteBatch.DrawString(_menuFont, _menuItems[i], position, color);
-            }
-        } */
     }
 }
