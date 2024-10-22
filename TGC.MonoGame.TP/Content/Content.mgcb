@@ -163,35 +163,11 @@
 /processorParam:Quality=Best
 /build:Models/autos/RacingCarA/backgroundmusic.mp3
 
-#begin Models/autos/RacingCarA/enginesound.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Models/autos/RacingCarA/enginesound.wav
-
-#begin Models/autos/RacingCarA/enginesound2.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Models/autos/RacingCarA/enginesound2.wav
-
 #begin Models/autos/RacingCarA/high ACC.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Models/autos/RacingCarA/high ACC.wav
-
-#begin Models/autos/RacingCarA/high Deacc.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Models/autos/RacingCarA/high Deacc.wav
-
-#begin Models/autos/RacingCarA/low-boosted.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Models/autos/RacingCarA/low-boosted.wav
 
 #begin Models/autos/RacingCarA/low-boosted2.wav
 /importer:WavImporter
@@ -229,12 +205,6 @@
 /processorParam:SwapWindingOrder=False
 /processorParam:TextureFormat=Compressed
 /build:Models/autos/RacingCarA/RacingCar.fbx
-
-#begin Models/autos/RacingCarA/Sound - Sport Car Engine Loop 03  AudioJungle.mp3
-/importer:Mp3Importer
-/processor:SongProcessor
-/processorParam:Quality=Best
-/build:Models/autos/RacingCarA/Sound - Sport Car Engine Loop 03  AudioJungle.mp3
 
 #begin Models/autos/RacingCarA/TEX.png
 /importer:TextureImporter
