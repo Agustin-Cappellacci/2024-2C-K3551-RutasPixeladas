@@ -11,7 +11,7 @@ namespace TGC.MonoGame.TP.Content.Models
     /// </summary>
     class IsometricCamera
     {
-        private const float AxisDistanceToTarget = 1000f;
+        private const float AxisDistanceToTarget = 10f;
 
         private const float AngleFollowSpeed = 0.015f;
 
@@ -34,7 +34,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public IsometricCamera(float screenWidth, float screenHeight)
         {
             // Orthographic camera
-            Projection = Matrix.CreateScale(0.3f) * Matrix.CreateFromYawPitchRoll(MathF.PI / 6, 0, MathF.PI / 4) * Matrix.CreateOrthographic(screenWidth , screenHeight, -500f, 10000f);
+            Projection =  Matrix.CreateScale(1f) * Matrix.CreateFromYawPitchRoll(MathF.PI / 6, 0, MathF.PI/ 6)  * Matrix.CreateOrthographic(screenWidth , screenHeight, -1500f, 10000f);
 
             // Perspective camera
             // Uso 60° como FOV, aspect ratio, pongo las distancias a near plane y far plane en 0.1 y 100000 (mucho) respectivamente

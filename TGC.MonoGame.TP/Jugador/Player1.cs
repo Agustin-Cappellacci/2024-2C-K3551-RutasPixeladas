@@ -28,6 +28,7 @@ namespace TGC.MonoGame.TP.Content.Models
         // Jugabilidad
         private Microsoft.Xna.Framework.Vector3 direccionFrontal { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
+        private Matrix rotationMatrix;
 
         public Matrix carWorld { get; set; }
 
@@ -36,28 +37,29 @@ namespace TGC.MonoGame.TP.Content.Models
         //    private const float carAcceleratioSpeedMin = 0;
         private const float carSpeedMax = 1000f;
         private const float carSpeedMin = -700f;
-        public float carJumpSpeed {get; set;}
+        public float carJumpSpeed { get; set; }
         private const float gravity = 98f;
         private const float carSpinSpeed = 0.3f;
 
 
         private System.Numerics.Vector3 carPosition { get; set; }
-        public float CarSpeed {get; set;}
+        public float CarSpeed { get; set; }
         private const float CarMaxSpeed = 500f;
-        public float CarAcceleration {get; set;}
+        public float CarAcceleration { get; set; }
         private const float CarBrakeForce = 5000f;
         private float CarDeceleration = 500f;
 
         private float wheelRotationAngle;
         private float wheelSteeringAngle;
-        private float maxWheelSteer = 0.7f;
-        private float wheelSteerDelta = 0.2f;
+        private float maxWheelSteer = 0.5f;
+        private float wheelSteerDelta = 0.1f;
         private float CarRotationY;
         private const float CarjumpStrength = 300f;
         private float elapsedTime;
         private Simulation simulation;
         private BodyHandle carBodyHandle;
         private BodyHandle wheelBodyHandle;
+        SimpleCarController playerController;
 
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
@@ -70,11 +72,15 @@ namespace TGC.MonoGame.TP.Content.Models
         public float cooldownTimer = 0f;   // Contador para el cooldown
         public bool isOnCooldown = false;
 
+        private float vida = 200;
 
-        public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
+
+
+
+        public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
         {
-            carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
-            direccionFrontal = Vector3.Forward;
+            //carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
+            //direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
@@ -86,8 +92,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             CarAcceleration = 500f;
-            carJumpSpeed = 500f;
+            carJumpSpeed = 2000f;
+
             
+
 
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -110,30 +118,28 @@ namespace TGC.MonoGame.TP.Content.Models
             // utilizo el graphicsDevice para dibujar las cajas
             this.graphicsDevice = graphicsDevice;
             this.simulation = simulation;
-            // Crear una caja de colisión para el cuerpo principal del auto
-            var carBox = new Box(200f, 10f, 500f); // Dimension del auto
-            carBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(carPosition + new System.Numerics.Vector3(0, 80f, 0)), carBox.ComputeInertia(50f),
-            simulation.Shapes.Add(carBox), 1f));
+            this.playerController = playerController;
 
+            //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
-            // Crear cajas de colisión para cada rueda
-            foreach (var rueda in ruedas)
-            {
-                // Extraer la posición local de la rueda desde el modelo
-                var wheelMatrix = rueda.ParentBone.Transform;
-                var wheelPosition = Vector3.Transform(carPosition, wheelMatrix); // Convertir la posición de la rueda al espacio del mundo
-                var wheelBox = new Box(100f, 100f, 100f); // Dimension de las ruedas
-
-                // Agregar cada rueda a la simulación
-                wheelBodyHandle = simulation.Bodies.Add(BodyDescription.CreateDynamic(new RigidPose(PositionToNumerics(wheelPosition)),
-                wheelBox.ComputeInertia(1f), // para la masa de las ruedas
-                simulation.Shapes.Add(wheelBox), 1f));
-
-            }
 
         }
 
-        public void Update(GameTime gameTime)
+        private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
+        {
+            // Crear el cuerpo del coche en la simulación con una posición y orientación iniciales
+            var bodyDescription = BodyDescription.CreateDynamic(
+                new RigidPose(posicionInicial, System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, anguloInicial)),
+                new BodyInertia(),
+                new CollidableDescription(),
+                new BodyActivityDescription(0.01f)
+            );
+
+            return simulation.Bodies.Add(bodyDescription);
+        }
+
+
+        public void Update(GameTime gameTime, Simulation simulation)
         {
 
             // Caputo el estado del teclado.
@@ -144,8 +150,9 @@ namespace TGC.MonoGame.TP.Content.Models
             // Obtener la referencia del cuerpo del auto en la simulación
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
-            
 
+/*
+<<<<<<< HEAD
 
             // Capturar el estado del teclado
             if (keyboardState.IsKeyDown(Keys.Q) && !isOnCooldown)
@@ -195,116 +202,45 @@ namespace TGC.MonoGame.TP.Content.Models
                 if (Math.Abs(CarSpeed) < 0.1f) CarSpeed = 0; // Detener el auto cuando está casi en reposo
                 Console.WriteLine("CarSpeed (no key): " + CarSpeed);
             }
+*/
+            float steeringSum = 0;
 
             // Actualizar rotación del coche
             if (keyboardState.IsKeyDown(Keys.A))
             {
-                if (CarSpeed != 0)
-                {
-                    if (CarSpeed >= 0)
-                    {
-                        CarRotationY += carSpinSpeed * elapsedTime;
-                    }
-                    else
-                    {
-                        CarRotationY -= carSpinSpeed * elapsedTime;
-                    }
-                }
+                steeringSum += 1;
                 wheelSteeringAngle = Math.Min(wheelSteeringAngle + wheelSteerDelta, maxWheelSteer);
 
             }
-            else if (keyboardState.IsKeyDown(Keys.D))
-            {
-                if (CarSpeed != 0)
-                {
-                    if (CarSpeed >= 0)
-                    {
-                        CarRotationY -= carSpinSpeed * elapsedTime;
-                    }
-                    else
-                    {
-                        CarRotationY += carSpinSpeed * elapsedTime;
-                    }
-                }
-                wheelSteeringAngle = Math.Max(wheelSteeringAngle - wheelSteerDelta, -maxWheelSteer);
-            }
             else
             {
-                wheelSteeringAngle = 0;
+                if (keyboardState.IsKeyDown(Keys.D))
+                {
+                    steeringSum -= 1;
+                    wheelSteeringAngle = Math.Max(wheelSteeringAngle - wheelSteerDelta, -maxWheelSteer);
+                }
+                else
+                {
+                    wheelSteeringAngle = 0;
+                }
             }
 
-            if (keyboardState.IsKeyDown(Keys.Space) && carPosition.Y<100f){
+
+            if (keyboardState.IsKeyDown(Keys.Space) && carPosition.Y < 100f)
+            {
                 carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
             }
 
-            float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
-            wheelRotationAngle += wheelRotationDelta;
-            var currentVelocity = carBodyReference.Velocity.Linear;
-            // Actualizar la velocidad del cuerpo en la simulación en base a la dirección
-            var forwardDirection = System.Numerics.Vector3.Transform(System.Numerics.Vector3.UnitZ,
-            System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, CarRotationY));
-
-            // ESTA LOGICA ES PARA EVITAR PROBLEMAS CON LA GRAVEDAD Y ESAS COSAS, CUANDO APLICA LA VELOCIDAD, DESCARTA LA COMPONENTE VERTICAL
-            // Proyectar la velocidad actual en la dirección hacia adelante
-            
-            // Separar la componente vertical (gravedad)
-            var verticalVelocity = new System.Numerics.Vector3(0, currentVelocity.Y, 0);
-            // Obtener la velocidad en el plano horizontal (XZ)
-            var horizontalVelocity = new System.Numerics.Vector3(currentVelocity.X, 0, currentVelocity.Z);
-            var forwardVelocity = System.Numerics.Vector3.Dot(horizontalVelocity, forwardDirection);
-            // Eliminar el componente lateral para evitar deslizamiento, solo en el plano XZ
-            var lateralDirection = horizontalVelocity - forwardVelocity * forwardDirection;
-            horizontalVelocity -= lateralDirection * 0.9f; // Ajusta el valor para controlar el deslizamiento
-            // Volver a combinar la velocidad horizontal con la vertical
-            carBodyReference.Velocity.Linear = horizontalVelocity + verticalVelocity;
-
-
-            // Aplicar la nueva velocidad en la dirección hacia adelante
-            carBodyReference.ApplyLinearImpulse(forwardDirection * CarSpeed);
-            // Aplicar la rotación al cuerpo físico
-            carBodyReference.Pose.Orientation = System.Numerics.Quaternion.CreateFromAxisAngle(new System.Numerics.Vector3(0, 1, 0), CarRotationY);
+            var targetSpeedFraction = keyboardState.IsKeyDown(Keys.W) ? 10f : keyboardState.IsKeyDown(Keys.S) ? -10f : 0;
+            Console.WriteLine("TargetSpeed " + targetSpeedFraction);
+            playerController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, keyboardState.IsKeyDown(Keys.LeftAlt));
             // Actualizar la posición y la matriz de mundo del auto
+            carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
-            var rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
-            carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
+            rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
+            carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
 
-
-
-
-            var frontLeftWheelPosition = Vector3.Transform(ruedas[0].ParentBone.Transform.Translation, carWorld);
-            var frontRightWheelPosition = Vector3.Transform(ruedas[1].ParentBone.Transform.Translation, carWorld);
-            var backLeftWheelPosition = Vector3.Transform(ruedas[2].ParentBone.Transform.Translation, carWorld);
-            var backRightWheelPosition = Vector3.Transform(ruedas[3].ParentBone.Transform.Translation, carWorld);
-
-            var vector1 = frontRightWheelPosition - frontLeftWheelPosition;
-            var vector2 = backLeftWheelPosition - frontLeftWheelPosition;
-
-            var normal = Vector3.Cross(vector1, vector2);
-            normal.Normalize(); // Asegúrate de normalizar el vector normal
-
-            normal.Y = 0;
-
-            var targetOrientation = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(Vector3.Zero, normal, Vector3.Up));
-
-            System.Numerics.Quaternion targetOrientationNumerics = new System.Numerics.Quaternion(
-                targetOrientation.X,
-                targetOrientation.Y,
-                targetOrientation.Z,
-                targetOrientation.W
-            );
-
-            carBodyReference.Pose.Orientation = targetOrientationNumerics;
-
-            if (carPosition.Y < -3f)
-            {
-                carWorld = Matrix.Identity * Matrix.CreateTranslation(new Vector3(0f,300f,0f));
-
-            }
-            else
-            {
-                carWorld = rotationMatrix * Matrix.CreateTranslation(carPosition);
-            }
-                Console.WriteLine("posicion del auto: " + carPosition);
+            Console.WriteLine("posicion del auto: " + carPosition);
         }
 
         public void Draw(Matrix View, Matrix Projection)
@@ -349,13 +285,15 @@ namespace TGC.MonoGame.TP.Content.Models
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
         {
             // Obtener la matriz de rotación del auto (supongo que tienes una variable CarRotationY para la rotación en Y)
-            var carRotationMatrix = Matrix.CreateRotationY(CarRotationY); // Rotación del auto en Y (ajusta esto si tienes más rotaciones en otros ejes)
+            //var carRotationMatrix = Matrix.CreateRotationY(rotationMatrix); // Rotación del auto en Y (ajusta esto si tienes más rotaciones en otros ejes)
 
             // Crear la matriz de mundo del coche, que incluye rotación y traslación
-            var carWorldMatrix = carRotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
+            var carWorldMatrix = rotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
 
+            
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
-            DrawBox(carWorldMatrix, new Vector3(200f, 100f, 550f), viewMatrix, projectionMatrix);
+            //DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
+            /*
             // Dibujar las cajas de colisión de las ruedas
             foreach (var rueda in ruedas)
             {
@@ -374,7 +312,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 // Dibujar la caja de colisión para cada rueda
                 DrawBox(Matrix.CreateTranslation(wheelPositionInWorld), new Vector3(100f, 100f, 100f), viewMatrix, projectionMatrix);
-            }
+            } */
         }
 
         private void ElevateWheel(BodyReference wheelBodyReference)

@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using BepuPhysics;
 using BepuPhysics.Constraints;
 using BepuUtilities.Memory;
+using BepuPhysics.Collidables;
+using BepuUtilities;
 
 namespace TGC.MonoGame.TP
 {
@@ -34,7 +36,6 @@ namespace TGC.MonoGame.TP
         public const string ContentFolderTextures = "Textures/";
         public const string ContenidoAutoCombate = "Models/CombatVehicle";
         public const string ContenidoAutoCarrera = "Models/RacingCarA";
-        SpriteFont myFont;
 
         private GraphicsDeviceManager Graphics { get; }
         private SpriteBatch SpriteBatch { get; set; }
@@ -51,18 +52,18 @@ namespace TGC.MonoGame.TP
         private Model Model { get; set; }
         private Model DeLoreanModel { get; set; }
         private Effect Effect { get; set; }
-        
+
         // Clases
-        private Jugador autoJugador {get; set;}
+        private Jugador autoJugador { get; set; }
         private Toys Toys { get; set; }
         private Cuarto Cuarto { get; set; }
         private ToyCity ToyCity { get; set; }
         private SimpleTerrain SimpleTerrain { get; set; }
 
-        private Logo Logo {  get; set; }
+        private Logo Logo { get; set; }
         // Matrices
-        private Matrix View { get; set; }
-        private Matrix Projection { get; set; }
+        private Microsoft.Xna.Framework.Matrix View { get; set; }
+        private Microsoft.Xna.Framework.Matrix Projection { get; set; }
 
         //------ Variables para los SpawnPoint
         public enum TipoAuto
@@ -70,40 +71,53 @@ namespace TGC.MonoGame.TP
             tipoJugador,
             tipoCarrera,
             tipoCombate
-        }        
-        private float CantidadDeAutos {get; set;}
+        }
+        private int CantidadDeAutos { get; set; }
         public List<TipoAuto> listaModelos { get; set; }
         public List<AutoEnemigo> listaAutos { get; set; }
-        private List<Vector3> traslacionesIniciales { get; set; }
+        private List<System.Numerics.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
+        
+        public int aiCount = 1;
+
         // ------
 
         private Simulation simulation;
         private BufferPool bufferPool;
         private SimpleThreadDispatcher threadDispatcher;
+        private SimpleCarController playerController;
 
-        // -----
+    /*    struct AIController
+        {*/
+           /* public float LaneOffset;
+        }*/
+        Buffer<SimpleCarController> aiControllers;
+
+
+               // -----
 
         Texture2D texturaBarraVida;
         Texture2D texturaCuadroItem;
         Texture2D texturaItem;
         Texture2D Circulo;
 
+        SpriteFont myFont;
+
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
-            
+
             // Consejo: Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
-            
-            
+
+
             // Carpeta raiz donde va a estar toda la Media.
             Content.RootDirectory = "Content";
-            
+
             // Hace que el mouse sea visible.
             IsMouseVisible = true;
         }
-        
+
 
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo.
@@ -113,8 +127,9 @@ namespace TGC.MonoGame.TP
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
             CantidadDeAutos = 70;
+            
             traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
-            angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales); 
+            angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales);
 
             listaModelos = new List<TipoAuto>();
             listaAutos = new List<AutoEnemigo>();
@@ -129,15 +144,15 @@ namespace TGC.MonoGame.TP
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
             Graphics.ApplyChanges();
 
-            
-            
             Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
-            
+
             FreeCamera = new FreeCamera(GraphicsDevice.Viewport.AspectRatio);
-            
+
             IsometricCamera = new IsometricCamera(Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight);
 
             // Configuramos nuestras matrices de la escena.
+            /*
+<<<<<<< HEAD
            
             base.Initialize();
         }
@@ -171,11 +186,13 @@ namespace TGC.MonoGame.TP
             var solveDescription = new SolveDescription(8,1);
             simulation = Simulation.Create(bufferPool, narrowPhaseCallbacks, poseIntegratorCallbacks, solveDescription);
 
+*/
+
 
             int tessellation = 2;
             if (CantidadDeAutos % tessellation != 0) // Cuidado que aquí tienes que tener cuidado y asegurarte que sea divisible por el número.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
-            
+
             listaModelos.Add(TipoAuto.tipoJugador);
             for (int i = 0; i < CantidadDeAutos / tessellation; i++)
             {
@@ -192,29 +209,66 @@ namespace TGC.MonoGame.TP
                 listaModelos[i] = listaModelos[j];
                 listaModelos[j] = temp;
             }
+            
+            // INICIALIZO LOGICA DE BEPU
+            iniciarSimulacion();
+
+
+            base.Initialize();
+        }
+
+        /// <summary>
+        ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
+        ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
+        ///     que podemos pre calcular para nuestro juego.
+        /// </summary>
+        protected override void LoadContent()
+        {
+
+            texturaBarraVida = Content.Load<Texture2D>("HUD/textura-vida");
+            texturaCuadroItem = Content.Load<Texture2D>("HUD/marco");
+            Circulo = Content.Load<Texture2D>("HUD/circulo");
+            texturaItem = Content.Load<Texture2D>("HUD/textura-nitro");
+
+            myFont = Content.Load<SpriteFont>("myFont");  // Carga la fuente
+
+            // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
+            SpriteBatch = new SpriteBatch(GraphicsDevice);
+
+
+
 
 
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
-            {   
-                if (listaModelos[i] == TipoAuto.tipoCarrera){
-                    listaAutos.Add(new AutoEnemigoCarrera(Content, traslacionesIniciales[i], angulosIniciales[i]));
+            {
+                if (listaModelos[i] == TipoAuto.tipoCarrera)
+                {
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, aiControllers[i], traslacionesIniciales[i], angulosIniciales[i]));
                 }
-                if (listaModelos[i] == TipoAuto.tipoCombate){
-                    listaAutos.Add(new AutoEnemigoCombate(Content, traslacionesIniciales[i], angulosIniciales[i]));
+                if (listaModelos[i] == TipoAuto.tipoCombate)
+                {
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, aiControllers[i] ,traslacionesIniciales[i], angulosIniciales[i]));
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
 
 
             // Cargo Clases
+/*
+<<<<<<< HEAD
             autoJugador = new Jugador(Content, simulation,GraphicsDevice);
             ToyCity = new ToyCity(Content);
             SimpleTerrain = new SimpleTerrain(GraphicsDevice, Content);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content);
+            */
             Logo = new Logo(Content, simulation, GraphicsDevice);
-            
+            autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
+            Toys = new Toys(Content, simulation, GraphicsDevice);
+            Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
+           
+
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -230,11 +284,13 @@ namespace TGC.MonoGame.TP
         ///     ante ellas.
         /// </summary>
         protected override void Update(GameTime gameTime)
-        {      
-            simulation.Timestep(1f/60f, threadDispatcher);
+        {
+
+            Console.WriteLine("Number of bodies: " + simulation.Bodies.ActiveSet.Count);
+            simulation.Timestep(1f / 60f, threadDispatcher);
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-            
+
             if (keyboardState.IsKeyDown(Keys.Escape))
             {
                 Exit();
@@ -255,14 +311,14 @@ namespace TGC.MonoGame.TP
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
-            
+
             if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
             {
                 liberarCamara = !liberarCamara;
             }
             if (!liberarCamara)
             {
-                autoJugador.Update(gameTime);
+                autoJugador.Update(gameTime, simulation);
                 IsometricCamera.Update(gameTime, autoJugador.carWorld);
                 View = IsometricCamera.View;
                 Projection = IsometricCamera.Projection;
@@ -293,25 +349,25 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
-           GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
-            GraphicsDevice.BlendState = BlendState.Opaque ;
+            GraphicsDevice.BlendState = BlendState.Opaque;
 
-            foreach ( var Auto in listaAutos){
+            foreach (var Auto in listaAutos)
+            {
                 Auto.Draw(gameTime, View, Projection);
             }
-            
 
-            
+
+
             autoJugador.Draw(View, Projection);
-            ToyCity.Draw(gameTime, View, Projection);
-            SimpleTerrain.Draw(gameTime, View, Projection);
+           
             Toys.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
-            Logo.Draw(gameTime, View, Projection);
-            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+        //    Logo.Draw(gameTime, View, Projection);
+           GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
@@ -330,6 +386,7 @@ namespace TGC.MonoGame.TP
 
     // Dibuja el ítem
             SpriteBatch.Draw(texturaCuadroItem, new Rectangle(10, 40, 70, 70), Color.White);
+            /*
             
             if (autoJugador.power != -1){
                 SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
@@ -349,10 +406,28 @@ namespace TGC.MonoGame.TP
             SpriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
 
             SpriteBatch.End();
+            */
+            SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
             
+         
+        // Puedes dibujar el círculo dependiendo del progreso
+        // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
+                Rectangle circleRect = new Rectangle(13, 43, 65, 65);
+                
+                // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
+               
             
+
+            SpriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 150, 40), Color.Black * 0.5f);
+            SpriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
+
+            SpriteBatch.End();
+
+
+
+
             // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.
-            
+
             /*
             Effect.Parameters["View"].SetValue(View);
             Effect.Parameters["Projection"].SetValue(Projection);
@@ -364,7 +439,7 @@ namespace TGC.MonoGame.TP
                 mesh.Draw();
             }
             */
-            
+
             base.Draw(gameTime);
         }
 
@@ -379,10 +454,10 @@ namespace TGC.MonoGame.TP
             base.UnloadContent();
         }
 
-        public List<Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
+        public List<System.Numerics.Vector3> GenerarPuntosEnCirculo(float numPuntos, float radio)
         {
-            List<Vector3> puntos = new List<Vector3>();
-            float anguloIncremento = MathHelper.TwoPi / numPuntos; // Divide el círculo en partes iguales
+            List<System.Numerics.Vector3> puntos = new List<System.Numerics.Vector3>();
+            float anguloIncremento = Microsoft.Xna.Framework.MathHelper.TwoPi / numPuntos; // Divide el círculo en partes iguales
             float centroX = -900f; // Desplazamiento en X
             float centroZ = -1100f; // Desplazamiento en Z
 
@@ -393,13 +468,13 @@ namespace TGC.MonoGame.TP
                 float z = centroZ + radio * (float)Math.Sin(angulo); // Coordenada Z con desplazamiento
                 float y = 5; // Coordenada Y fija
 
-                puntos.Add(new Vector3(x, y, z));
+                puntos.Add(new System.Numerics.Vector3(x, y, z));
             }
 
             return puntos;
         }
 
-        public List<float> CalcularAngulosHaciaCentro(List<Vector3> posiciones)     // Gira los autos para que miren al centro
+        public List<float> CalcularAngulosHaciaCentro(List<System.Numerics.Vector3> posiciones)     // Gira los autos para que miren al centro
         {
             List<float> angulos = new List<float>();
 
@@ -414,12 +489,90 @@ namespace TGC.MonoGame.TP
                 float dz = centroZ - posicion.Z;
 
                 // Calculamos el ángulo con Atan2. Intercambiamos dx y dz para invertir la dirección
-                float angulo = MathHelper.TwoPi - (float)Math.Atan2(dz, dx) + MathHelper.Pi / 2;
+                float angulo = Microsoft.Xna.Framework.MathHelper.TwoPi - (float)Math.Atan2(dz, dx) + Microsoft.Xna.Framework.MathHelper.Pi / 2;
 
                 angulos.Add(angulo);
             }
 
             return angulos;
         }
+
+        private void iniciarSimulacion()
+        {
+            
+            // inicializo logica de bepu
+            // setea el threadCount para el update de la simulacion de bepu
+            var targetThreadCount = Math.Max(1,
+                Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
+            threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
+
+            var properties = new CollidableProperty<CarBodyProperties>();
+            bufferPool = new BufferPool();
+            simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
+
+            var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
+            builder.Add(new Box(50f, 30f, 100f), RigidPose.Identity, 300);
+            builder.Add(new Box(40f, 30f, 50f), new System.Numerics.Vector3(0, 20f, -5f), 1f);
+            builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
+            builder.Dispose();
+            var bodyShape = new Compound(children);
+            var bodyShapeIndex = simulation.Shapes.Add(bodyShape);
+            var wheelShape = new Cylinder(5f, 5f);
+            var wheelInertia = wheelShape.ComputeInertia(5f);
+            var wheelShapeIndex = simulation.Shapes.Add(wheelShape);
+
+            const float x = 30f;
+            const float y = -10f;
+            const float frontZ = 35f;
+            const float backZ = -35f;
+            const float wheelBaseWidth = x * 3f;
+            const float wheelBaseLength = frontZ - backZ;
+
+            var pose = new RigidPose(traslacionesIniciales[0],  System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
+
+            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 5f,
+            new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
+            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
+
+            Console.WriteLine("Inertia: " + bodyInertia);
+            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+            wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
+
+            // ACA SE INICIALIZAN LOS AUTOS DE IA
+            bufferPool.Take(CantidadDeAutos-1, out aiControllers);
+            var random = new Random(5);
+            for (int i = 1; i < CantidadDeAutos; ++i)
+            {
+                var position = traslacionesIniciales[i];
+                var orientation = System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[i]);
+                aiControllers[i] = new SimpleCarController(SimpleCar.Create(simulation, properties, new RigidPose(position, orientation), bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2f,
+                    new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
+                    new SpringSettings(5, 0.7f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f)),
+                    forwardSpeed: 50, forwardForce: 5, zoomMultiplier: 2, backwardSpeed: 10, backwardForce: 4, idleForce: 0.25f, brakeForce: 7, steeringSpeed: 1.5f, maximumSteeringAngle: MathF.PI * 0.23f,
+                    wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
+
+                //aiControllers[i].LaneOffset = random.NextSingle() * 20 - 10;
+            }
+
+        }
+
+
+        /*
+            // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
+            for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
+            {
+                if (listaModelos[i] == TipoAuto.tipoCarrera)
+                {
+                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
+                }
+                if (listaModelos[i] == TipoAuto.tipoCombate)
+                {
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
+                }
+                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
+            }
+        */
+
+        
     }
 }
