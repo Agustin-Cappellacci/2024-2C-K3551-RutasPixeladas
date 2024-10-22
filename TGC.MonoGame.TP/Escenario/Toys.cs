@@ -74,13 +74,17 @@ namespace TGC.MonoGame.TP.Content.Models
         private StaticHandle rampa7BodyHandle;
         private StaticHandle rampa8BodyHandle;
         private StaticHandle rampaParedBodyHandle;
-        private StaticHandle rampaDobleBodyHandle;
+        private StaticHandle rampaDoble1BodyHandle;
+        private StaticHandle rampaDoble2BodyHandle;
         private StaticHandle caballo1BodyHandle;
         private StaticHandle caballo2BodyHandle;
         private StaticHandle rampaPanzaBodyHandle;
         private StaticHandle ajedrezBodyHandle;
         private StaticHandle legoBodyHandle;
-        private StaticHandle puenteBodyHandle;
+        private StaticHandle puenteBase1Handle;
+        private StaticHandle puenteBase2Handle;
+        private StaticHandle puentePared1Handle;
+        private StaticHandle puentePared2Handle;
         
         private Simulation simulation;
         private GraphicsDevice graphicsDevice;
@@ -389,20 +393,27 @@ namespace TGC.MonoGame.TP.Content.Models
             rampShapeIndex
             )); */
             
+
+
             
             // Crear colisiones con rampa doble
             // Definir las dimensiones de la rampa
-            var rampaDobleSize = new System.Numerics.Vector3(1000f, 100f, 300f); //Tamaño
-            // Calcular la posición y la rotación
-            var rampaDoblePosition = new System.Numerics.Vector3(-900f, 0f, -1100f); // Posición de la rampa
+            var rampaDobleSize = new System.Numerics.Vector3(540f, 100f, 300f); //Tamaño
             var rampaDobleShape = new Box(rampaDobleSize.X, rampaDobleSize.Y, rampaDobleSize.Z);
 
             // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
             var rampaDobleShapeIndex = simulation.Shapes.Add(rampaDobleShape);
 
             // Crear el cuerpo estático para la rampa
-            rampaDobleBodyHandle = simulation.Statics.Add(new StaticDescription(
-                rampaDoblePosition, // Posición inicial de la rampa
+            rampaDoble1BodyHandle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(-1220f, -10f, -1100f), // Posición inicial de la rampa
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(0, 0, (float)Math.PI / 20),
+                rampaDobleShapeIndex
+            ));
+             // Crear el cuerpo estático para la rampa
+            rampaDoble2BodyHandle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(-550f, -10f, -1100f), // Posición inicial de la rampa
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(0, 0, -(float)Math.PI / 20),
                 rampaDobleShapeIndex
             ));
 
@@ -490,22 +501,44 @@ namespace TGC.MonoGame.TP.Content.Models
             ));
             
             // Definir las dimensiones del puente
-            var puenteSize = new System.Numerics.Vector3(500f, 200f, 500f); // Ejemplo de tamaño
-            // Calcular la posición y la rotación
-            var puentePosition = new System.Numerics.Vector3(360F, 2f, -1700f); // Posición del puente
-            var puenteOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, (float)Math.PI / -2); // Rotación
-            var puenteShape = new Box(puenteSize.X, puenteSize.Y, puenteSize.Z);
+            var puenteBaseSize = new System.Numerics.Vector3(500f,150f, 400f); // Ejemplo de tamaño
+            
+            var puenteBaseShape = new Box(puenteBaseSize.X, puenteBaseSize.Y, puenteBaseSize.Z);
 
             // Registrar la forma del puente en el sistema de colisiones y obtener un TypedIndex
-            var puenteShapeIndex = simulation.Shapes.Add(puenteShape);
+            var puenteBaseShapeIndex = simulation.Shapes.Add(puenteBaseShape);
 
             // Crear el cuerpo estático para el puente
-            puenteBodyHandle = simulation.Statics.Add(new StaticDescription(
-                puentePosition,
-                puenteOrientation,
-                puenteShapeIndex
+            puenteBase1Handle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(305f, -200f, -1625f),
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4,(float)Math.PI /8, (float)Math.PI / -2), // Rotación,
+                puenteBaseShapeIndex
+            ));
+            // Crear el cuerpo estático para el puente
+            puenteBase2Handle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(435f, -200f, -1755f),
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 4, -(float)Math.PI / 8, (float)Math.PI / -2),
+                puenteBaseShapeIndex
             ));
 
+            // Definir las dimensiones del puente
+            var puenteParedSize = new System.Numerics.Vector3(300f, 30f, 550f); // Ejemplo de tamaño
+            var puenteParedShape = new Box(puenteParedSize.X, puenteParedSize.Y, puenteParedSize.Z);
+
+            // Registrar la forma del puente en el sistema de colisiones y obtener un TypedIndex
+            var puenteParedShapeIndex = simulation.Shapes.Add(puenteParedShape);
+            // Crear el cuerpo estático para el puente
+            puentePared1Handle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(320f, 0f, -1775f),
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4,0, (float)Math.PI / -2),
+                puenteParedShapeIndex
+            ));
+            // Crear el cuerpo estático para el puente
+            puentePared2Handle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(430f, 0f, -1635f),
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI /4,0, (float)Math.PI / -2),
+                puenteParedShapeIndex
+            ));
 
             
         }
@@ -874,8 +907,12 @@ namespace TGC.MonoGame.TP.Content.Models
             // Dibujar cajas de colision de la rampa
             this.DrawCollisionBoxesRampaGrande(viewMatrix,projectionMatrix);
             
+
             // Dibujar Rampa doble
-            DrawBox(Matrix.CreateTranslation(-900f, 0f, -1100f), new Vector3(1000f, 100f, 300f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(0, 0, (float)Math.PI / 20)*Matrix.CreateTranslation(-1220f, -10f, -1120f), new Vector3(540f, 100f, 230f), viewMatrix, projectionMatrix);
+             // Dibujar Rampa doble
+            DrawBox(Matrix.CreateFromYawPitchRoll(0, 0, -(float)Math.PI / 20)*Matrix.CreateTranslation(-550f, -10f, -1120f), new Vector3(540f, 100f, 230f), viewMatrix, projectionMatrix);
+            
             // Dibujar Rampa panza
             DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, 0, 0)*Matrix.CreateTranslation(-1200f, 10f, 0f), new Vector3(350f, 100f, 500f), viewMatrix, projectionMatrix);
             // Dibujar caballo1
@@ -887,9 +924,12 @@ namespace TGC.MonoGame.TP.Content.Models
             // Dibujar lego
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(1200f, 2f, 1700f), new Vector3(150f, 100f, 150f), viewMatrix, projectionMatrix);
             // Dibujar puente
-            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, (float)Math.PI / -2)*Matrix.CreateTranslation(360F, 2f, -1700f), new Vector3(500f, 200f, 500f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,(float)Math.PI /8, (float)Math.PI / -2)*Matrix.CreateTranslation(305f, -200f, -1625f), new Vector3(500f,150f, 400f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,-(float)Math.PI /8, (float)Math.PI / -2)*Matrix.CreateTranslation(435f, -200f, -1755f), new Vector3(500f, 150f, 400f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,0, (float)Math.PI / -2)*Matrix.CreateTranslation(320f, 0f, -1775f), new Vector3(300f, 30f, 550f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,0, (float)Math.PI / -2)*Matrix.CreateTranslation(430f, 0f, -1635f), new Vector3(300f, 30f, 550f), viewMatrix, projectionMatrix);
             
-        }
+        }// 450 -1665
 
         private void DrawCollisionBoxesRampaGrande(Matrix viewMatrix, Matrix projectionMatrix)
         {
