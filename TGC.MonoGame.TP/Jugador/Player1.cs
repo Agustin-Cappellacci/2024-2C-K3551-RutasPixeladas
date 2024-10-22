@@ -13,12 +13,14 @@ using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
     // Nunca olvides mesh.ParentBone.Transform
 
-    class Jugador
+    public class Jugador
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
@@ -64,6 +66,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private GraphicsDevice graphicsDevice;
 
         private IPowerUp powerUp;
+        private SoundEffect _engineSound;
+        private SoundEffectInstance _engineSoundInstance;
+        private bool isMuted = false;
 
 
 
@@ -72,13 +77,17 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
             direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
+            _engineSound = content.Load<SoundEffect>(ContentFolder3D + "autos/RacingCarA/high ACC");
+            _engineSoundInstance = _engineSound.CreateInstance();
+            _engineSoundInstance.IsLooped = true;
+            _engineSoundInstance.Play();
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
             //powerUp = new SuperJump(this);
-            powerUp = new SuperSpeed(this);
+            powerUp = new SuperSpeed(content, this);
 
 
             CarAcceleration = 500f;
@@ -208,6 +217,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
             }
 
+            _engineSoundInstance.Pitch = CarSpeed * 0.002f;
+
             float wheelRotationDelta = CarSpeed * 0.0005f; // Ajusta este factor para que el giro sea proporcional.
             wheelRotationAngle += wheelRotationDelta;
             var currentVelocity = carBodyReference.Velocity.Linear;
@@ -310,6 +321,18 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Dibujar las cajas de colisión del auto y las ruedas
             DrawCollisionBoxes(View, Projection);
+        }
+
+        public void ToggleSound()
+        {
+            if (isMuted) {
+                _engineSoundInstance.Play();
+                isMuted = false;
+                return;
+            }
+            _engineSoundInstance.Stop();
+            isMuted = true;
+            return;
         }
 
         public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)

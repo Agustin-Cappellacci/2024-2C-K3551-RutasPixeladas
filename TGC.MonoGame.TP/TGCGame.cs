@@ -10,6 +10,8 @@ using System.Collections.Generic;
 using BepuPhysics;
 using BepuPhysics.Constraints;
 using BepuUtilities.Memory;
+using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Media;
 
 namespace TGC.MonoGame.TP
 {
@@ -37,6 +39,10 @@ namespace TGC.MonoGame.TP
 
         private GraphicsDeviceManager Graphics { get; }
         private SpriteBatch SpriteBatch { get; set; }
+
+        // Menu
+        private MainMenu menu;
+        private bool _isMenuOpen = false;
 
         // Cámara
         FollowCamera Camera { get; set; }
@@ -78,6 +84,8 @@ namespace TGC.MonoGame.TP
         private Simulation simulation;
         private BufferPool bufferPool;
         private SimpleThreadDispatcher threadDispatcher;
+        private bool soundIsPaused = false;
+        private Song _backgroundMusic;
 
         public TGCGame()
         {
@@ -141,6 +149,9 @@ namespace TGC.MonoGame.TP
         {
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
+            _backgroundMusic = Content.Load<Song>(ContentFolder3D + "autos/RacingCarA/backgroundmusic");
+            MediaPlayer.IsRepeating = true;
+            MediaPlayer.Play(_backgroundMusic);
 
             // setea el threadCount para el update de la simulacion de bepu
             var targetThreadCount = Math.Max(1,
@@ -200,7 +211,7 @@ namespace TGC.MonoGame.TP
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
 
-
+            menu = new MainMenu(autoJugador, SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
             base.LoadContent();
         }
 
@@ -215,37 +226,51 @@ namespace TGC.MonoGame.TP
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
             
-            if (keyboardState.IsKeyDown(Keys.Escape))
+            if (keyboardState.IsKeyDown(Keys.Escape) && !oldState.IsKeyDown(Keys.Escape))
             {
-                Exit();
-            }
-            // Aca deberiamos poner toda la logica de actualizacion del juego.
-
-            // Capturar Input teclado
-            
-            if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
-            {
-                liberarCamara = !liberarCamara;
-            }
-            if (!liberarCamara)
-            {
-                autoJugador.Update(gameTime);
-                IsometricCamera.Update(gameTime, autoJugador.carWorld);
-                View = IsometricCamera.View;
-                Projection = IsometricCamera.Projection;
-            }
-            else
-            {
-                FreeCamera.Update(gameTime, autoJugador.carWorld);
-                View = FreeCamera.View;
-                Projection = FreeCamera.Projection;
+                _isMenuOpen = !_isMenuOpen;
             }
 
-            /*  
-            foreach ( var Auto in listaAutos){
-                Auto.Update();
+            if (_isMenuOpen)
+            {
+                _isMenuOpen = menu.HandleMenuInput(keyboardState);
             }
-            */
+
+            if (keyboardState.IsKeyDown(Keys.P) && !oldState.IsKeyDown(Keys.P))
+            {
+                soundIsPaused = !soundIsPaused;
+                if (soundIsPaused)
+                    MediaPlayer.Pause();
+                else
+                    MediaPlayer.Resume();
+            }
+                // Aca deberiamos poner toda la logica de actualizacion del juego.
+
+                // Capturar Input teclado
+                
+                if (keyboardState.IsKeyDown(Keys.Tab) & oldState.IsKeyUp(Keys.Tab))
+                {
+                    liberarCamara = !liberarCamara;
+                }
+                if (!liberarCamara)
+                {
+                    autoJugador.Update(gameTime);
+                    IsometricCamera.Update(gameTime, autoJugador.carWorld);
+                    View = IsometricCamera.View;
+                    Projection = IsometricCamera.Projection;
+                }
+                else
+                {
+                    FreeCamera.Update(gameTime, autoJugador.carWorld);
+                    View = FreeCamera.View;
+                    Projection = FreeCamera.Projection;
+                }
+
+                /*  
+                foreach ( var Auto in listaAutos){
+                    Auto.Update();
+                }
+                */
 
             oldState = keyboardState;
             float fps = 1f / elapsedTime;
@@ -276,6 +301,7 @@ namespace TGC.MonoGame.TP
             Cuarto.Draw(gameTime, View, Projection);
             Logo.Draw(gameTime, View, Projection);
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             
 
             
@@ -293,8 +319,17 @@ namespace TGC.MonoGame.TP
                 mesh.Draw();
             }
             */
+        
+            if (_isMenuOpen)
+            {
+                menu.DrawMenuOverlay();
+            }
             
             base.Draw(gameTime);
+        }
+
+        public void ToggleMusic() {
+            MediaPlayer.IsMuted = !MediaPlayer.IsMuted;
         }
 
         /// <summary>
@@ -350,5 +385,51 @@ namespace TGC.MonoGame.TP
 
             return angulos;
         }
+
+        /* private void HandleMenuInput(KeyboardState keyboardState)
+        {
+            if (keyboardState.IsKeyDown(Keys.Down))
+            {
+                _selectedIndex = (_selectedIndex + 1) % _menuItems.Length;
+            }
+            else if (keyboardState.IsKeyDown(Keys.Up))
+            {
+                _selectedIndex = (_selectedIndex - 1 + _menuItems.Length) % _menuItems.Length;
+            }
+
+            if (keyboardState.IsKeyDown(Keys.Enter))
+            {
+                if (_menuItems[_selectedIndex] == "Resume")
+                {
+                    _isMenuOpen = false; // Close the menu.
+                }
+                if (_menuItems[_selectedIndex] == "Toggle Sound")
+                {
+                    _isMenuOpen = false; // Close the menu.
+                    _isSoundMenuOpen = true;
+                    autoJugador.ToggleSound();
+                }
+                else if (_menuItems[_selectedIndex] == "Exit")
+                {
+                    Exit();
+                }
+            }
+        }
+
+        private void DrawMenuOverlay()
+        {
+            // Draw a semi-transparent background for the menu.
+            Texture2D overlay = new Texture2D(GraphicsDevice, 1, 1);
+            overlay.SetData(new[] { Color.Black * 0.5f }); // 50% transparent black.
+            SpriteBatch.Draw(overlay, new Rectangle(0, 0, Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight), Color.White);
+
+            // Draw menu items.
+            for (int i = 0; i < _menuItems.Length; i++)
+            {
+                Color color = (i == _selectedIndex) ? Color.Yellow : Color.White;
+                Vector2 position = new Vector2(850, 450 + i * 40);
+                SpriteBatch.DrawString(_menuFont, _menuItems[i], position, color);
+            }
+        } */
     }
 }
