@@ -19,10 +19,10 @@ namespace TGC.MonoGame.TP.Content.Models
         private float Yaw { get; set; }
         private float Pitch { get; set; }
 
-        private Vector3 CameraPosition = Vector3.UnitZ * 150;
-        private Vector3 CameraForward = Vector3.Forward;
-        private Vector3 CameraTarget = Vector3.Zero;
-        private Vector3 CameraUp = Vector3.Up;
+        private Vector3 CameraPosition;
+        private Vector3 CameraForward;
+        private Vector3 CameraTarget;
+        private Vector3 CameraUp;
 
         public FreeCamera(float aspectRatio)
         {
@@ -31,9 +31,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Perspective camera
             // Uso 60° como FOV, aspect ratio, pongo las distancias a near plane y far plane en 0.1 y 100000 (mucho) respectivamente
-            
+
+            CameraPosition = new Vector3(-600, 300, 300);
+            CameraForward = Vector3.Forward;
+            CameraTarget = Vector3.Zero;
+            CameraUp = Vector3.Up;
+
             Scale = Matrix.CreateScale(1f);
-            View = Matrix.CreateLookAt(Vector3.UnitZ * 150, Vector3.Zero, Vector3.Up);
+            View = Matrix.CreateLookAt(CameraPosition, CameraTarget, CameraUp);
             Projection = Matrix.CreatePerspectiveFieldOfView(MathF.PI / 3f, aspectRatio, 0.1f, 100000f);
         }
 

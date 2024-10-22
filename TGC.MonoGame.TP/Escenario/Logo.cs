@@ -18,12 +18,10 @@ namespace TGC.MonoGame.TP.Content.Models
         public const string ContentFolderEffects = "Effects/";
         
         private Model Model;
-
         private Effect Effect;
+
         private Microsoft.Xna.Framework.Matrix World;
-
         private Simulation simulation;
-
         private GraphicsDevice graphicsDevice;
         public Logo(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
         {
@@ -37,7 +35,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     meshPart.Effect = Effect;
                 }
             }
-            World = Microsoft.Xna.Framework.Matrix.CreateFromYawPitchRoll(MathF.PI, MathF.PI, 0) * Microsoft.Xna.Framework.Matrix.CreateScale(500f) * Microsoft.Xna.Framework.Matrix.CreateTranslation(1f,1f,-1000f);
+            World = Microsoft.Xna.Framework.Matrix.CreateFromYawPitchRoll(MathF.PI, MathF.PI, 0) * Microsoft.Xna.Framework.Matrix.CreateScale(500f) * Microsoft.Xna.Framework.Matrix.CreateTranslation(1f,-25f,-1000f);
         }
 
         public void Update()

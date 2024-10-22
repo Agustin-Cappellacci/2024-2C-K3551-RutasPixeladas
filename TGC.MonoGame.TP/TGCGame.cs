@@ -59,8 +59,8 @@ namespace TGC.MonoGame.TP
         private Cuarto Cuarto { get; set; }
         private ToyCity ToyCity { get; set; }
         private SimpleTerrain SimpleTerrain { get; set; }
-
         private Logo Logo { get; set; }
+        private Hub Hub { get; set; }
         // Matrices
         private Microsoft.Xna.Framework.Matrix View { get; set; }
         private Microsoft.Xna.Framework.Matrix Projection { get; set; }
@@ -87,7 +87,7 @@ namespace TGC.MonoGame.TP
         private SimpleThreadDispatcher threadDispatcher;
         private SimpleCarController playerController;
 
-    /*    struct AIController
+        /*    struct AIController
         {*/
            /* public float LaneOffset;
         }*/
@@ -96,12 +96,7 @@ namespace TGC.MonoGame.TP
 
                // -----
 
-        Texture2D texturaBarraVida;
-        Texture2D texturaCuadroItem;
-        Texture2D texturaItem;
-        Texture2D Circulo;
 
-        SpriteFont myFont;
 
         public TGCGame()
         {
@@ -164,19 +159,9 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {   
-
-            texturaBarraVida = Content.Load<Texture2D>("HUD/textura-vida");
-            texturaCuadroItem = Content.Load<Texture2D>("HUD/marco");
-            Circulo = Content.Load<Texture2D>("HUD/circulo");
-
-            myFont = Content.Load<SpriteFont>("myFont");  // Carga la fuente
-
-            // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
-
             // setea el threadCount para el update de la simulacion de bepu
             var targetThreadCount = Math.Max(1,
-                Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
+            Environment.ProcessorCount > 4 ? Environment.ProcessorCount - 2 : Environment.ProcessorCount - 1);
             threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
             
              // Inicializar la simulación de física de Bepu
@@ -224,21 +209,6 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {
-
-            texturaBarraVida = Content.Load<Texture2D>("HUD/textura-vida");
-            texturaCuadroItem = Content.Load<Texture2D>("HUD/marco");
-            Circulo = Content.Load<Texture2D>("HUD/circulo");
-            texturaItem = Content.Load<Texture2D>("HUD/textura-nitro");
-
-            myFont = Content.Load<SpriteFont>("myFont");  // Carga la fuente
-
-            // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
-
-
-
-
-
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
@@ -255,19 +225,21 @@ namespace TGC.MonoGame.TP
 
 
             // Cargo Clases
-/*
-<<<<<<< HEAD
-            autoJugador = new Jugador(Content, simulation,GraphicsDevice);
-            ToyCity = new ToyCity(Content);
-            SimpleTerrain = new SimpleTerrain(GraphicsDevice, Content);
-            Toys = new Toys(Content, simulation, GraphicsDevice);
-            Cuarto = new Cuarto(Content);
-            */
+            /*
+            <<<<<<< HEAD
+                        autoJugador = new Jugador(Content, simulation,GraphicsDevice);
+                        ToyCity = new ToyCity(Content);
+                        SimpleTerrain = new SimpleTerrain(GraphicsDevice, Content);
+                        Toys = new Toys(Content, simulation, GraphicsDevice);
+                        Cuarto = new Cuarto(Content);
+                        */
+
+            Hub = new Hub(Content);   
             Logo = new Logo(Content, simulation, GraphicsDevice);
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
-           
+            SpriteBatch = new SpriteBatch(GraphicsDevice); 
 
 
 
@@ -296,18 +268,9 @@ namespace TGC.MonoGame.TP
                 Exit();
             }
 
-            texturaItem = Content.Load<Texture2D>("HUD/textura-cohete");
             
 
-            if (autoJugador.power == 0){
-                texturaItem = Content.Load<Texture2D>("HUD/textura-cohete");
-            }
-            if (autoJugador.power == 1){
-                texturaItem = Content.Load<Texture2D>("HUD/textura-nitro");
-            }
-            if (autoJugador.power == 2){
-                texturaItem = Content.Load<Texture2D>("HUD/textura-arma");
-            }
+
             // Aca deberiamos poner toda la logica de actualizacion del juego.
 
             // Capturar Input teclado
@@ -330,6 +293,8 @@ namespace TGC.MonoGame.TP
                 Projection = FreeCamera.Projection;
             }
 
+            Hub.Update(autoJugador);
+
             /*  
             foreach ( var Auto in listaAutos){
                 Auto.Update();
@@ -349,7 +314,7 @@ namespace TGC.MonoGame.TP
         protected override void Draw(GameTime gameTime)
         {
             // Aca deberiamos poner toda la logia de renderizado del juego.
-         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
 
             GraphicsDevice.Clear(Color.CornflowerBlue);
@@ -366,79 +331,24 @@ namespace TGC.MonoGame.TP
            
             Toys.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection);
-        //    Logo.Draw(gameTime, View, Projection);
-           GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            
+            Logo.Draw(gameTime, View, Projection);
+            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
-            SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
 
             // Dibuja texto en la pantalla
             double tiempoTotal = gameTime.TotalGameTime.TotalSeconds;
 
             // Mostrar el tiempo transcurrido desde el inicio en pantalla
-            string tiempoDesdeInicio = $"{tiempoTotal:F2}"; 
-            Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
-            Color textColor = Color.White;
+            string tiempoDesdeInicio = $"{tiempoTotal:F2}";
 
-            SpriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
-            SpriteBatch.Draw(texturaBarraVida, new Rectangle(12, 12, 200, 20), Color.White);
-
-    // Dibuja el ítem
-            SpriteBatch.Draw(texturaCuadroItem, new Rectangle(10, 40, 70, 70), Color.White);
-            /*
             
-            if (autoJugador.power != -1){
-                SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
-            }
-            if (autoJugador.isOnCooldown){
-                float cooldownProgress = autoJugador.cooldownTimer / autoJugador.cooldownTime;  // Porcentaje de carga (0.0 a 1.0)
-        
-        // Puedes dibujar el círculo dependiendo del progreso
-        // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
-                Rectangle circleRect = new Rectangle(13, 43, 65, 65);
-                
-                // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
-                SpriteBatch.Draw(Circulo, circleRect, Color.White * (1 - cooldownProgress));
-            }
-
-            SpriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 150, 40), Color.Black * 0.5f);
-            SpriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
-
+            //Podríamos hacer un método para SpriteBatch de ser necesario.
+            SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
+            
+            Hub.Draw(SpriteBatch, tiempoDesdeInicio);
+           
             SpriteBatch.End();
-            */
-            SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
-            
-         
-        // Puedes dibujar el círculo dependiendo del progreso
-        // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
-                Rectangle circleRect = new Rectangle(13, 43, 65, 65);
-                
-                // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
-               
-            
-
-            SpriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 150, 40), Color.Black * 0.5f);
-            SpriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
-
-            SpriteBatch.End();
-
-
-
-
-            // Para dibujar le modelo necesitamos pasarle informacion que el efecto esta esperando. En el método Draw.
-
-            /*
-            Effect.Parameters["View"].SetValue(View);
-            Effect.Parameters["Projection"].SetValue(Projection);
-            Effect.Parameters["DiffuseColor"].SetValue(Color.DarkBlue.ToVector3());
-
-            foreach (var mesh in Model.Meshes)
-            {
-                Effect.Parameters["World"].SetValue(mesh.ParentBone.Transform * World);
-                mesh.Draw();
-            }
-            */
 
             base.Draw(gameTime);
         }
