@@ -45,7 +45,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private StaticHandle rampaDoble2BodyHandle;
         private StaticHandle caballo1BodyHandle;
         private StaticHandle caballo2BodyHandle;
-        private StaticHandle rampaPanzaBodyHandle;
+        private StaticHandle rampaPanza1BodyHandle;
+        private StaticHandle rampaPanza2BodyHandle;
         private StaticHandle ajedrezBodyHandle;
         private StaticHandle legoBodyHandle;
         private StaticHandle puenteBase1Handle;
@@ -266,7 +267,8 @@ namespace TGC.MonoGame.TP.Content.Models
             DrawBox(Matrix.CreateFromYawPitchRoll(0, 0, -(float)Math.PI / 20)*Matrix.CreateTranslation(-550f, -10f, -1120f), new Vector3(540f, 100f, 230f), viewMatrix, projectionMatrix);
             
             // Dibujar Rampa panza
-            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, 0, 0)*Matrix.CreateTranslation(-1200f, 10f, 0f), new Vector3(350f, 100f, 500f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, (float)Math.PI / 7, 0)*Matrix.CreateTranslation(-1125f, -20f, 50f), new Vector3(330f, 150f, 260f), viewMatrix, projectionMatrix);
+            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, -(float)Math.PI / 7, 0)*Matrix.CreateTranslation(-1275f, -20f, -50f), new Vector3(330f, 150f, 260f), viewMatrix, projectionMatrix);
             // Dibujar caballo1
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI * (5/4), 0, 0)*Matrix.CreateTranslation(1000f, 730f, 300f), new Vector3(100f, 500f, 260f), viewMatrix, projectionMatrix);
             // Dibujar caballo2
@@ -630,22 +632,26 @@ namespace TGC.MonoGame.TP.Content.Models
             ));
 
             // Definir las dimensiones de la rampa
-            var rampaPanzaSize = new System.Numerics.Vector3(350f, 100f, 500f); // Ejemplo de tamaño
+            var rampaPanzaSize = new System.Numerics.Vector3(330f, 150f, 260f); // Ejemplo de tamaño
             // Calcular la posición y la rotación
-            var rampaPanzaPosition = new System.Numerics.Vector3(-1200f, 10f, 0f); // Posición de la rampa
-            var rampaPanzaOrientation = BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 3, 0, 0); // Rotación
-
-            var rampaPanzaShape = new Box(rampaPanzaSize.X, rampaPanzaSize.Y, rampaPanzaSize.Z);
+             var rampaPanzaShape = new Box(rampaPanzaSize.X, rampaPanzaSize.Y, rampaPanzaSize.Z);
 
             // Registrar la forma de la rampa en el sistema de colisiones y obtener un TypedIndex
             var rampaPanzaShapeIndex = simulation.Shapes.Add(rampaPanzaShape);
 
             // Crear el cuerpo estático para la rampa
-            rampaPanzaBodyHandle = simulation.Statics.Add(new StaticDescription(
-                rampaPanzaPosition, // Posición inicial de la rampa
-                rampaPanzaOrientation,
+            rampaPanza1BodyHandle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(-1125f, -20f, 50f), // Posición inicial de la rampa
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 3, (float)Math.PI / 7, 0),
                 rampaPanzaShapeIndex
             ));
+            // Crear el cuerpo estático para la rampa
+            rampaPanza2BodyHandle = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(-1275f, -20f, -50f), // Posición inicial de la rampa
+                BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 3, -(float)Math.PI / 7, 0),
+                rampaPanzaShapeIndex
+            ));
+
             // Definir las dimensiones del caballo
             var caballo1PanzaSize = new System.Numerics.Vector3(100f, 500f, 260f); // Ejemplo de tamaño
             // Calcular la posición y la rotación

@@ -211,7 +211,6 @@ namespace TGC.MonoGame.TP
 
 
             // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
-          
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
                 if (listaModelos[i] == TipoAuto.tipoCarrera)
@@ -444,9 +443,9 @@ namespace TGC.MonoGame.TP
             playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce:50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
-            // ACA SE INICIALIZAN LOS AUTOS DE IA
+             // ACA SE INICIALIZAN LOS AUTOS DE IA
             bufferPool.Take(CantidadDeAutos-1, out aiControllers);
-            var random = new Random(5);
+            /* var random = new Random(5);
             for (int i = 1; i < CantidadDeAutos; ++i)
             {
                 var position = traslacionesIniciales[i];
@@ -458,7 +457,7 @@ namespace TGC.MonoGame.TP
                     wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
                 //aiControllers[i].LaneOffset = random.NextSingle() * 20 - 10;
-            }
+            }  */
 
         }
 
