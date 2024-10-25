@@ -90,9 +90,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Model carpet = content.Load<Model>(ContentFolder3D + "escenario/nuevos/carpet");
             Model caballo1 = content.Load<Model>(ContentFolder3D + "escenario/nuevos/caballo1");
             Model caballo2 = content.Load<Model>(ContentFolder3D + "escenario/nuevos/caballo2");
-            List<Model> listaModelos = new List<Model>(){
-                Torre, LegoPJ, Puente, rampaDoble, rampaPanza, rampa, carpet, caballo1, caballo2
-            };
+
 
             //Load textures
             
@@ -102,33 +100,45 @@ namespace TGC.MonoGame.TP.Content.Models
             Texture2D textureRampa = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/texture");
             Texture2D textureMadera = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/wood");
             Texture2D textureCarpet = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/alfombra2");
-            Texture2D textureCaballo1 = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/bullseye");
-            Texture2D textureCaballo2 = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/ColAlphY_horse_brown");
+            Texture2D textureCaballo1 = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/ColAlphY_horse_brown");
+            Texture2D textureCaballo2 = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/bullseye");
             Texture2D texture = content.Load<Texture2D>(ContentFolder3D + "escenario/nuevos/default-grey");
 
-            List<Texture2D> listaTexturas = new List<Texture2D>()
-            {
-                textureMetal,textureLegoPJ,textureMadera2,textureMadera,textureRampa,textureMadera,textureCarpet,textureCaballo2,textureCaballo1
-            };
-
-            List<Matrix> WorldMatrix = new List<Matrix>()
-            {
-                Matrix.CreateRotationY((float)Math.PI / 10) * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(new Vector3(-1300f, 1f, 700f)),   //Torre
-                Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(0.1f) * Matrix.CreateTranslation(new Vector3(1200f, 2f, 1700f)),   //LegoPJ
-                Matrix.CreateRotationX((float)Math.PI / -2) * Matrix.CreateRotationY((float)Math.PI / 4) * Matrix.CreateScale(100f) * Matrix.CreateTranslation(new Vector3(360F, 2f, -1700f)),    //Puente
-                Matrix.CreateScale(4f) * Matrix.CreateTranslation(new Vector3(-1400f, 0f, -1000f)),              //RampaDoble
-                Matrix.CreateRotationY((float)Math.PI / 3) * Matrix.CreateScale(300f) * Matrix.CreateTranslation(new Vector3(-1200f, 10f, 0f)),   //RampaPanza
-                Matrix.CreateRotationX(-(float)Math.PI / 2) * Matrix.CreateRotationY( (float)Math.PI / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(new Vector3(0f, 0f, 1000f)),   //Rampa
-                Matrix.CreateScale(10f) * Matrix.CreateTranslation(new Vector3(-900f, -1f, -1100f)), //Carpet
-                Matrix.CreateRotationY(-(float)Math.PI * (5 / 4)) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1000f, 730f, 300f)),//Caballo1
-                Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1200f, 730f, -100f))//Caballo2
-            };
 
 
-            for (int i = 0; i < listaModelos.Count; i++)
-            {
-                listaCombinada.Add(new Tuple<Model, Texture2D,Matrix>(listaModelos[i], listaTexturas[i], WorldMatrix[i]));
-            }
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(Torre, textureMetal, 
+                Matrix.CreateRotationY((float)Math.PI / 10) * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(new Vector3(-1300f, 1f, 700f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(LegoPJ, textureLegoPJ, 
+                Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(0.1f) * Matrix.CreateTranslation(new Vector3(1200f, 2f, 1700f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(Puente, textureMadera2, 
+                Matrix.CreateRotationX((float)Math.PI / -2) * Matrix.CreateRotationY((float)Math.PI / 4) * Matrix.CreateScale(100f) * Matrix.CreateTranslation(new Vector3(360F, 2f, -1700f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(rampaDoble, textureMadera, 
+                Matrix.CreateScale(4f) * Matrix.CreateTranslation(new Vector3(-1400f, 0f, -1000f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(rampaPanza, textureRampa, 
+                Matrix.CreateRotationY((float)Math.PI / 3) * Matrix.CreateScale(300f) * Matrix.CreateTranslation(new Vector3(-1200f, 10f, 0f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(rampa, textureMadera, 
+                Matrix.CreateRotationX(-(float)Math.PI / 2) * Matrix.CreateRotationY((float)Math.PI / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(new Vector3(0f, 0f, 1000f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(carpet, textureCarpet, 
+                Matrix.CreateScale(10f) * Matrix.CreateTranslation(new Vector3(-900f, -1f, -1100f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(caballo1, textureCaballo1, 
+                Matrix.CreateRotationY(-(float)Math.PI * (5 / 4)) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1000f, 730f, 300f))));
+            listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(caballo2, textureCaballo2, 
+                Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1200f, 730f, -100f))));
+
+
+
+            //Torre
+            //LegoPJ
+            //Puente
+            //RampaDoble
+            //RampaPanza
+            //Rampa
+            //Carpet
+            //Caballo1
+            //Caballo2
+
+
+
             // Ponemos efectos a todas las partes
             for (int i = 0; i < listaCombinada.Count; i++)
             {
