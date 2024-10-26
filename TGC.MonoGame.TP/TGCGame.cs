@@ -45,15 +45,17 @@ namespace TGC.MonoGame.TP
 
         // Menu
         MainMenu menu;
+
         private bool _isMenuOpen = false;
+        private bool _liberarCamara = false;
+        private bool _debugColisiones = true;
 
         // Cámara
-        FollowCamera Camera { get; set; }
         IsometricCamera IsometricCamera { get; set; }
         FreeCamera FreeCamera { get; set; }
+        BoundingFrustum _boundingFrustum { get; set; }
+        
 
-        private bool liberarCamara = false;
-        private bool debugColisiones = true;
         private KeyboardState oldState { get; set; }
 
         // Modelos y efectos
@@ -146,8 +148,6 @@ namespace TGC.MonoGame.TP
             Graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height - 100;
             Graphics.ApplyChanges();
 
-            Camera = new FollowCamera(GraphicsDevice.Viewport.AspectRatio);
-
             FreeCamera = new FreeCamera(GraphicsDevice.Viewport.AspectRatio);
 
             IsometricCamera = new IsometricCamera(Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight);
@@ -177,6 +177,8 @@ namespace TGC.MonoGame.TP
                 listaModelos[i] = listaModelos[j];
                 listaModelos[j] = temp;
             }
+
+            _boundingFrustum = new BoundingFrustum(IsometricCamera.View * IsometricCamera.Projection);
 
             nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
             hamster = new Hamster(Content, autoJugador, new Vector3(50, 10, 50));
@@ -254,19 +256,20 @@ namespace TGC.MonoGame.TP
             // DEBUG
             if (keyboardState.IsKeyDown(Keys.C) & oldState.IsKeyUp(Keys.C))
             {
-                debugColisiones = !debugColisiones;
+                _debugColisiones = !_debugColisiones;
             }
             // CAMBIO DE CAMARA
             if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
             {
-                liberarCamara = !liberarCamara;
+                _liberarCamara = !_liberarCamara;
             }
-            if (!liberarCamara)
+            if (!_liberarCamara)
             {
                 autoJugador.Update(gameTime, simulation);
                 IsometricCamera.Update(gameTime, autoJugador.carWorld);
                 View = IsometricCamera.View;
                 Projection = IsometricCamera.Projection;
+                _boundingFrustum.Matrix = View * Projection;
                 Hub.Update(autoJugador);
             }
             else
@@ -295,19 +298,20 @@ namespace TGC.MonoGame.TP
                     MediaPlayer.Resume();
             }
 
-                // Capturar Input teclado
+            // Capturar Input teclado
                 
-                if (keyboardState.IsKeyDown(Keys.Tab) & oldState.IsKeyUp(Keys.Tab))
-                {
-                    liberarCamara = !liberarCamara;
-                }
-                
+            if (keyboardState.IsKeyDown(Keys.Tab) & oldState.IsKeyUp(Keys.Tab))
+            {
+                _liberarCamara = !_liberarCamara;
+            }
 
-                /*  
-                foreach ( var Auto in listaAutos){
-                    Auto.Update();
-                }
-                */
+            
+            Toys.Update(_boundingFrustum);
+            /*      
+            foreach ( var Auto in listaAutos){
+                Auto.Update();
+            }
+            */
             oldState = keyboardState;
 
             arma.Update(gameTime);
@@ -348,7 +352,7 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
 
-            if (debugColisiones)
+            if (_debugColisiones)
             {
                 // dibujar las cajas de colisiones de todos los objetos
                 // si se quiere dibujar un convexHull hay que usar el mtodo DrawConvexHull (esta medio cursed ese)
@@ -403,7 +407,7 @@ namespace TGC.MonoGame.TP
                 float angulo = i * anguloIncremento;
                 float x = centroX + radio * (float)Math.Cos(angulo); // Coordenada X con desplazamiento
                 float z = centroZ + radio * (float)Math.Sin(angulo); // Coordenada Z con desplazamiento
-                float y = 5; // Coordenada Y fija
+                float y = 20; // Coordenada Y fija
 
                 puntos.Add(new System.Numerics.Vector3(x, y, z));
             }
