@@ -299,52 +299,68 @@ namespace TGC.MonoGame.TP.Content.Models
             
         }
 
+        private VertexBuffer? _vertexBuffer;
+        private IndexBuffer? _indexBuffer;
+        private BasicEffect? _effect;
         public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
         {
+            if (_effect == null){
+                _effect = new BasicEffect(graphicsDevice);
+                _effect.VertexColorEnabled = true;
+            }
+            _effect.World = Matrix.CreateScale(size/2f) * worldMatrix;
+            _effect.View = viewMatrix;
+            _effect.Projection = projectionMatrix;
             // Crear un efecto básico para dibujar la caja
-            BasicEffect effect = new BasicEffect(graphicsDevice);
-            effect.World = worldMatrix;
-            effect.View = viewMatrix;
-            effect.Projection = projectionMatrix;
-            effect.VertexColorEnabled = true;
+            
 
             // Definir los vértices de una caja (un cubo unitario que escalaremos)
-            VertexPositionColor[] vertices = new VertexPositionColor[8];
-            vertices[0] = new VertexPositionColor(new Vector3(-1, 1, 1), Microsoft.Xna.Framework.Color.Red);   // Front top left
-            vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1), Microsoft.Xna.Framework.Color.Red);    // Front top right
-            vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1), Microsoft.Xna.Framework.Color.Red);  // Front bottom left
-            vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1), Microsoft.Xna.Framework.Color.Red);   // Front bottom right
-            vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1), Microsoft.Xna.Framework.Color.Red);  // Back top left
-            vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1), Microsoft.Xna.Framework.Color.Red);   // Back top right
-            vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1), Microsoft.Xna.Framework.Color.Red); // Back bottom left
-            vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1), Microsoft.Xna.Framework.Color.Red);  // Back bottom right
+            if (_vertexBuffer == null){
+                VertexPositionColor[] vertices = new VertexPositionColor[8];
+                vertices[0] = new VertexPositionColor(new Vector3(-1, 1, 1), Microsoft.Xna.Framework.Color.Red);   // Front top left
+                vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1),  Microsoft.Xna.Framework.Color.Red);    // Front top right
+                vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1),  Microsoft.Xna.Framework.Color.Red);  // Front bottom left
+                vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1),  Microsoft.Xna.Framework.Color.Red);   // Front bottom right
+                vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1),  Microsoft.Xna.Framework.Color.Red);  // Back top left
+                vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1),  Microsoft.Xna.Framework.Color.Red);   // Back top right
+                vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1),  Microsoft.Xna.Framework.Color.Red); // Back bottom left
+                vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1),  Microsoft.Xna.Framework.Color.Red);  // Back bottom right 
+                _vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionColor), 8, BufferUsage.None);
+                _vertexBuffer.SetData(vertices);
+            }
+        
 
             // Escalar la caja en función del tamaño dado
-            for (int i = 0; i < vertices.Length; i++)
+            /*for (int i = 0; i < vertices.Length; i++)
             {
                 vertices[i].Position *= size / 2f;
-            }
+            }*/
 
             // Definir los índices que forman las líneas de la caja
-            int[] indices = new int[]
-            {
-        0, 1, 1, 3, 3, 2, 2, 0,  // Front face
-        4, 5, 5, 7, 7, 6, 6, 4,  // Back face
-        0, 4, 1, 5, 2, 6, 3, 7   // Connecting edges
-            };
-
+            
+            if (_indexBuffer == null){
+                ushort[] indices = new ushort[]
+                {
+            0, 1, 1, 3, 3, 2, 2, 0,  // Front face
+            4, 5, 5, 7, 7, 6, 6, 4,  // Back face
+            0, 4, 1, 5, 2, 6, 3, 7   // Connecting edges
+                };
+                _indexBuffer = new IndexBuffer(graphicsDevice, IndexElementSize.SixteenBits, indices.Length, BufferUsage.None);
+                _indexBuffer.SetData(indices);
+            } //mover a initialice
+            graphicsDevice.SetVertexBuffer(_vertexBuffer);
+            graphicsDevice.Indices = _indexBuffer;
             // Dibujar la caja usando el efecto básico
-            foreach (var pass in effect.CurrentTechnique.Passes)
+            foreach (var pass in _effect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                graphicsDevice.DrawUserIndexedPrimitives(
+                graphicsDevice.DrawIndexedPrimitives(
                     PrimitiveType.LineList,
-                    vertices,
                     0,
-                    vertices.Length,
-                    indices,
                     0,
-                    indices.Length / 2
+                    _vertexBuffer.VertexCount,
+                    0,
+                    _indexBuffer.IndexCount / 2
                 );
             }
         }

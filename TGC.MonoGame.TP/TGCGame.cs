@@ -328,7 +328,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.BlendState = BlendState.Opaque;
 
 
-            Toys.Draw(gameTime, View, Projection);
+            /*Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(View, Projection);
             ToyCity.Draw(gameTime, View, Projection);
             SimpleTerrain.Draw(gameTime, View, Projection);
@@ -347,7 +347,7 @@ namespace TGC.MonoGame.TP
 
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
-
+*/
             if (debugColisiones)
             {
                 // dibujar las cajas de colisiones de todos los objetos
