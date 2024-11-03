@@ -180,9 +180,6 @@ namespace TGC.MonoGame.TP
 
             _boundingFrustum = new BoundingFrustum(IsometricCamera.View * IsometricCamera.Projection);
 
-            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
-            hamster = new Hamster(Content, autoJugador, new Vector3(50, 10, 50));
-            arma = new Gun(Content, autoJugador, new Vector3(-50, 24, 50));
 
             // INICIALIZO LOGICA DE BEPU
             iniciarSimulacion();
@@ -230,6 +227,9 @@ namespace TGC.MonoGame.TP
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
+            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
+            hamster = new Hamster(GraphicsDevice, Content, autoJugador, new Vector3(50, 10, 50));
+            arma = new Gun(Content, autoJugador, new Vector3(-50, 24, 50));
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
@@ -332,7 +332,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.BlendState = BlendState.Opaque;
 
 
-            /*Toys.Draw(gameTime, View, Projection);
+            Toys.Draw(gameTime, View, Projection);
             autoJugador.Draw(View, Projection);
             ToyCity.Draw(gameTime, View, Projection);
             SimpleTerrain.Draw(gameTime, View, Projection);
@@ -351,7 +351,7 @@ namespace TGC.MonoGame.TP
 
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
-*/
+
             if (_debugColisiones)
             {
                 // dibujar las cajas de colisiones de todos los objetos

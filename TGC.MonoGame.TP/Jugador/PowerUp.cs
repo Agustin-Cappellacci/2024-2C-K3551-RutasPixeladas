@@ -14,6 +14,7 @@ using Vector3 = Microsoft.Xna.Framework.Vector3;
 using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+using TGC.MonoGame.Samples.Collisions;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -30,13 +31,15 @@ namespace TGC.MonoGame.TP.Content.Models
     private SoundEffect _powerUpSound;
     public SoundEffectInstance _powerUpSoundInstance;
     private bool isMuted = false;
-
     public Matrix world;
-
     public Vector3 PosicionInicial;
     public Texture2D textura;
     public const string ContentFolderEffects = "Effects/";
     protected abstract void CargarModelo(ContentManager content);
+
+    
+    public bool Seleccionado = false;
+    public bool AreAABBsTouching = false;
 
     public abstract void Update(GameTime gameTime);
         
@@ -57,6 +60,7 @@ namespace TGC.MonoGame.TP.Content.Models
     }
     class SuperSpeed : IPowerUp
     {
+        private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
         {
             this.jugador = jugador;
@@ -89,18 +93,23 @@ namespace TGC.MonoGame.TP.Content.Models
 
     }
 
-    class Gun : IPowerUp
+class Gun : IPowerUp
     {
-            private float rotationSpeed = 1f; // Velocidad de rotación
+    private float rotationSpeed = 1f; // Velocidad de rotación
     private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
     private float maxHeight = 7f; // Altura máxima del movimiento vertical
     private float currentHeight = 0f;
     private bool goingUp = true;
+    private BoundingBox ColisionCaja { get; set; }
+
         public Gun(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
         {
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
+
+            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(modelo);
+            ColisionCaja = new BoundingBox(ColisionCaja.Min + posInicial, ColisionCaja.Max + posInicial);
         }
 
         public override void Apply()
@@ -152,6 +161,7 @@ namespace TGC.MonoGame.TP.Content.Models
         // Aplicar los movimientos al modelo
         world = Matrix.CreateScale(2f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
         // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
+        //AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
         }
 
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
@@ -178,18 +188,27 @@ namespace TGC.MonoGame.TP.Content.Models
 
     }
 
-        class Hamster : IPowerUp
+class Hamster : IPowerUp
     {
-            private float rotationSpeed = 1f; // Velocidad de rotación
+    private float rotationSpeed = 1f; // Velocidad de rotación
     private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
     private float maxHeight = 7f; // Altura máxima del movimiento vertical
     private float currentHeight = 0f;
     private bool goingUp = true;
-        public Hamster(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
-        {
+
+    private Vector3 posicion;
+
+    private GraphicsDevice graphicsDevice;
+
+    private BoundingBox ColisionCaja { get; set; }
+        public Hamster(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
+        {   
+            this.graphicsDevice = graphicsDevice;
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
+            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
+            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
         }
 
         protected override void CargarModelo(ContentManager content) {
@@ -205,7 +224,7 @@ namespace TGC.MonoGame.TP.Content.Models
             }
         }
 
-                public override void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -233,9 +252,29 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
+        //ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
+
+        Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
+        AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
+
+        if (AreAABBsTouching & jugador.powerUp != null){
+            jugador.powerUp = this;
+            posicion = jugador.carPosition + new Vector3(0,2f,0);
+            Seleccionado = true;
+        }
+
+        if (Seleccionado){
+            world =  Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
+        } else {
+            world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+        }
+
+
         // Aplicar los movimientos al modelo
-        world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
         // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
+
+
+
         }
 
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
@@ -258,7 +297,45 @@ namespace TGC.MonoGame.TP.Content.Models
                     mesh.Draw();
 
             }
+
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+    
         }
+
+        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+{
+    var corners = boundingBox.GetCorners();
+    var vertices = new VertexPositionColor[24];
+
+    // Define color para las líneas del bounding box
+    var color = Color.Red;
+
+    // Asigna los vértices de las líneas de cada borde del bounding box
+    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                    };
+
+    for (int i = 0; i < indices.Length; i++)
+    {
+        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+    }
+
+    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+    {
+        World = Matrix.Identity,
+        View = view,
+        Projection = projection,
+        VertexColorEnabled = true
+    };
+
+    foreach (var pass in basicEffect.CurrentTechnique.Passes)
+    {
+        pass.Apply();
+        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+    }
+}
+
 
         public override void Apply()
         {

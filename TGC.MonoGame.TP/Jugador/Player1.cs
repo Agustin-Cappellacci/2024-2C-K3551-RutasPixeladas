@@ -15,6 +15,8 @@ using TGC.MonoGame.TP;
 using Vector3 = Microsoft.Xna.Framework.Vector3;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+using TGC.MonoGame.Samples.Collisions;
+
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -30,7 +32,7 @@ namespace TGC.MonoGame.TP.Content.Models
         // Jugabilidad
         private Microsoft.Xna.Framework.Vector3 direccionFrontal { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
-        private Matrix rotationMatrix;
+        public Matrix rotationMatrix;
 
         public Matrix carWorld { get; set; }
 
@@ -44,7 +46,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.3f;
 
 
-        private System.Numerics.Vector3 carPosition { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
         public float CarSpeed { get; set; }
         private const float CarMaxSpeed = 500f;
         public float CarAcceleration { get; set; }
@@ -67,7 +69,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private List<ModelMesh> restoAuto;
         private GraphicsDevice graphicsDevice;
 
-        private IPowerUp powerUp;
+        public IPowerUp powerUp = null;
         private SoundEffect _engineSound;
         private SoundEffectInstance _engineSoundInstance;
         private bool isMuted = false;
@@ -81,6 +83,12 @@ namespace TGC.MonoGame.TP.Content.Models
 
         Texture2D texturaAuto;
         Texture2D texturaRueda;
+
+        public BoundingBox ColisionCaja { get; set; }
+
+        private float jumpCooldown = 3f; // Tiempo de espera en segundos
+        private float timeSinceLastJump = 3f; // Inicializa para permitir el primer salto de inmediato
+        private bool canJump = true;
 
 
 
@@ -99,15 +107,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
-            //powerUp = new SuperJump(this);
-            //powerUp = new SuperSpeed(content, this);
+
 
 
             texturaAuto = content.Load<Texture2D>("texturas/colorRojo");
             texturaRueda = content.Load<Texture2D>("texturas/rueda");
 
             CarAcceleration = 500f;
-            carJumpSpeed = 2000f;
+            carJumpSpeed = 50000f;
 
             
 
@@ -137,6 +144,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
+            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(Model);
+            ColisionCaja = new BoundingBox(ColisionCaja.Min + posicion, ColisionCaja.Max + posicion);
 
         }
 
@@ -188,10 +197,34 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
+            timeSinceLastJump += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (keyboardState.IsKeyDown(Keys.Space) && carPosition.Y < 100f)
+            if (canJump && keyboardState.IsKeyDown(Keys.Space) && carPosition.Y < 100f)
             {
                 carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
+                canJump = false; // Desactiva el salto
+                timeSinceLastJump = 0f; // Reinicia el temporizador
+            }
+
+            // Si el tiempo de espera ha pasado, permite saltar de nuevo
+            if (timeSinceLastJump >= jumpCooldown)
+            {
+                canJump = true;
+            }
+
+
+            bool isFlipped = rotationMatrix.Up.Y < 0; // Si Y es negativo, el auto está al revés
+
+            // Si está volcado y se presiona "R"
+            if (isFlipped && keyboardState.IsKeyDown(Keys.R))
+            {
+                // Rota el auto para enderezarlo
+                carBodyReference.Pose.Orientation = System.Numerics.Quaternion.Identity;
+                carBodyReference.Pose.Position = new System.Numerics.Vector3(
+                    carBodyReference.Pose.Position.X,
+                    carBodyReference.Pose.Position.Y + 1, // Ajusta la altura si es necesario
+                    carBodyReference.Pose.Position.Z
+                );
             }
 
 
@@ -204,6 +237,9 @@ namespace TGC.MonoGame.TP.Content.Models
             // Actualizar la posición y la matriz de mundo del auto
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
+
+            //ColisionCaja = new BoundingBox(ColisionCaja.Min + carPosition, ColisionCaja.Max + carPosition);
+            
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
 
@@ -244,7 +280,44 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Dibujar las cajas de colisión del auto y las ruedas
             DrawCollisionBoxes(View, Projection);
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
         }
+
+
+        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+{
+    var corners = boundingBox.GetCorners();
+    var vertices = new VertexPositionColor[24];
+
+    // Define color para las líneas del bounding box
+    var color = Color.Red;
+
+    // Asigna los vértices de las líneas de cada borde del bounding box
+    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                    };
+
+    for (int i = 0; i < indices.Length; i++)
+    {
+        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+    }
+
+    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+    {
+        World = Matrix.Identity,
+        View = view,
+        Projection = projection,
+        VertexColorEnabled = true
+    };
+
+    foreach (var pass in basicEffect.CurrentTechnique.Passes)
+    {
+        pass.Apply();
+        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+    }
+}
+
 
         public void ToggleSound()
         {
