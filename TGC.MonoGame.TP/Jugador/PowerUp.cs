@@ -259,12 +259,16 @@ class Hamster : IPowerUp
 
         if (AreAABBsTouching & jugador.powerUp != null){
             jugador.powerUp = this;
-            posicion = jugador.carPosition + new Vector3(0,2f,0);
             Seleccionado = true;
         }
 
-        if (Seleccionado){
-            world =  Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
+        Seleccionado = true;
+
+        if (Seleccionado) {
+            // Ajusta la posición en relación con la rotación y posición del coche
+            var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
+            posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
+            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
         } else {
             world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
         }
