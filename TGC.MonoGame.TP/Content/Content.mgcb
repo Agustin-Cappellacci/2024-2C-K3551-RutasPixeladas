@@ -19,6 +19,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/BasicShader.fx
 
+#begin Effects/BlinnPhong.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/BlinnPhong.fx
+
 #begin Effects/CityShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -36,6 +42,12 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Effects/ModelsTexture.fx
+
+#begin Effects/Player1.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/Player1.fx
 
 #begin Effects/Terrain.fx
 /importer:EffectImporter

@@ -81,6 +81,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private float vida = 200;
 
+        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
+
         Texture2D texturaAuto;
         Texture2D texturaRueda;
 
@@ -103,7 +105,8 @@ namespace TGC.MonoGame.TP.Content.Models
             _engineSoundInstance.IsLooped = true;
             _engineSoundInstance.Play();
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "Player1");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
@@ -251,15 +254,23 @@ namespace TGC.MonoGame.TP.Content.Models
             var random = new Random(Seed: 0);
             var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
-            effectAuto.Parameters["View"].SetValue(View);
-            effectAuto.Parameters["Projection"].SetValue(Projection);
+           // effectAuto.Parameters["View"].SetValue(View);
+            //effectAuto.Parameters["Projection"].SetValue(Projection);
 
 
             foreach (ModelMesh mesh in restoAuto)
-            {   
+            {
+                effectAuto.Parameters["View"].SetValue(View);
+                effectAuto.Parameters["Projection"].SetValue(Projection);
+                Vector3 lightPosition = new Vector3(-1000, 2000, 1000); // Luz en una posición elevada en el espacio
+                effectAuto.Parameters["lightPosition"].SetValue(lightPosition);
+                //effectAuto.Parameters["LightViewProjection"].SetValue(lightViewProjection);
+                //effectAuto.Parameters["ShadowMap"].SetValue(shadowRenderTarget);
+
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(color);
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                
                 mesh.Draw();
             }
 
