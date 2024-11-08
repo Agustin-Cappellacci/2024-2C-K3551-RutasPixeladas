@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+//using System.Numerics;
 using System.Text;
 
 namespace TGC.MonoGame.TP.Content.Models
@@ -162,7 +163,7 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition)
         {
             /*
             Effect.Parameters["View"].SetValue(view);
@@ -174,8 +175,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             graphicsDevice.DepthStencilState = DepthStencilState.Default;
 
-            EffectBed.Parameters["View"].SetValue(view);
-            EffectBed.Parameters["Projection"].SetValue(projection);
+            //EffectBed.Parameters["View"].SetValue(view);
+            //EffectBed.Parameters["Projection"].SetValue(projection);
 
             var random = new Random(Seed: 0);
 
@@ -199,7 +200,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     Effect.Parameters["shininess"].SetValue(50.0f);
 
                     Effect.Parameters["lightPosition"].SetValue(lightPosition);
-                    Effect.Parameters["eyePosition"].SetValue(new Vector3(-1000, 2000, 1000));
+                    Effect.Parameters["eyePosition"].SetValue(cameraPosition);
                     Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                     // We set the main matrices for each mesh to draw
                     Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
@@ -228,14 +229,14 @@ namespace TGC.MonoGame.TP.Content.Models
                 EffectChair.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
                 EffectChair.Parameters["KAmbient"].SetValue(0.7f);
-                EffectChair.Parameters["KDiffuse"].SetValue(3.0f);
+                EffectChair.Parameters["KDiffuse"].SetValue(0.3f);
                 EffectChair.Parameters["KSpecular"].SetValue(2.5f);
                 EffectChair.Parameters["shininess"].SetValue(20.0f);
                 
                 lightPosition = new Vector3(0, 2000, 0);
 
                 EffectChair.Parameters["lightPosition"].SetValue(lightPosition);
-                EffectChair.Parameters["eyePosition"].SetValue(new Vector3(-1000, 2000, 1000));
+                EffectChair.Parameters["eyePosition"].SetValue(cameraPosition);
 
                 EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
                 var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
@@ -260,10 +261,31 @@ namespace TGC.MonoGame.TP.Content.Models
                 foreach (var part in mesh.MeshParts)
                 {
                     var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+                    
                     EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
+                    
                     var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
+                    /*// We set the main matrices for each mesh to draw
+                    EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                    */
+
+                    EffectBed.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    EffectBed.Parameters["diffColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    EffectBed.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                    EffectBed.Parameters["KAmbient"].SetValue(0.3f);
+                    EffectBed.Parameters["KDiffuse"].SetValue(0.8f);
+                    EffectBed.Parameters["KSpecular"].SetValue(0.1f);
+                    EffectBed.Parameters["shininess"].SetValue(1.0f);
+
+                    EffectBed.Parameters["lightPosition"].SetValue(lightPosition);
+                    EffectBed.Parameters["eyePosition"].SetValue(cameraPosition);
                     // We set the main matrices for each mesh to draw
                     EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                    // InverseTransposeWorld is used to rotate normals
+                    EffectBed.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorldBed)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    EffectBed.Parameters["WorldViewProjection"].SetValue(meshWorldBed * BedWorld * view * projection);
                 }
                 // Draw the mesh
                 mesh.Draw();

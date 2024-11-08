@@ -164,8 +164,8 @@ namespace TGC.MonoGame.TP.Content.Models
         public void Draw(GameTime gameTime, Matrix view, Matrix projection)
         {
             // Set the View and Projection matrices, needed to draw every 3D model
-            EfectoComun.Parameters["View"].SetValue(view);
-            EfectoComun.Parameters["Projection"].SetValue(projection);
+            //EfectoComun.Parameters["View"].SetValue(view);
+            //EfectoComun.Parameters["Projection"].SetValue(projection);
 
             // Texturas
 

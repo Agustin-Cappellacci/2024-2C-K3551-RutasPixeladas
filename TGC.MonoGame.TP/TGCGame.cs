@@ -333,10 +333,10 @@ namespace TGC.MonoGame.TP
 
 
             Toys.Draw(gameTime, View, Projection);
-            autoJugador.Draw(View, Projection);
+            autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
             ToyCity.Draw(gameTime, View, Projection);
             SimpleTerrain.Draw(gameTime, View, Projection);
-            Cuarto.Draw(gameTime, View, Projection);
+            Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
             foreach (var Auto in listaAutos)
             {
                 Auto.Draw(gameTime, View, Projection);

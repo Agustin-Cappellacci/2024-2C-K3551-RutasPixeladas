@@ -19,7 +19,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private float Yaw { get; set; }
         private float Pitch { get; set; }
 
-        private Vector3 CameraPosition;
+        public Vector3 CameraPosition;
         private Vector3 CameraForward;
         private Vector3 CameraTarget;
         private Vector3 CameraUp;

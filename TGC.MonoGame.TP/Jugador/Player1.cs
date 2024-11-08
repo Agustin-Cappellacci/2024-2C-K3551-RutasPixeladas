@@ -105,7 +105,8 @@ namespace TGC.MonoGame.TP.Content.Models
             _engineSoundInstance.IsLooped = true;
             _engineSoundInstance.Play();
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "Player1");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "Player1");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             ruedas = new List<ModelMesh>();
@@ -249,20 +250,22 @@ namespace TGC.MonoGame.TP.Content.Models
             Console.WriteLine("posicion del auto: " + carPosition);
         }
 
-        public void Draw(Matrix View, Matrix Projection)
+        public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition)
         {
             var random = new Random(Seed: 0);
             var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
-           // effectAuto.Parameters["View"].SetValue(View);
+            // effectAuto.Parameters["View"].SetValue(View);
             //effectAuto.Parameters["Projection"].SetValue(Projection);
 
 
             foreach (ModelMesh mesh in restoAuto)
             {
-                effectAuto.Parameters["View"].SetValue(View);
+                Vector3 lightPosition = new Vector3(-1000, 3000, 1000); // Luz en una posición elevada en el espacio
+
+                /*effectAuto.Parameters["View"].SetValue(View);
                 effectAuto.Parameters["Projection"].SetValue(Projection);
-                Vector3 lightPosition = new Vector3(-1000, 2000, 1000); // Luz en una posición elevada en el espacio
+                
                 effectAuto.Parameters["lightPosition"].SetValue(lightPosition);
                 //effectAuto.Parameters["LightViewProjection"].SetValue(lightViewProjection);
                 //effectAuto.Parameters["ShadowMap"].SetValue(shadowRenderTarget);
@@ -270,7 +273,27 @@ namespace TGC.MonoGame.TP.Content.Models
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(color);
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
-                
+                */
+
+                effectAuto.Parameters["ambientColor"].SetValue(new Vector3(0.25f, 0.0f, 0.0f));
+                effectAuto.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                effectAuto.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                effectAuto.Parameters["KAmbient"].SetValue(0.3f);
+                effectAuto.Parameters["KDiffuse"].SetValue(0.8f);
+                effectAuto.Parameters["KSpecular"].SetValue(0.3f);
+                effectAuto.Parameters["shininess"].SetValue(50.0f);
+
+                effectAuto.Parameters["lightPosition"].SetValue(lightPosition);
+                effectAuto.Parameters["eyePosition"].SetValue(cameraPosition);
+                effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
+                // We set the main matrices for each mesh to draw
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                // InverseTransposeWorld is used to rotate normals
+                effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(carWorld)));
+                // WorldViewProjection is used to transform from model space to clip space
+                effectAuto.Parameters["WorldViewProjection"].SetValue(mesh.ParentBone.Transform * carWorld * View * Projection);
+
                 mesh.Draw();
             }
 
@@ -281,10 +304,18 @@ namespace TGC.MonoGame.TP.Content.Models
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
                     effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
+                    // InverseTransposeWorld is used to rotate normals
+                    effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * carWorld)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    effectAuto.Parameters["WorldViewProjection"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld * View * Projection);
                 }
                 else
                 {
                     effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld);
+                    // InverseTransposeWorld is used to rotate normals
+                    effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.CreateRotationX(wheelRotationAngle) * carWorld)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    effectAuto.Parameters["WorldViewProjection"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld * View * Projection);
                 }
                 rueda.Draw();
             }
