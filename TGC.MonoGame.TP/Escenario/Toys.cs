@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+//using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -23,6 +24,9 @@ namespace TGC.MonoGame.TP.Content.Models
         public const string ContentFolderEffects = "Effects/";
         public const float DistanceBetweenCities = 2100f;
         private Model Lego { get; set; }
+        private Model Puente { get; set; }
+        private Model rampaDoble { get; set; }
+        private Model Torre { get; set; }
         private Model Ajedrez { get; set; }
         private Matrix worldAjedrez { get; set; }
         private Vector3 colorAjedrez = new Vector3(0.5f, 0.5f, 1f);
@@ -33,6 +37,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private List<bool> _puedeVerse;
         private StaticHandle ajedrezBodyHandle;
         private StaticHandle floorHandle;
+
+        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
         private Simulation simulation;
         private GraphicsDevice graphicsDevice;
@@ -48,7 +54,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         {
             // Load an effect that will be used to draw the scene
-            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
             EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             // ESTA INTERESANTE PERO NO HACE NADA
@@ -161,7 +167,7 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition)
         {
             // Set the View and Projection matrices, needed to draw every 3D model
             //EfectoComun.Parameters["View"].SetValue(view);
@@ -176,9 +182,32 @@ namespace TGC.MonoGame.TP.Content.Models
                     tupla.Item1.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
                     foreach (var mesh in tupla.Item1.Meshes)
                     {
-                        EfectoTexture.Parameters["ModelTexture"].SetValue(tupla.Item2);
+                        
                         var worldFinal = modelMeshesBaseTransforms[mesh.ParentBone.Index] * tupla.Item3;
+                        /*EfectoTexture.Parameters["ModelTexture"].SetValue(tupla.Item2);
                         EfectoTexture.Parameters["World"].SetValue(worldFinal);
+                        */
+                        EfectoTexture.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                        EfectoTexture.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                        EfectoTexture.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                        EfectoTexture.Parameters["KAmbient"].SetValue(0.7f);
+                        EfectoTexture.Parameters["KDiffuse"].SetValue(1.0f);
+                        EfectoTexture.Parameters["KSpecular"].SetValue(2.5f);
+                        EfectoTexture.Parameters["shininess"].SetValue(100.0f);
+
+                        EfectoTexture.Parameters["lightPosition"].SetValue(lightPosition);
+                        EfectoTexture.Parameters["eyePosition"].SetValue(cameraPosition);
+                        EfectoTexture.Parameters["ModelTexture"].SetValue(tupla.Item2);
+                        // We set the main matrices for each mesh to draw
+                        EfectoTexture.Parameters["World"].SetValue(Matrix.Identity * tupla.Item3);
+
+                        // InverseTransposeWorld is used to rotate normals
+                        EfectoTexture.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(worldFinal)));
+
+                        // WorldViewProjection is used to transform from model space to clip space
+                        EfectoTexture.Parameters["WorldViewProjection"].SetValue(Matrix.Identity * tupla.Item3 * view * projection);
+
                         mesh.Draw();
                     }
                 }
@@ -206,7 +235,25 @@ namespace TGC.MonoGame.TP.Content.Models
                 {
                     var worldFinal = modelLegoMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                     EfectoComun.Parameters["DiffuseColor"].SetValue(color);
+                    //EfectoComun.Parameters["World"].SetValue(worldFinal);
+
+                    EfectoComun.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    EfectoComun.Parameters["diffColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    EfectoComun.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                    EfectoComun.Parameters["KAmbient"].SetValue(0.3f);
+                    EfectoComun.Parameters["KDiffuse"].SetValue(0.8f);
+                    EfectoComun.Parameters["KSpecular"].SetValue(0.3f);
+                    EfectoComun.Parameters["shininess"].SetValue(1.0f);
+
+                    EfectoComun.Parameters["lightPosition"].SetValue(lightPosition);
+                    EfectoComun.Parameters["eyePosition"].SetValue(cameraPosition);
+                    // We set the main matrices for each mesh to draw
                     EfectoComun.Parameters["World"].SetValue(worldFinal);
+                    // InverseTransposeWorld is used to rotate normals
+                    EfectoComun.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(worldFinal)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    EfectoComun.Parameters["WorldViewProjection"].SetValue(worldFinal * view * projection);
                     mesh.Draw();
                 }
             }

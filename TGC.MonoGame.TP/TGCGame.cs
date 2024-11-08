@@ -332,9 +332,9 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.BlendState = BlendState.Opaque;
 
 
-            Toys.Draw(gameTime, View, Projection);
+            Toys.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
             autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
-            ToyCity.Draw(gameTime, View, Projection);
+            ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
             SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
             foreach (var Auto in listaAutos)

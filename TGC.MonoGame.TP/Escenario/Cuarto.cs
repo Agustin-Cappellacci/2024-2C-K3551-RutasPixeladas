@@ -224,14 +224,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
             foreach (var mesh in ChairModel.Meshes)
             {
-                EffectChair.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
-                EffectChair.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                EffectChair.Parameters["ambientColor"].SetValue(new Vector3(0.75f, 0.75f, 0.75f));
+                EffectChair.Parameters["diffuseColor"].SetValue(new Vector3(0.25f, 0.25f, 0.25f));
                 EffectChair.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
                 EffectChair.Parameters["KAmbient"].SetValue(0.7f);
-                EffectChair.Parameters["KDiffuse"].SetValue(0.3f);
-                EffectChair.Parameters["KSpecular"].SetValue(2.5f);
-                EffectChair.Parameters["shininess"].SetValue(20.0f);
+                EffectChair.Parameters["KDiffuse"].SetValue(1.0f);
+                EffectChair.Parameters["KSpecular"].SetValue(5.0f);
+                EffectChair.Parameters["shininess"].SetValue(200.0f);
                 
                 lightPosition = new Vector3(0, 2000, 0);
 
@@ -243,7 +243,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 // We set the main matrices for each mesh to draw
                 EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
                 // InverseTransposeWorld is used to rotate normals
-                EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(ChairWorld)));
+                EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(ChairWorld));
                 // WorldViewProjection is used to transform from model space to clip space
                 EffectChair.Parameters["WorldViewProjection"].SetValue(meshWorldChair * ChairWorld * view * projection);
 

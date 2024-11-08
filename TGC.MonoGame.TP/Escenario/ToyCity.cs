@@ -24,6 +24,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Texture2D texture { get; set; }
 
+        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
+
+
 
         /// <summary>
         /// Creates a City Scene with a content manager to load resources.
@@ -42,8 +45,7 @@ namespace TGC.MonoGame.TP.Content.Models
             texture = content.Load<Texture2D>(ContentFolder3D + "scene/tex/Palette");
 
             // Set the Texture to the Effect
-            // 
-            Effect.Parameters["ModelTexture"].SetValue(texture);
+            // Effect.Parameters["ModelTexture"].SetValue(texture);
 
             // Assign the mesh effect
             // A model contains a collection of meshes
@@ -95,11 +97,11 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition)
         {
             // Set the View and Projection matrices, needed to draw every 3D model
-            Effect.Parameters["View"].SetValue(view);
-            Effect.Parameters["Projection"].SetValue(projection);
+            //Effect.Parameters["View"].SetValue(view);
+            //Effect.Parameters["Projection"].SetValue(projection);
 
             // Get the base transform for each mesh
             // These are center-relative matrices that put every mesh of a model in their corresponding location
@@ -116,8 +118,27 @@ namespace TGC.MonoGame.TP.Content.Models
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
 
                 // We set the main matrices for each mesh to draw
-                Effect.Parameters["World"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion));
+                //Effect.Parameters["World"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion));
 
+                Effect.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                Effect.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                Effect.Parameters["KAmbient"].SetValue(0.3f);
+                Effect.Parameters["KDiffuse"].SetValue(0.8f);
+                Effect.Parameters["KSpecular"].SetValue(0.1f);
+                Effect.Parameters["shininess"].SetValue(1.0f);
+
+                Effect.Parameters["lightPosition"].SetValue(lightPosition);
+                Effect.Parameters["eyePosition"].SetValue(lightPosition);
+                Effect.Parameters["ModelTexture"].SetValue(texture);
+                //Effect.Parameters["ModelTexture"].SetValue(textureFloor);
+                // We set the main matrices for each mesh to draw
+                Effect.Parameters["World"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion));
+                // InverseTransposeWorld is used to rotate normals
+                Effect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion))));
+                // WorldViewProjection is used to transform from model space to clip space
+                Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion) * view * projection);
                 // Draw the mesh
                 mesh.Draw();
                 /*
