@@ -363,7 +363,7 @@ namespace TGC.MonoGame.TP
             //Podríamos hacer un método para SpriteBatch de ser necesario.
             SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
 
-            Hub.Draw(SpriteBatch, gameTime);
+            Hub.Draw(SpriteBatch, gameTime, autoJugador);
 
             SpriteBatch.End();
 

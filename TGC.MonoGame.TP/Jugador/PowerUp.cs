@@ -15,6 +15,9 @@ using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 using TGC.MonoGame.Samples.Collisions;
+using System.Runtime.Serialization;
+using System.Diagnostics.Contracts;
+using TGC.MonoGame.TP.Content.Models;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -58,7 +61,7 @@ namespace TGC.MonoGame.TP.Content.Models
         }
         public abstract void Apply();
     }
-    class SuperSpeed : IPowerUp
+class SuperSpeed : IPowerUp
     {
         private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
@@ -208,7 +211,9 @@ class Hamster : IPowerUp
             this.PosicionInicial = posInicial;
             CargarModelo(content);
             ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
+            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);       
+          
+            listaBalas = new List<BalaHamster>();
         }
 
         protected override void CargarModelo(ContentManager content) {
@@ -223,6 +228,7 @@ class Hamster : IPowerUp
                 }
             }
         }
+
 
         public override void Update(GameTime gameTime)
         {
@@ -252,25 +258,31 @@ class Hamster : IPowerUp
                 }
             }
 
-        //ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
-
         Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
         AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
 
-        if (AreAABBsTouching & jugador.powerUp != null){
+        if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0){
             jugador.powerUp = this;
             Seleccionado = true;
         }
-
-        Seleccionado = true;
 
         if (Seleccionado) {
             // Ajusta la posición en relación con la rotación y posición del coche
             var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
             posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
-            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
+            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);            
         } else {
             world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+        }
+
+        if (listaBalas.Count != 0){
+            Console.WriteLine("count: " + listaBalas.Count);
+            foreach (BalaHamster bala in listaBalas){
+                    bala.Update(gameTime);
+                if (bala.duracion > 3){
+                    //listaBalas.Remove(bala);
+                }
+            }
         }
 
 
@@ -295,57 +307,131 @@ class Hamster : IPowerUp
             {
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
                     // We set the main matrices for each mesh to draw
-                    efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+                efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
 
                     // Draw the mesh
-                    mesh.Draw();
-
+                mesh.Draw();
             }
 
-            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            if(listaBalas.Count != 0){
+                foreach(BalaHamster bala in listaBalas){
+                    bala.Draw(View, Projection);
+                    if(bala.duracion > 3){} 
+                }
+            }
+
+    //        DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
     
         }
 
         public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-{
-    var corners = boundingBox.GetCorners();
-    var vertices = new VertexPositionColor[24];
+        {
+            var corners = boundingBox.GetCorners();
+            var vertices = new VertexPositionColor[24];
 
-    // Define color para las líneas del bounding box
-    var color = Color.Red;
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
 
-    // Asigna los vértices de las líneas de cada borde del bounding box
-    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
-                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
-                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
-                    };
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                            4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                            0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                            };
 
-    for (int i = 0; i < indices.Length; i++)
-    {
-        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
-    }
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
 
-    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
-    {
-        World = Matrix.Identity,
-        View = view,
-        Projection = projection,
-        VertexColorEnabled = true
-    };
+            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            {
+                World = Matrix.Identity,
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
 
-    foreach (var pass in basicEffect.CurrentTechnique.Passes)
-    {
-        pass.Apply();
-        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
-    }
-}
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
 
+        List<BalaHamster> listaBalas;
 
         public override void Apply()
-        {
+        {   
+            var bala = new BalaHamster(graphicsDevice, jugador.contenido, jugador.rotationMatrix.Backward, jugador.carPosition + jugador.rotationMatrix.Backward * 60f);
+            Seleccionado = false;
+            jugador.powerUp = null;
+            listaBalas.Add(bala);
         //    jugador.CarSpeed = 10000;
         }
     }
 
 
+}
+
+class BalaHamster{
+
+    public Model modelo;
+    public Effect efectoPwUP;
+    public Vector3 posicion;
+
+    public Vector3 direccion;
+    public Texture2D textura;
+    public float duracion = 0;
+    public Matrix world;
+    private SoundEffect _powerUpSound;
+    public SoundEffectInstance _powerUpSoundInstance;
+
+    public const string ContentFolderEffects = "Effects/";
+
+    public BalaHamster(GraphicsDevice graphicsDevice, ContentManager content, Vector3 direccion, Vector3 posInicial){
+    
+        this.modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
+        efectoPwUP = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+        this.textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
+
+        this.posicion = posInicial;
+        this.direccion = direccion;
+
+        foreach (var mesh in modelo.Meshes)
+        {
+                // Aquí verificas si el nombre del mesh corresponde a una rueda
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = efectoPwUP;
+            }
+        }
+    }
+
+    public void Update(GameTime gameTime){
+        duracion += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        Matrix rotacionHamster = Matrix.CreateRotationY((float)-direccion.Z);
+
+        posicion += direccion * 1500f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        world = Matrix.CreateScale(0.1f) * rotacionHamster * Matrix.CreateTranslation(posicion);
+    }
+
+    public void Draw(Matrix View, Matrix Projection){
+        efectoPwUP.Parameters["View"].SetValue(View);
+        efectoPwUP.Parameters["Projection"].SetValue(Projection);
+        efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
+
+        var modelMeshesBaseTransforms = new Matrix[modelo.Bones.Count];
+        modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+
+        foreach (var mesh in modelo.Meshes)
+        {
+            var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+                // We set the main matrices for each mesh to draw
+            efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+                // Draw the mesh
+            mesh.Draw();
+        }
+    }
 }

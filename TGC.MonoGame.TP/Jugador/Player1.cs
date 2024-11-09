@@ -90,11 +90,15 @@ namespace TGC.MonoGame.TP.Content.Models
         private float timeSinceLastJump = 3f; // Inicializa para permitir el primer salto de inmediato
         private bool canJump = true;
 
+        public float tiempoRestante = 0f;
+        float tiempoEnfriamiento = 5f;
 
+        public ContentManager contenido;
 
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
-        {
+        {   
+            contenido = content;
             //carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
             //direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
@@ -145,8 +149,6 @@ namespace TGC.MonoGame.TP.Content.Models
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
             ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(Model);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + posicion, ColisionCaja.Max + posicion);
-
         }
 
         private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
@@ -227,6 +229,18 @@ namespace TGC.MonoGame.TP.Content.Models
                 );
             }
 
+            if (tiempoRestante > 0)
+            {
+                tiempoRestante -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            }
+
+            // Comprueba si el tiempo de espera ha terminado y si se ha presionado la tecla
+            if (powerUp != null && keyboardState.IsKeyDown(Keys.Q) && tiempoRestante <= 0)
+            {
+                powerUp.Apply();        // Activa el power-up
+                tiempoRestante = tiempoEnfriamiento; // Resetea el tiempo de espera
+            }
+
 
             var targetSpeedFraction = keyboardState.IsKeyDown(Keys.W) ? 10f : keyboardState.IsKeyDown(Keys.S) ? -10f : 0;
             Console.WriteLine("TargetSpeed " + targetSpeedFraction);
@@ -238,10 +252,19 @@ namespace TGC.MonoGame.TP.Content.Models
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
 
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + carPosition, ColisionCaja.Max + carPosition);
-            
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
+
+            Vector3[] esquinas = ColisionCaja.GetCorners();
+
+            // Aplica la transformación a cada esquina
+            for (int i = 0; i < esquinas.Length; i++)
+            {
+                esquinas[i] = Vector3.Transform(esquinas[i], carWorld);
+            }
+
+            // Crea un nuevo BoundingBox a partir de las esquinas transformadas
+            ColisionCaja = BoundingBox.CreateFromPoints(esquinas);
 
             Console.WriteLine("posicion del auto: " + carPosition);
         }
@@ -278,6 +301,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 rueda.Draw();
             }
 
+            Console.WriteLine("colisionCaja:" + ColisionCaja.Max + carPosition);
+
             // Dibujar las cajas de colisión del auto y las ruedas
             DrawCollisionBoxes(View, Projection, ColisionCaja);
             //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
@@ -285,38 +310,38 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
         public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-{
-    var corners = boundingBox.GetCorners();
-    var vertices = new VertexPositionColor[24];
+        {
+            var corners = boundingBox.GetCorners();
+            var vertices = new VertexPositionColor[24];
 
-    // Define color para las líneas del bounding box
-    var color = Color.Red;
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
 
-    // Asigna los vértices de las líneas de cada borde del bounding box
-    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
-                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
-                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
-                    };
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                            4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                            0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                            };
 
-    for (int i = 0; i < indices.Length; i++)
-    {
-        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
-    }
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
 
-    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
-    {
-        World = Matrix.Identity,
-        View = view,
-        Projection = projection,
-        VertexColorEnabled = true
-    };
+            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            {
+                World = Matrix.Identity,
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
 
-    foreach (var pass in basicEffect.CurrentTechnique.Passes)
-    {
-        pass.Apply();
-        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
-    }
-}
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
 
 
         public void ToggleSound()
@@ -346,7 +371,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
-            DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
+            //DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
             DrawBox(carWorldMatrix, colisionCaja.Max - colisionCaja.Min, viewMatrix, projectionMatrix);
             /*
             // Dibujar las cajas de colisión de las ruedas
