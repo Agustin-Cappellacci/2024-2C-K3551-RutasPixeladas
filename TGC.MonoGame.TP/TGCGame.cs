@@ -130,7 +130,7 @@ namespace TGC.MonoGame.TP
         protected override void Initialize()
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-            CantidadDeAutos = 70;
+            CantidadDeAutos = 2;
 
             traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
             angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales);
@@ -307,11 +307,11 @@ namespace TGC.MonoGame.TP
 
             
             Toys.Update(_boundingFrustum);
-            /*      
+                 
             foreach ( var Auto in listaAutos){
-                Auto.Update();
+                Auto.Update(gameTime, simulation);
             }
-            */
+            
             oldState = keyboardState;
 
             arma.Update(gameTime);
@@ -480,7 +480,8 @@ namespace TGC.MonoGame.TP
 
             // ACA SE INICIALIZAN LOS AUTOS DE IA
             bufferPool.Take(CantidadDeAutos - 1, out aiControllers);
-            /* var random = new Random(5);
+
+             var random = new Random(5);
             for (int i = 1; i < CantidadDeAutos; ++i)
             {
                 var position = traslacionesIniciales[i];
@@ -492,7 +493,7 @@ namespace TGC.MonoGame.TP
                     wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
                 //aiControllers[i].LaneOffset = random.NextSingle() * 20 - 10;
-            }  */
+            }  
 
         }
 
