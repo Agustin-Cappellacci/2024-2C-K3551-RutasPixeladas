@@ -90,11 +90,12 @@ namespace TGC.MonoGame.TP.Content.Models
         private float timeSinceLastJump = 3f; // Inicializa para permitir el primer salto de inmediato
         private bool canJump = true;
 
-
+        public ContentManager contenido;
 
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
-        {
+        {   
+            contenido = content;
             //carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
             //direccionFrontal = Vector3.Forward;
             Model = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
@@ -225,6 +226,10 @@ namespace TGC.MonoGame.TP.Content.Models
                     carBodyReference.Pose.Position.Y + 1, // Ajusta la altura si es necesario
                     carBodyReference.Pose.Position.Z
                 );
+            }
+
+            if ( powerUp != null && keyboardState.IsKeyDown(Keys.Q)){
+                powerUp.Apply();
             }
 
 

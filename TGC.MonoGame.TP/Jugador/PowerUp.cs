@@ -15,6 +15,9 @@ using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 using TGC.MonoGame.Samples.Collisions;
+using System.Runtime.Serialization;
+using System.Diagnostics.Contracts;
+using TGC.MonoGame.TP.Content.Models;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
@@ -208,7 +211,9 @@ class Hamster : IPowerUp
             this.PosicionInicial = posInicial;
             CargarModelo(content);
             ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
+            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);        
+            Seleccionado = true;
+            listaBalas = new List<BalaHamster>();
         }
 
         protected override void CargarModelo(ContentManager content) {
@@ -262,15 +267,23 @@ class Hamster : IPowerUp
             Seleccionado = true;
         }
 
-        Seleccionado = true;
-
         if (Seleccionado) {
             // Ajusta la posición en relación con la rotación y posición del coche
             var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
             posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
-            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
+            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);            
         } else {
             world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+        }
+
+        if (listaBalas.Count != 0){
+            Console.WriteLine("count: " + listaBalas.Count);
+            foreach (BalaHamster bala in listaBalas){
+                    bala.Update(gameTime);
+                if (bala.duracion > 3){
+                    //listaBalas.Remove(bala);
+                }
+            }
         }
 
 
@@ -295,14 +308,20 @@ class Hamster : IPowerUp
             {
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
                     // We set the main matrices for each mesh to draw
-                    efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+                efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
 
                     // Draw the mesh
-                    mesh.Draw();
-
+                mesh.Draw();
             }
 
-            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            if(listaBalas.Count != 0){
+                foreach(BalaHamster bala in listaBalas){
+                    bala.Draw(View, Projection);
+                    if(bala.duracion > 3){} 
+                }
+            }
+
+    //        DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
     
         }
 
@@ -340,12 +359,81 @@ class Hamster : IPowerUp
     }
 }
 
+        List<BalaHamster> listaBalas;
 
         public override void Apply()
-        {
+        {   
+            Seleccionado = false;
+            //jugador.powerUp = null;
+            var bala = new BalaHamster(graphicsDevice, jugador.contenido, jugador.rotationMatrix.Backward, jugador.carPosition + jugador.rotationMatrix.Backward * 60f);
+            listaBalas.Add(bala);
         //    jugador.CarSpeed = 10000;
         }
     }
 
 
 }
+
+class BalaHamster{
+
+    public Model modelo;
+    public Effect efectoPwUP;
+    public Vector3 posicion;
+
+    public Vector3 direccion;
+    public Texture2D textura;
+    public float duracion = 0;
+    public Matrix world;
+    private SoundEffect _powerUpSound;
+    public SoundEffectInstance _powerUpSoundInstance;
+
+    public const string ContentFolderEffects = "Effects/";
+
+    public BalaHamster(GraphicsDevice graphicsDevice, ContentManager content, Vector3 direccion, Vector3 posInicial){
+    
+        this.modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
+        efectoPwUP = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+        this.textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
+
+        this.posicion = posInicial;
+        this.direccion = direccion;
+
+        foreach (var mesh in modelo.Meshes)
+        {
+                // Aquí verificas si el nombre del mesh corresponde a una rueda
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = efectoPwUP;
+            }
+        }
+    }
+
+    public void Update(GameTime gameTime){
+        duracion += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        Matrix rotacionHamster = Matrix.CreateRotationY((float)-direccion.Z);
+
+        posicion += direccion * 300f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        world = Matrix.CreateScale(0.1f) * rotacionHamster * Matrix.CreateTranslation(posicion);
+    }
+
+    public void Draw(Matrix View, Matrix Projection){
+        efectoPwUP.Parameters["View"].SetValue(View);
+        efectoPwUP.Parameters["Projection"].SetValue(Projection);
+        efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
+
+        var modelMeshesBaseTransforms = new Matrix[modelo.Bones.Count];
+        modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+
+        foreach (var mesh in modelo.Meshes)
+        {
+            var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+                // We set the main matrices for each mesh to draw
+            efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+                // Draw the mesh
+            mesh.Draw();
+        }
+    }
+}
+
