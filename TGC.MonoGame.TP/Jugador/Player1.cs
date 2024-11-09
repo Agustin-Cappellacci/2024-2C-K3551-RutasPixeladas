@@ -238,7 +238,7 @@ namespace TGC.MonoGame.TP.Content.Models
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
 
-            //ColisionCaja = new BoundingBox(ColisionCaja.Min + carPosition, ColisionCaja.Max + carPosition);
+            ColisionCaja = new BoundingBox(ColisionCaja.Min + carPosition, ColisionCaja.Max + carPosition);
             
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
@@ -279,8 +279,8 @@ namespace TGC.MonoGame.TP.Content.Models
             }
 
             // Dibujar las cajas de colisión del auto y las ruedas
-            DrawCollisionBoxes(View, Projection);
-            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            DrawCollisionBoxes(View, Projection, ColisionCaja);
+            //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
         }
 
 
@@ -336,7 +336,7 @@ namespace TGC.MonoGame.TP.Content.Models
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
 
-        public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
+        public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix, BoundingBox colisionCaja)
         {
             // Obtener la matriz de rotación del auto (supongo que tienes una variable CarRotationY para la rotación en Y)
             //var carRotationMatrix = Matrix.CreateRotationY(rotationMatrix); // Rotación del auto en Y (ajusta esto si tienes más rotaciones en otros ejes)
@@ -346,7 +346,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
-            //DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
+            DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
+            DrawBox(carWorldMatrix, colisionCaja.Max - colisionCaja.Min, viewMatrix, projectionMatrix);
             /*
             // Dibujar las cajas de colisión de las ruedas
             foreach (var rueda in ruedas)
