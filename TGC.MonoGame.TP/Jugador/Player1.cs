@@ -22,7 +22,7 @@ namespace TGC.MonoGame.TP.Content.Models
 {
     // Nunca olvides mesh.ParentBone.Transform
 
-    class Jugador
+    public class Jugador
     {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
@@ -63,7 +63,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Simulation simulation;
         private BodyHandle carBodyHandle;
         private BodyHandle wheelBodyHandle;
-        SimpleCarController playerController;
+        public SimpleCarController playerController;
 
         private List<ModelMesh> ruedas;
         private List<ModelMesh> restoAuto;
@@ -88,10 +88,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private float jumpCooldown = 3f; // Tiempo de espera en segundos
         private float timeSinceLastJump = 3f; // Inicializa para permitir el primer salto de inmediato
-        private bool canJump = true;
+        public bool canJump = true;
 
-
-
+        public bool isGrounded = false;
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
         {
@@ -115,9 +114,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             CarAcceleration = 500f;
             carJumpSpeed = 50000f;
-
-            
-
+            isGrounded = false;
 
             // A model contains a collection of meshes
             foreach (var mesh in Model.Meshes)
@@ -199,12 +196,18 @@ namespace TGC.MonoGame.TP.Content.Models
 
             timeSinceLastJump += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            if (canJump && keyboardState.IsKeyDown(Keys.Space) && carPosition.Y < 100f)
+
+            if (isGrounded)
             {
-                carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
-                canJump = false; // Desactiva el salto
-                timeSinceLastJump = 0f; // Reinicia el temporizador
+                Console.Out.WriteLine("AUTO IS GROUNDED");
+                if (canJump && keyboardState.IsKeyDown(Keys.Space))
+                {
+                    carBodyReference.ApplyLinearImpulse(new System.Numerics.Vector3(0, carJumpSpeed, 0));
+                    canJump = false; // Desactiva el salto
+                    timeSinceLastJump = 0f; // Reinicia el temporizador
+                }
             }
+
 
             // Si el tiempo de espera ha pasado, permite saltar de nuevo
             if (timeSinceLastJump >= jumpCooldown)
@@ -232,14 +235,14 @@ namespace TGC.MonoGame.TP.Content.Models
             Console.WriteLine("TargetSpeed " + targetSpeedFraction);
             playerController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, keyboardState.IsKeyDown(Keys.LeftAlt));
 
-            _engineSoundInstance.Pitch = steeringSum* 0.00000000002f;
-            
+            _engineSoundInstance.Pitch = steeringSum * 0.00000000002f;
+
             // Actualizar la posición y la matriz de mundo del auto
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
 
             ColisionCaja = new BoundingBox(ColisionCaja.Min + carPosition, ColisionCaja.Max + carPosition);
-            
+
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
 
@@ -256,7 +259,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             foreach (ModelMesh mesh in restoAuto)
-            {   
+            {
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(color);
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
@@ -264,7 +267,7 @@ namespace TGC.MonoGame.TP.Content.Models
             }
 
             foreach (ModelMesh rueda in ruedas)
-            {   
+            {
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaRueda);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
@@ -285,43 +288,44 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
         public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-{
-    var corners = boundingBox.GetCorners();
-    var vertices = new VertexPositionColor[24];
+        {
+            var corners = boundingBox.GetCorners();
+            var vertices = new VertexPositionColor[24];
 
-    // Define color para las líneas del bounding box
-    var color = Color.Red;
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
 
-    // Asigna los vértices de las líneas de cada borde del bounding box
-    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
                       4, 5, 5, 6, 6, 7, 7, 4, // Top face
                       0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
                     };
 
-    for (int i = 0; i < indices.Length; i++)
-    {
-        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
-    }
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
 
-    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
-    {
-        World = Matrix.Identity,
-        View = view,
-        Projection = projection,
-        VertexColorEnabled = true
-    };
+            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            {
+                World = Matrix.Identity,
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
 
-    foreach (var pass in basicEffect.CurrentTechnique.Passes)
-    {
-        pass.Apply();
-        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
-    }
-}
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
 
 
         public void ToggleSound()
         {
-            if (isMuted) {
+            if (isMuted)
+            {
                 _engineSoundInstance.Play();
                 isMuted = false;
                 return;
@@ -344,7 +348,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Crear la matriz de mundo del coche, que incluye rotación y traslación
             var carWorldMatrix = rotationMatrix * Matrix.CreateTranslation(carPosition + new System.Numerics.Vector3(0, 80f, 0));
 
-            
+
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
             DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
             DrawBox(carWorldMatrix, colisionCaja.Max - colisionCaja.Min, viewMatrix, projectionMatrix);

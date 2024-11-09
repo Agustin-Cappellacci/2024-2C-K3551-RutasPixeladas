@@ -1,12 +1,15 @@
 using BepuPhysics;
 
-namespace TGC.MonoGame.TP.Content.Models;
-
-struct WheelHandles
+namespace TGC.MonoGame.TP.Content.Models
 {
-    public BodyHandle Wheel;
-    public ConstraintHandle SuspensionSpring;
-    public ConstraintHandle SuspensionTrack;
-    public ConstraintHandle Hinge;
-    public ConstraintHandle Motor;
+
+    public struct WheelHandles
+    {
+        public BodyHandle Wheel;
+        public ConstraintHandle SuspensionSpring;
+        public ConstraintHandle SuspensionTrack;
+        public ConstraintHandle Hinge;
+        public ConstraintHandle Motor;
+    }
+
 }

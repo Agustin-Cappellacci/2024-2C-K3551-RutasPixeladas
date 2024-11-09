@@ -18,7 +18,7 @@ using TGC.MonoGame.Samples.Collisions;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
-    abstract class IPowerUp
+    public abstract class IPowerUp
     {
     public Model modelo;
     public Effect efectoPwUP;

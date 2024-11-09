@@ -3,7 +3,7 @@ using BepuPhysics;
 
 namespace TGC.MonoGame.TP.Content.Models;
 
-struct SimpleCarController
+public struct SimpleCarController
 {
     public SimpleCar Car;
 
@@ -32,6 +32,8 @@ struct SimpleCarController
     private float previousTargetSpeed;
     private float previousTargetForce;
 
+    public bool WheelContact;
+
     public SimpleCarController(SimpleCar car,
         float forwardSpeed, float forwardForce, float zoomMultiplier, float backwardSpeed, float backwardForce, float idleForce, float brakeForce,
         float steeringSpeed, float maximumSteeringAngle, float wheelBaseLength, float wheelBaseWidth, float ackermanSteering)
@@ -49,10 +51,11 @@ struct SimpleCarController
         WheelBaseLength = wheelBaseLength;
         WheelBaseWidth = wheelBaseWidth;
         AckermanSteering = ackermanSteering;
-
+        
         steeringAngle = 0;
         previousTargetForce = 0;
         previousTargetSpeed = 0;
+        WheelContact = false;
     }
 
     public void Update(Simulation simulation, float dt, float targetSteeringAngle, float targetSpeedFraction, bool brake)
@@ -67,7 +70,6 @@ struct SimpleCarController
         {
             float leftSteeringAngle;
             float rightSteeringAngle;
-
             float steeringAngleAbs = MathF.Abs(steeringAngle);
 
             if (AckermanSteering > 0 && steeringAngleAbs > 1e-6)
@@ -158,4 +160,8 @@ struct SimpleCarController
 
         Console.WriteLine(newTargetSpeed + " " + newTargetForce);
     }
+
+    public void SetWheelContact(Boolean wheelContact){
+        this.WheelContact = wheelContact;
+    } 
 }

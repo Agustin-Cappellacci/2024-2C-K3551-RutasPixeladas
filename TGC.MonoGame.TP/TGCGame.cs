@@ -54,7 +54,7 @@ namespace TGC.MonoGame.TP
         IsometricCamera IsometricCamera { get; set; }
         FreeCamera FreeCamera { get; set; }
         BoundingFrustum _boundingFrustum { get; set; }
-        
+
 
         private KeyboardState oldState { get; set; }
 
@@ -97,6 +97,11 @@ namespace TGC.MonoGame.TP
         private SimpleThreadDispatcher threadDispatcher;
 
         private SimpleCarController playerController;
+
+        private CarControllerContainer carControllerContainer;
+        private AutoJugadorWrapper autoJugadorWrapper {get; set;}
+
+        private CarCallbacks carCallbacks;
 
 
         Buffer<SimpleCarController> aiControllers;
@@ -195,7 +200,7 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void LoadContent()
         {
-            
+
 
             // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
@@ -220,7 +225,8 @@ namespace TGC.MonoGame.TP
             // Cargo Clases
             Hub = new Hub(Content);
             //Logo = new Logo(Content);
-            autoJugador = new Jugador(Content, simulation, GraphicsDevice, playerController, traslacionesIniciales[0], angulosIniciales[0]);
+            autoJugador = new Jugador(Content, simulation, GraphicsDevice, carControllerContainer.Controller, traslacionesIniciales[0], angulosIniciales[0]);
+            autoJugadorWrapper.AutoJugador = autoJugador;
             ToyCity = new ToyCity(Content);
             SimpleTerrain = new SimpleTerrain(Content, GraphicsDevice);
             Toys = new Toys(Content, simulation, GraphicsDevice);
@@ -248,6 +254,8 @@ namespace TGC.MonoGame.TP
         {
 
             Console.WriteLine("Number of bodies: " + simulation.Bodies.ActiveSet.Count);
+
+            autoJugador.isGrounded = false;
             simulation.Timestep(1f / 60f, threadDispatcher);
 
 
@@ -278,7 +286,7 @@ namespace TGC.MonoGame.TP
                 View = FreeCamera.View;
                 Projection = FreeCamera.Projection;
             }
-            
+
             if (keyboardState.IsKeyDown(Keys.Escape) && !oldState.IsKeyDown(Keys.Escape))
             {
                 _isMenuOpen = !_isMenuOpen;
@@ -299,19 +307,20 @@ namespace TGC.MonoGame.TP
             }
 
             // Capturar Input teclado
-                
+
             if (keyboardState.IsKeyDown(Keys.Tab) & oldState.IsKeyUp(Keys.Tab))
             {
                 _liberarCamara = !_liberarCamara;
             }
 
-            
+
             Toys.Update(_boundingFrustum);
-                 
-            foreach ( var Auto in listaAutos){
+
+            foreach (var Auto in listaAutos)
+            {
                 Auto.Update(gameTime, simulation);
             }
-            
+
             oldState = keyboardState;
 
             arma.Update(gameTime);
@@ -367,12 +376,12 @@ namespace TGC.MonoGame.TP
 
             SpriteBatch.End();
 
-        
+
             if (_isMenuOpen)
             {
                 menu.DrawMenuOverlay();
             }
-        
+
             base.Draw(gameTime);
 
         }
@@ -447,8 +456,11 @@ namespace TGC.MonoGame.TP
             threadDispatcher = new SimpleThreadDispatcher(targetThreadCount);
 
             var properties = new CollidableProperty<CarBodyProperties>();
+            carControllerContainer = new CarControllerContainer(); // Contenedor vacío al principio.
+            autoJugadorWrapper = new AutoJugadorWrapper();
             bufferPool = new BufferPool();
-            simulation = Simulation.Create(bufferPool, new CarCallbacks() { Properties = properties }, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
+            carCallbacks = new CarCallbacks() { Properties = properties, ControllerContainer = carControllerContainer, AutoJugadorWrapper = autoJugadorWrapper};
+            simulation = Simulation.Create(bufferPool, carCallbacks, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
 
             var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
             builder.Add(new Box(50f, 30f, 100f), RigidPose.Identity, 300);
@@ -477,11 +489,14 @@ namespace TGC.MonoGame.TP
             Console.WriteLine("Inertia: " + bodyInertia);
             playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce: 50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
-
+            // Actualiza el contenedor con el `CarController` después de su creación.
+            carControllerContainer.Controller = playerController;
+            carCallbacks.ControllerContainer = carControllerContainer;
+            
             // ACA SE INICIALIZAN LOS AUTOS DE IA
             bufferPool.Take(CantidadDeAutos - 1, out aiControllers);
 
-             var random = new Random(5);
+            var random = new Random(5);
             for (int i = 1; i < CantidadDeAutos; ++i)
             {
                 var position = traslacionesIniciales[i];
@@ -493,7 +508,7 @@ namespace TGC.MonoGame.TP
                     wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
 
                 //aiControllers[i].LaneOffset = random.NextSingle() * 20 - 10;
-            }  
+            }
 
         }
 
