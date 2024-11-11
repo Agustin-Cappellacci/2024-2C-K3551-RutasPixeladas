@@ -91,7 +91,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private bool canJump = true;
 
         public float tiempoRestante = 0f;
-        float tiempoEnfriamiento = 5f;
+        float tiempoEnfriamiento = 0.5f;
 
         public ContentManager contenido;
 
@@ -149,6 +149,21 @@ namespace TGC.MonoGame.TP.Content.Models
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
             ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(Model);
+        }
+
+        public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
+        {
+            // Calcular el centro de la caja original
+            Vector3 centro = (cajaOriginal.Min + cajaOriginal.Max) / 2;
+
+            // Calcular los nuevos límites Min y Max en función del centro y las dimensiones deseadas
+            Vector3 nuevoMin = centro - nuevaDimension / 2;
+            nuevoMin = new Vector3(nuevoMin.X, 0, nuevoMin.Z);
+            Vector3 nuevoMax = centro + nuevaDimension / 2;
+            nuevoMax = new Vector3(nuevoMax.X, 100, nuevoMax.Z);
+
+            // Crear una nueva BoundingBox con los nuevos límites
+            return new BoundingBox(nuevoMin, nuevoMax);
         }
 
         private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)

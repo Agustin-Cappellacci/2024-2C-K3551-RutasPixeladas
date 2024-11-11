@@ -79,6 +79,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Jugador autoJugador) {
             Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
+            Vector2 positionContador = new Vector2(560, 620);  // Posición en la pantalla
             Color textColor = Color.White;      
 
             spriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
@@ -107,8 +108,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Mostrar el tiempo transcurrido desde el inicio en pantalla
             string tiempoDesdeInicio = $"Seg:{tiempoTotal:F2}\nFPS:{fps}";
+            string contador = (autoJugador.powerUp is Gun)? $"x{autoJugador.powerUp.balasRestantes}" :"";
 
             spriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
+            spriteBatch.DrawString(myFont, contador, positionContador, textColor);
 
         }
 

@@ -105,6 +105,12 @@ namespace TGC.MonoGame.TP
         IPowerUp hamster;
         IPowerUp arma;
 
+        IPowerUp hamster2;
+        IPowerUp arma2;
+
+        IPowerUp hamster3;
+        IPowerUp arma3;
+
         private bool soundIsPaused = false;
         private Song _backgroundMusic;
         public TGCGame()
@@ -227,15 +233,20 @@ namespace TGC.MonoGame.TP
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
             hamster = new Hamster(GraphicsDevice, Content, autoJugador, new Vector3(50, 10, 50));
-            arma = new Gun(Content, autoJugador, new Vector3(-50, 24, 50));
+            arma = new Gun(GraphicsDevice, Content, autoJugador, new Vector3(300, 24, -603));
+            hamster2 = new Hamster(GraphicsDevice, Content, autoJugador, new Vector3(-900, 10, 200));
+            arma2 = new Gun(GraphicsDevice, Content, autoJugador, new Vector3(800, 24, 0));
+            hamster3 = new Hamster(GraphicsDevice, Content, autoJugador, new Vector3(-900, 70, -1050));
+            arma3 = new Gun(GraphicsDevice, Content, autoJugador, new Vector3(-1100, 24, 503));
 
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
 
             menu = new MainMenu(/*autoJugador,*/ SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
+           // autoJugador.powerUp = hamster;
+
             base.LoadContent();
         }
 
@@ -314,8 +325,12 @@ namespace TGC.MonoGame.TP
             
             oldState = keyboardState;
 
-            arma.Update(gameTime);
-            hamster.Update(gameTime);
+            arma.Update(gameTime, listaAutos);
+            hamster.Update(gameTime, listaAutos);
+            arma2.Update(gameTime, listaAutos);
+            hamster2.Update(gameTime, listaAutos);
+            arma3.Update(gameTime, listaAutos);
+            hamster3.Update(gameTime, listaAutos);
 
             base.Update(gameTime);
         }
@@ -345,6 +360,10 @@ namespace TGC.MonoGame.TP
 
             arma.Draw(gameTime, View, Projection);
             hamster.Draw(gameTime, View, Projection);
+            arma2.Draw(gameTime, View, Projection);
+            hamster2.Draw(gameTime, View, Projection);
+            arma3.Draw(gameTime, View, Projection);
+            hamster3.Draw(gameTime, View, Projection);
 
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
