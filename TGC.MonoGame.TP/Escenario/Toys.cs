@@ -54,7 +54,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         {
             // Load an effect that will be used to draw the scene
-            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "Player1");
+            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
             EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             // ESTA INTERESANTE PERO NO HACE NADA
@@ -253,6 +253,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
                     EfectoComun.Parameters["lightPosition"].SetValue(lightPosition);
                     EfectoComun.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                    EfectoComun.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                    EfectoComun.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
                     // We set the main matrices for each mesh to draw
                     EfectoComun.Parameters["World"].SetValue(worldFinal);
                     // InverseTransposeWorld is used to rotate normals

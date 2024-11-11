@@ -21,6 +21,9 @@ float shininess;
 float3 lightPosition;
 float3 eyePosition; // Camera position
 
+float3 lightDirection; // La dirección de la luz (hacia adelante)
+float cutoffAngle; // Ángulo de corte para la luz focal (en radianes)
+
 texture ModelTexture;
 sampler2D textureSampler = sampler_state
 {
@@ -52,7 +55,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 
 	output.Position = mul(input.Position, WorldViewProjection);
 	output.WorldPosition = mul(input.Position, World);
-	output.Normal = mul(input.Normal, InverseTransposeWorld);
+    output.Normal = mul( /*input.Normal*/float4(normalize(input.Normal.xyz), 1.0), InverseTransposeWorld);
 	output.TextureCoordinates = input.TextureCoordinates;
 	
 	return output;
@@ -60,28 +63,33 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 
 float4 MainPS(VertexShaderOutput input) : COLOR
 {
+    float3 normal = normalize(input.Normal.xyz);
     // Base vectors
-	float3 lightDirection = normalize(lightPosition - input.WorldPosition.xyz);
+	float3 lightDir = normalize(lightPosition - input.WorldPosition.xyz);
 	float3 viewDirection = normalize(eyePosition - input.WorldPosition.xyz);
-	float3 halfVector = normalize(lightDirection + viewDirection);
+	float3 halfVector = normalize(lightDir + viewDirection);
 
 	// Get the texture texel
 	float4 texelColor = tex2D(textureSampler, input.TextureCoordinates.xy);
-    
+
+    // Calculate spotlight effect
+	float spotEffect = dot(lightDir, lightDirection); // Producto escalar entre dirección luz y dirección objetivo
+	spotEffect = saturate((spotEffect - cos(cutoffAngle)) / (1 - cos(cutoffAngle))); // Atenuación dentro del ángulo
+	
 	// Calculate the diffuse light
-	float NdotL = saturate(dot(input.Normal.xyz, lightDirection));
+    float NdotL = saturate(dot(normal, lightDir)) * spotEffect;
 	float3 diffuseLight = KDiffuse * diffuseColor * NdotL;
 
 	// Calculate the specular light
-	float NdotH = dot(input.Normal.xyz, halfVector);
-	float3 specularLight = sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
+	float NdotH = dot(normal, halfVector);
+	float3 specularLight = sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess) * spotEffect;
     
     // Final calculation
 	float4 finalColor = float4(saturate(ambientColor * KAmbient + diffuseLight) * texelColor.rgb + specularLight, texelColor.a);
 	
 	return finalColor;
-
 }
+
 
 technique BasicColorDrawing
 {

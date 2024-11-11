@@ -22,7 +22,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Model Model { get; set; }
         private Model ChairModel { get; set; }
-        private Model BedModel { get; set; }
+        public Model BedModel { get; set; }
         private Effect Effect { get; set; }
         private Effect EffectChair { get; set; }
         private Effect EffectBed { get; set; }
@@ -71,7 +71,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             // Load an effect that will be used to draw the scene
-            Effect = content.Load<Effect>(ContentFolderEffects + "Player1");
+            Effect = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
             EffectBed = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
             EffectChair = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
@@ -195,8 +195,8 @@ namespace TGC.MonoGame.TP.Content.Models
                     Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                     Effect.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
-                    Effect.Parameters["KAmbient"].SetValue(0.8f);
-                    Effect.Parameters["KDiffuse"].SetValue(0.7f);
+                    Effect.Parameters["KAmbient"].SetValue(0.7f);
+                    Effect.Parameters["KDiffuse"].SetValue(0.8f);
                     Effect.Parameters["KSpecular"].SetValue(0.8f);
                     Effect.Parameters["shininess"].SetValue(50.0f);
 
@@ -246,6 +246,9 @@ namespace TGC.MonoGame.TP.Content.Models
                 EffectChair.Parameters["lightPosition"].SetValue(lightPosition);
                 EffectChair.Parameters["eyePosition"].SetValue(cameraPosition);
 
+                Effect.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                Effect.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+
                 EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
                 var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
                 // We set the main matrices for each mesh to draw
@@ -288,6 +291,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
                     EffectBed.Parameters["lightPosition"].SetValue(lightPosition);
                     EffectBed.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                    EffectBed.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                    EffectBed.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
                     // We set the main matrices for each mesh to draw
                     EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
                     // InverseTransposeWorld is used to rotate normals

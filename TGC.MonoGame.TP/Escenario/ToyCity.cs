@@ -38,7 +38,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Model = content.Load<Model>(ContentFolder3D + "scene/city");
 
             // Load an effect that will be used to draw the scene
-            Effect = content.Load<Effect>(ContentFolderEffects + "Player1");
+            Effect = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
             // Get the first texture we find
             // The city model only contains a single texture
@@ -130,7 +130,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 Effect.Parameters["shininess"].SetValue(1.0f);
 
                 Effect.Parameters["lightPosition"].SetValue(lightPosition);
-                Effect.Parameters["eyePosition"].SetValue(lightPosition);
+                Effect.Parameters["eyePosition"].SetValue(cameraPosition);
 
                 Effect.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
                 Effect.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
@@ -140,7 +140,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 // We set the main matrices for each mesh to draw
                 Effect.Parameters["World"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion));
                 // InverseTransposeWorld is used to rotate normals
-                Effect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion))));
+                Effect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorld/*Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion)*/)));
                 // WorldViewProjection is used to transform from model space to clip space
                 Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion) * view * projection);
                 // Draw the mesh

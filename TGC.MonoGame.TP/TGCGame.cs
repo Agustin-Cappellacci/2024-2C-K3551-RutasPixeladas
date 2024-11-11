@@ -340,10 +340,12 @@ namespace TGC.MonoGame.TP
 
 
             Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
-            autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
+            
             ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
             SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
+
+            autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
             foreach (var Auto in listaAutos)
             {
                 Auto.Draw(gameTime, View, Projection);
