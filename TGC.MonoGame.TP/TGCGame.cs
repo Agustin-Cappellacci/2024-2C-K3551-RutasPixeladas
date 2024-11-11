@@ -107,6 +107,10 @@ namespace TGC.MonoGame.TP
 
         private bool soundIsPaused = false;
         private Song _backgroundMusic;
+
+        private Vector3 lightPosition;
+        private Vector3 lightDirection; // La dirección de la luz (hacia adelante)
+
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -317,6 +321,9 @@ namespace TGC.MonoGame.TP
             arma.Update(gameTime);
             hamster.Update(gameTime);
 
+            lightPosition = Vector3.Transform(new Vector3(0, 0, 0), autoJugador.carWorld);
+            lightDirection = autoJugador.forwardVector;
+
             base.Update(gameTime);
         }
 
@@ -332,11 +339,11 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.BlendState = BlendState.Opaque;
 
 
-            Toys.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
+            Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
             autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
-            ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
+            ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
             SimpleTerrain.Draw(gameTime, View, Projection);
-            Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition);
+            Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
             foreach (var Auto in listaAutos)
             {
                 Auto.Draw(gameTime, View, Projection);

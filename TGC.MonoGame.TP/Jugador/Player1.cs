@@ -92,8 +92,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private float timeSinceLastJump = 3f; // Inicializa para permitir el primer salto de inmediato
         private bool canJump = true;
 
-
-
+        public Vector3 forwardVector;
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
         {
@@ -246,6 +245,8 @@ namespace TGC.MonoGame.TP.Content.Models
             
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
+
+            forwardVector = rotationMatrix.Forward;
 
             Console.WriteLine("posicion del auto: " + carPosition);
         }

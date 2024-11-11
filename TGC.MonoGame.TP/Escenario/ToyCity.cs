@@ -24,7 +24,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Texture2D texture { get; set; }
 
-        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
+        //private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
 
 
@@ -38,7 +38,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Model = content.Load<Model>(ContentFolder3D + "scene/city");
 
             // Load an effect that will be used to draw the scene
-            Effect = content.Load<Effect>(ContentFolderEffects + "CityShader");
+            Effect = content.Load<Effect>(ContentFolderEffects + "Player1");
 
             // Get the first texture we find
             // The city model only contains a single texture
@@ -97,7 +97,7 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition, Vector3 lightPosition, Vector3 forwardVector)
         {
             // Set the View and Projection matrices, needed to draw every 3D model
             //Effect.Parameters["View"].SetValue(view);
@@ -124,13 +124,17 @@ namespace TGC.MonoGame.TP.Content.Models
                 Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                 Effect.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
-                Effect.Parameters["KAmbient"].SetValue(0.3f);
+                Effect.Parameters["KAmbient"].SetValue(0.7f);
                 Effect.Parameters["KDiffuse"].SetValue(0.8f);
                 Effect.Parameters["KSpecular"].SetValue(0.1f);
                 Effect.Parameters["shininess"].SetValue(1.0f);
 
                 Effect.Parameters["lightPosition"].SetValue(lightPosition);
                 Effect.Parameters["eyePosition"].SetValue(lightPosition);
+
+                Effect.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                Effect.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+
                 Effect.Parameters["ModelTexture"].SetValue(texture);
                 //Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                 // We set the main matrices for each mesh to draw

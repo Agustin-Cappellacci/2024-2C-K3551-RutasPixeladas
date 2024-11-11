@@ -38,7 +38,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private StaticHandle ajedrezBodyHandle;
         private StaticHandle floorHandle;
 
-        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
+        //private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
         private Simulation simulation;
         private GraphicsDevice graphicsDevice;
@@ -54,7 +54,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         {
             // Load an effect that will be used to draw the scene
-            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
+            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "Player1");
             EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             // ESTA INTERESANTE PERO NO HACE NADA
@@ -167,7 +167,7 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition, Vector3 lightPosition, Vector3 forwardVector)
         {
             // Set the View and Projection matrices, needed to draw every 3D model
             //EfectoComun.Parameters["View"].SetValue(view);
@@ -192,13 +192,17 @@ namespace TGC.MonoGame.TP.Content.Models
                         EfectoTexture.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                         EfectoTexture.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
-                        EfectoTexture.Parameters["KAmbient"].SetValue(0.7f);
-                        EfectoTexture.Parameters["KDiffuse"].SetValue(1.0f);
+                        EfectoTexture.Parameters["KAmbient"].SetValue(0.8f);
+                        EfectoTexture.Parameters["KDiffuse"].SetValue(0.8f);
                         EfectoTexture.Parameters["KSpecular"].SetValue(2.5f);
-                        EfectoTexture.Parameters["shininess"].SetValue(100.0f);
+                        EfectoTexture.Parameters["shininess"].SetValue(50.0f);
 
                         EfectoTexture.Parameters["lightPosition"].SetValue(lightPosition);
                         EfectoTexture.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                        EfectoTexture.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                        EfectoTexture.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(45f));
+
                         EfectoTexture.Parameters["ModelTexture"].SetValue(tupla.Item2);
                         // We set the main matrices for each mesh to draw
                         EfectoTexture.Parameters["World"].SetValue(Matrix.Identity * tupla.Item3);

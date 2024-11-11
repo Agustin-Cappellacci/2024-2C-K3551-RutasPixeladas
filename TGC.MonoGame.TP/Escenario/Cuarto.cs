@@ -8,8 +8,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 //using System.Numerics;
-
-//using System.Numerics;
 using System.Text;
 
 namespace TGC.MonoGame.TP.Content.Models
@@ -34,7 +32,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Matrix ChairWorld { get; set; }
         private Matrix BedWorld { get; set; }
 
-        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
+        //private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
 
 
@@ -73,7 +71,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             // Load an effect that will be used to draw the scene
-            Effect = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
+            Effect = content.Load<Effect>(ContentFolderEffects + "Player1");
             EffectBed = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
             EffectChair = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
@@ -165,7 +163,7 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition, Vector3 lightPosition, Vector3 forwardVector)
         {
             /*
             Effect.Parameters["View"].SetValue(view);
@@ -197,15 +195,19 @@ namespace TGC.MonoGame.TP.Content.Models
                     Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                     Effect.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
-                    Effect.Parameters["KAmbient"].SetValue(0.5f);
-                    Effect.Parameters["KDiffuse"].SetValue(0.8f);
+                    Effect.Parameters["KAmbient"].SetValue(0.8f);
+                    Effect.Parameters["KDiffuse"].SetValue(0.7f);
                     Effect.Parameters["KSpecular"].SetValue(0.8f);
                     Effect.Parameters["shininess"].SetValue(50.0f);
 
-                    var lightPosition2 = new Vector3(0, 2000, 0);
+                    //var lightPosition2 = new Vector3(0, 2000, 0);
 
-                    Effect.Parameters["lightPosition"].SetValue(lightPosition2);
+                    Effect.Parameters["lightPosition"].SetValue(lightPosition);
                     Effect.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                    Effect.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                    Effect.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+
                     Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                     // We set the main matrices for each mesh to draw
                     Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
