@@ -19,7 +19,8 @@ using Vector3 = Microsoft.Xna.Framework.Vector3;
 namespace TGC.MonoGame.TP.Content.Models
 {
 
-    public abstract class AutoEnemigo {
+    public abstract class AutoEnemigo
+    {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
         private Effect effectAuto { get; set; }
@@ -74,11 +75,12 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
         // Constructor abstracto
-        protected AutoEnemigo(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice,/* SimpleCarController playerController,*/ Vector3 posicion, float angulo, BodyHandle bodyHandle) {
-            
+        protected AutoEnemigo(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice,/* SimpleCarController playerController,*/ Vector3 posicion, float angulo, BodyHandle bodyHandle)
+        {
+
             carWorld = Matrix.Identity;
             var random = new Random();  // No hace falta un seed porque se usa una sola vez y se guarda en una variable.
-            
+
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
             carBodyHandle = bodyHandle;
@@ -86,7 +88,7 @@ namespace TGC.MonoGame.TP.Content.Models
             effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
             var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
             effectAuto.Parameters["ModelTexture"].SetValue(texture);
-            }
+        }
 
         private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
         {
@@ -103,8 +105,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
         protected abstract void CargarModelo(ContentManager content);
 
-        public abstract void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController);
-        public abstract void Draw(GameTime gametime, Matrix View, Matrix Projection); 
+        public abstract void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController, Vector3 posicionJugador);
+        public abstract void Draw(GameTime gametime, Matrix View, Matrix Projection);
 
         public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
         {
@@ -112,7 +114,8 @@ namespace TGC.MonoGame.TP.Content.Models
         }
     }
 
-    class AutoEnemigoCombate : AutoEnemigo {
+    class AutoEnemigoCombate : AutoEnemigo
+    {
         private Matrix rotationMatrix;
         private System.Numerics.Vector3 carPosition { get; set; }
         public Effect effectAuto { get; set; }
@@ -120,10 +123,9 @@ namespace TGC.MonoGame.TP.Content.Models
         float Escala;
         //private List<ModelMesh> ruedas;
         //private List<ModelMesh> restoAuto;
-        SimpleCarController playerController;
         public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, Vector3 posicion, float angulo, BodyHandle carBodyHandle)
             : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2, carBodyHandle) //Ajustar ángulo si es necesario
-        {   
+        {
 
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
             CargarModelo(content);
@@ -132,45 +134,57 @@ namespace TGC.MonoGame.TP.Content.Models
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
         }
 
-         /*
-        private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
+        /*
+       private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
+       {
+           // Crear el cuerpo del coche en la simulación con una posición y orientación iniciales
+           var bodyDescription = BodyDescription.CreateDynamic(
+               new RigidPose(posicionInicial, System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, anguloInicial)),
+               new BodyInertia(),
+               new CollidableDescription(),
+               new BodyActivityDescription(0.01f)
+           );
+
+           return simulation.Bodies.Add(bodyDescription);
+       }
+       */
+
+        public override void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController, Vector3 posicionJugador)
         {
-            // Crear el cuerpo del coche en la simulación con una posición y orientación iniciales
-            var bodyDescription = BodyDescription.CreateDynamic(
-                new RigidPose(posicionInicial, System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, anguloInicial)),
-                new BodyInertia(),
-                new CollidableDescription(),
-                new BodyActivityDescription(0.01f)
-            );
-
-            return simulation.Bodies.Add(bodyDescription);
-        }
-        */
-
-        public override void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController){
             float elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
             // Obtener la referencia del cuerpo del auto en la simulación
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
-            
 
-            simpleCarController.Update(simulation, 1 / 60f, 0, 0, false);
+            // Vector hacia el objetivo
+            Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
+
+            // Calcular la rotación del auto actual
+            Vector3 forwardVector = Vector3.Transform(Vector3.Forward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
+            float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
+            float crossProduct = Vector3.Cross(forwardVector, directionToTarget).Y;
+
+            // Ajustar el ángulo de dirección basado en los productos
+            float steeringSum = Math.Clamp(crossProduct, -1f, 1f);
+            float targetSpeedFraction = dotProduct > 0 ? -10f : 10f; // Moverse hacia adelante si está de frente, hacia atrás si no
+
+            simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
-            
         }
 
-        protected override void CargarModelo(ContentManager content) {
+        protected override void CargarModelo(ContentManager content)
+        {
             this.CarModel = content.Load<Model>(ContentFolder3D + "autos/CombatVehicle/Vehicle");
 
             foreach (var mesh in CarModel.Meshes)
             {
                 Console.WriteLine(mesh.Name); // Verifica los nombres de los meshes
             }
-            
+
             foreach (var mesh in CarModel.Meshes)
             {
                 // Aquí verificas si el nombre del mesh corresponde a una rueda
@@ -179,11 +193,11 @@ namespace TGC.MonoGame.TP.Content.Models
 
                     meshPart.Effect = effectAuto;
                 }
-                    if (mesh.Name.Contains("Wheel"))
-                    {
-                        ruedas.Add(mesh);
-                    }
-                    else restoAuto.Add(mesh);
+                if (mesh.Name.Contains("Wheel"))
+                {
+                    ruedas.Add(mesh);
+                }
+                else restoAuto.Add(mesh);
 
             }
         }
@@ -219,7 +233,8 @@ namespace TGC.MonoGame.TP.Content.Models
         }
     }
 
-    class AutoEnemigoCarrera : AutoEnemigo {
+    class AutoEnemigoCarrera : AutoEnemigo
+    {
         private Matrix rotationMatrix;
         private System.Numerics.Vector3 carPosition { get; set; }
 
@@ -231,31 +246,48 @@ namespace TGC.MonoGame.TP.Content.Models
         SimpleCarController playerController;
         public AutoEnemigoCarrera(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, Vector3 posicion, float angulo, BodyHandle carBodyHandle)
             : base(content, simulation, graphicsDevice, posicion, angulo, carBodyHandle) // Ajustar ángulo si es necesario
-        {   
+        {
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             CargarModelo(content);
             Escala = 0.1f + (0.1f - 0.05f) * new Random().NextSingle();
         }
-        
-        public override void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController){
-            
+
+        public override void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController, Vector3 posicionJugador)
+        {
+
             float elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
+            // Obtener la referencia del cuerpo del auto en la simulación
             var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carBodyReference.Awake = true;
 
-            playerController.Update(simulation, 1 / 60f, 0, 0, false);
+            // Vector hacia el objetivo
+            Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
+
+            // Calcular la rotación del auto actual
+            Vector3 forwardVector = Vector3.Transform(Vector3.Forward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
+            float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
+            float crossProduct = Vector3.Cross(forwardVector, directionToTarget).Y;
+
+            // Ajustar el ángulo de dirección basado en los productos
+            float steeringSum = Math.Clamp(crossProduct, -1f, 1f);
+            float targetSpeedFraction = dotProduct > 0 ? 10f : -10f; // Moverse hacia adelante si está de frente, hacia atrás si no
+
+
+            simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
-            carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
+            carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
+
         }
-        protected override void CargarModelo(ContentManager content) {
+        protected override void CargarModelo(ContentManager content)
+        {
             this.CarModel = content.Load<Model>(ContentFolder3D + "autos/RacingCarA/RacingCar");
 
 
-        
+
             foreach (ModelMesh mesh in CarModel.Meshes)
             {
                 Console.WriteLine(mesh.Name);
@@ -263,12 +295,13 @@ namespace TGC.MonoGame.TP.Content.Models
                 foreach (var meshPart in mesh.MeshParts)
                 {
 
-                meshPart.Effect = effectAuto;
+                    meshPart.Effect = effectAuto;
                 }
                 if (mesh.Name.Contains("Wheel"))
                 {
-                ruedas.Add(mesh);
-                } else restoAuto.Add(mesh);
+                    ruedas.Add(mesh);
+                }
+                else restoAuto.Add(mesh);
 
             }
         }
@@ -279,6 +312,6 @@ namespace TGC.MonoGame.TP.Content.Models
         }
     }
 
-    
+
 
 }

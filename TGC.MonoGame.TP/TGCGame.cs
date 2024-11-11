@@ -14,6 +14,7 @@ using BepuPhysics.Collidables;
 using BepuUtilities;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+using System.Numerics;
 
 
 namespace TGC.MonoGame.TP
@@ -101,6 +102,8 @@ namespace TGC.MonoGame.TP
 
         private BodyHandle playerBodyHandle;
         private BodyHandle enemyBodyHandle;
+
+        private System.Numerics.Vector3 posicionJugador;
 
         private CarControllerContainer carControllerContainer;
         private AutoJugadorWrapper autoJugadorWrapper {get; set;}
@@ -229,9 +232,9 @@ namespace TGC.MonoGame.TP
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-            nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
-            hamster = new Hamster(GraphicsDevice, Content, autoJugador, new Vector3(50, 10, 50));
-            arma = new Gun(GraphicsDevice, Content, autoJugador, new Vector3(-50, 10, 50));
+            nitro = new SuperSpeed(Content, autoJugador, new System.Numerics.Vector3(0, 0, 0));
+            hamster = new Hamster(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(50, 10, 50));
+            arma = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-50, 10, 50));
 
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
@@ -282,6 +285,8 @@ namespace TGC.MonoGame.TP
             if (!_liberarCamara)
             {
                 autoJugador.Update(gameTime, simulation);
+                posicionJugador = autoJugador.carPosition;
+
                 IsometricCamera.Update(gameTime, autoJugador.carWorld);
                 View = IsometricCamera.View;
                 Projection = IsometricCamera.Projection;
@@ -326,7 +331,7 @@ namespace TGC.MonoGame.TP
 
             foreach (var Auto in listaAutos)
             {
-                Auto.Update(gameTime, simulation, enemyController);
+                Auto.Update(gameTime, simulation, enemyController, posicionJugador);
             }
 
 
