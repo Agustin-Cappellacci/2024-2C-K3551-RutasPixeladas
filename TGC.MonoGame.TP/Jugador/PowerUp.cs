@@ -15,39 +15,39 @@ using System.Runtime.CompilerServices;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 using TGC.MonoGame.Samples.Collisions;
+using System.Runtime.Serialization;
+using System.Diagnostics.Contracts;
+using TGC.MonoGame.TP.Content.Models;
+using System.Reflection.Metadata.Ecma335;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
     public abstract class IPowerUp
     {
-    public Model modelo;
-    public Effect efectoPwUP;
-    public Jugador jugador;
-    private float rotationSpeed = 1f; // Velocidad de rotación
-    private float verticalSpeed = 0.005f; // Velocidad de movimiento vertical
-    private float maxHeight = 20f; // Altura máxima del movimiento vertical
-    private float currentHeight = 0f;
-    private bool goingUp = true;
-    private SoundEffect _powerUpSound;
-    public SoundEffectInstance _powerUpSoundInstance;
-    private bool isMuted = false;
-    public Matrix world;
-    public Vector3 PosicionInicial;
-    public Texture2D textura;
-    public const string ContentFolderEffects = "Effects/";
-    protected abstract void CargarModelo(ContentManager content);
+        public Model modelo;
+        public Effect efectoPwUP;
+        public Jugador jugador;
+        protected float rotationSpeed = 1f; // Velocidad de rotación
+        protected float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
+        protected float maxHeight = 7f; // Altura máxima del movimiento vertical
+        protected float currentHeight = 0f;
+        protected bool goingUp = true;
+        protected GraphicsDevice graphicsDevice;
+        private SoundEffect _powerUpSound;
+        public SoundEffectInstance _powerUpSoundInstance;
+        private bool isMuted = false;
+        public Matrix world;
+        public Vector3 PosicionInicial;
+        public Texture2D textura;
+        public const string ContentFolderEffects = "Effects/";
+        protected abstract void CargarModelo(ContentManager content);
 
     
-    public bool Seleccionado = false;
-    public bool AreAABBsTouching = false;
+        public bool Seleccionado = false;
+        public bool AreAABBsTouching = false;
 
-    public abstract void Update(GameTime gameTime);
-        
-
-
+        public abstract void Update(GameTime gameTime);        
         public abstract void Draw(GameTime gametime, Matrix View, Matrix Projection);
-
-
         public IPowerUp(ContentManager content, Jugador jugador, Vector3 posInicial) {
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
@@ -57,8 +57,9 @@ namespace TGC.MonoGame.TP.Content.Models
             _powerUpSoundInstance = _powerUpSound.CreateInstance();
         }
         public abstract void Apply();
+
     }
-    class SuperSpeed : IPowerUp
+class SuperSpeed : IPowerUp
     {
         private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
@@ -95,31 +96,28 @@ namespace TGC.MonoGame.TP.Content.Models
 
 class Gun : IPowerUp
     {
-    private float rotationSpeed = 1f; // Velocidad de rotación
-    private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
-    private float maxHeight = 7f; // Altura máxima del movimiento vertical
-    private float currentHeight = 0f;
-    private bool goingUp = true;
-    private BoundingBox ColisionCaja { get; set; }
 
-        public Gun(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
+    private BoundingBox ColisionCaja { get; set; }
+        private Matrix scale;
+
+        public Gun(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
         {
             this.jugador = jugador;
+            this.graphicsDevice = graphicsDevice;
             this.PosicionInicial = posInicial;
+            scale = Matrix.CreateScale(2f);
             CargarModelo(content);
-
-            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(modelo);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + posInicial, ColisionCaja.Max + posInicial);
+            ColisionCaja = new BoundingBox((posInicial + new Vector3(-20f,-10f,-13f)), (posInicial)+ new Vector3(10f, 0f, 13f));
         }
 
         public override void Apply()
         {
-        //    jugador.CarSpeed = 10000;
+            //jugador.CarSpeed = 10000;
         }
 
         protected override void CargarModelo(ContentManager content) {
-            this.modelo = content.Load<Model>("poweUp/3078-eagle-handgun-3d-model/Eagle");
-            this.textura = content.Load<Texture2D>("poweUp/3078-eagle-handgun-3d-model/Texture/Eagle_02 - Default_AlbedoTransparency");
+            modelo = content.Load<Model>("poweUp/3078-eagle-handgun-3d-model/Eagle");
+            textura = content.Load<Texture2D>("poweUp/3078-eagle-handgun-3d-model/Texture/Eagle_02 - Default_AlbedoTransparency");
             
             foreach (var mesh in modelo.Meshes)
             {
@@ -139,7 +137,7 @@ class Gun : IPowerUp
             rotationSpeed += deltaTime; // rotationSpeed actúa ahora como un acumulador de rotación
 
             // Crear la rotación en base al acumulador
-            Matrix rotation = Matrix.CreateRotationY(rotationSpeed);
+            Matrix rotation = Matrix.CreateRotationY(this.rotationSpeed);
 
             // Movimiento vertical oscilante
             if (goingUp)
@@ -159,126 +157,9 @@ class Gun : IPowerUp
                 }
             }
         // Aplicar los movimientos al modelo
-        world = Matrix.CreateScale(2f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+        world = scale * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
         // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
-        //AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
-        }
-
-        public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
-            efectoPwUP.Parameters["View"].SetValue(View);
-            efectoPwUP.Parameters["Projection"].SetValue(Projection);
-            efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
-
-            var random = new Random(Seed: 0);
-
-            var modelMeshesBaseTransforms = new Matrix[modelo.Bones.Count];
-            modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
-
-            foreach (var mesh in modelo.Meshes)
-            {
-                var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-                    // We set the main matrices for each mesh to draw
-                    efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
-
-                    // Draw the mesh
-                    mesh.Draw();
-
-            }
-        }
-
-    }
-
-class Hamster : IPowerUp
-    {
-    private float rotationSpeed = 1f; // Velocidad de rotación
-    private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
-    private float maxHeight = 7f; // Altura máxima del movimiento vertical
-    private float currentHeight = 0f;
-    private bool goingUp = true;
-
-    private Vector3 posicion;
-
-    private GraphicsDevice graphicsDevice;
-
-    private BoundingBox ColisionCaja { get; set; }
-        public Hamster(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
-        {   
-            this.graphicsDevice = graphicsDevice;
-            this.jugador = jugador;
-            this.PosicionInicial = posInicial;
-            CargarModelo(content);
-            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
-        }
-
-        protected override void CargarModelo(ContentManager content) {
-            this.modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
-            this.textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
-            foreach (var mesh in modelo.Meshes)
-            {
-                // Aquí verificas si el nombre del mesh corresponde a una rueda
-                foreach (var meshPart in mesh.MeshParts)
-                {
-                    meshPart.Effect = efectoPwUP;
-                }
-            }
-        }
-
-        public override void Update(GameTime gameTime)
-        {
-            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            // Acumular la rotación en el eje Y
-            rotationSpeed += deltaTime; // rotationSpeed actúa ahora como un acumulador de rotación
-
-            // Crear la rotación en base al acumulador
-            Matrix rotation = Matrix.CreateRotationY(rotationSpeed);
-
-            // Movimiento vertical oscilante
-            if (goingUp)
-            {
-                currentHeight += verticalSpeed;
-                if (currentHeight >= maxHeight)
-                {
-                    goingUp = false;
-                }
-            }
-            else
-            {
-                currentHeight -= verticalSpeed;
-                if (currentHeight <= -maxHeight)
-                {
-                    goingUp = true;
-                }
-            }
-
-        //ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
-
-        Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
         AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
-
-        if (AreAABBsTouching & jugador.powerUp != null){
-            jugador.powerUp = this;
-            Seleccionado = true;
-        }
-
-        Seleccionado = true;
-
-        if (Seleccionado) {
-            // Ajusta la posición en relación con la rotación y posición del coche
-            var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
-            posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
-            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
-        } else {
-            world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
-        }
-
-
-        // Aplicar los movimientos al modelo
-        // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
-
-
-
         }
 
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
@@ -303,49 +184,276 @@ class Hamster : IPowerUp
             }
 
             DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+        }
+        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        {
+            var corners = boundingBox.GetCorners();
+
+            var vertices = new VertexPositionColor[24];
+
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
+
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                            4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                            0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                            };
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
+
+            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            {
+               
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
+
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
+    }
+
+class Hamster : IPowerUp
+    {
+
+    private Vector3 posicion;
+
+    private BoundingBox ColisionCaja { get; set; }
+        public Hamster(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
+        {   
+            this.graphicsDevice = graphicsDevice;
+            this.jugador = jugador;
+            this.PosicionInicial = posInicial;
+            CargarModelo(content);
+            ColisionCaja = new BoundingBox((posInicial + new Vector3(-30f, -10f, -25f)) , (posInicial + new Vector3(35f, 20f, 35f)) );       
+          
+            listaBalas = new List<BalaHamster>();
+        }
+
+        protected override void CargarModelo(ContentManager content) {
+            this.modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
+            this.textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
+            foreach (var mesh in modelo.Meshes)
+            {
+                // Aquí verificas si el nombre del mesh corresponde a una rueda
+                foreach (var meshPart in mesh.MeshParts)
+                {
+                    meshPart.Effect = efectoPwUP;
+                }
+            }
+        }
+
+
+        public override void Update(GameTime gameTime)
+        {
+            float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            // Acumular la rotación en el eje Y
+            rotationSpeed += deltaTime; // rotationSpeed actúa ahora como un acumulador de rotación
+
+            // Crear la rotación en base al acumulador
+            Matrix rotation = Matrix.CreateRotationY(rotationSpeed);
+
+            // Movimiento vertical oscilante
+            if (goingUp)
+            {
+                currentHeight += verticalSpeed;
+                if (currentHeight >= maxHeight)
+                {
+                    goingUp = false;
+                }
+            }
+            else
+            {
+                currentHeight -= verticalSpeed;
+                if (currentHeight <= -maxHeight)
+                {
+                    goingUp = true;
+                }
+            }
+
+        Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
+        AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
+
+        if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0){
+            jugador.powerUp = this;
+            Seleccionado = true;
+        }
+
+        if (Seleccionado) {
+            // Ajusta la posición en relación con la rotación y posición del coche
+            var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
+            posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
+            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);            
+        } else {
+            world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+        }
+
+        if (listaBalas.Count != 0){
+            Console.WriteLine("count: " + listaBalas.Count);
+            foreach (BalaHamster bala in listaBalas){
+                    bala.Update(gameTime);
+                if (bala.duracion > 3){
+                    //listaBalas.Remove(bala);
+                }
+            }
+        }
+
+
+        // Aplicar los movimientos al modelo
+        // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
+
+
+
+        }
+
+        public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
+            efectoPwUP.Parameters["View"].SetValue(View);
+            efectoPwUP.Parameters["Projection"].SetValue(Projection);
+            efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
+
+            var random = new Random(Seed: 0);
+
+            var modelMeshesBaseTransforms = new Matrix[modelo.Bones.Count];
+            modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+
+            foreach (var mesh in modelo.Meshes)
+            {
+                var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+                    // We set the main matrices for each mesh to draw
+                efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+
+                    // Draw the mesh
+                mesh.Draw();
+            }
+
+            if(listaBalas.Count != 0){
+                foreach(BalaHamster bala in listaBalas){
+                    bala.Draw(View, Projection);
+                    if(bala.duracion > 3){} 
+                }
+            }
+
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
     
         }
 
         public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-{
-    var corners = boundingBox.GetCorners();
-    var vertices = new VertexPositionColor[24];
+        {
+            var corners = boundingBox.GetCorners();
 
-    // Define color para las líneas del bounding box
-    var color = Color.Red;
+            var vertices = new VertexPositionColor[24];
 
-    // Asigna los vértices de las líneas de cada borde del bounding box
-    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
-                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
-                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
-                    };
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
 
-    for (int i = 0; i < indices.Length; i++)
-    {
-        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
-    }
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                            4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                            0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                            };
 
-    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
-    {
-        World = Matrix.Identity,
-        View = view,
-        Projection = projection,
-        VertexColorEnabled = true
-    };
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
 
-    foreach (var pass in basicEffect.CurrentTechnique.Passes)
-    {
-        pass.Apply();
-        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
-    }
-}
+            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            {
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
 
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
+
+        List<BalaHamster> listaBalas;
 
         public override void Apply()
-        {
+        {   
+            var bala = new BalaHamster(graphicsDevice, jugador.contenido, jugador.rotationMatrix.Backward, jugador.carPosition + jugador.rotationMatrix.Backward * 60f);
+            Seleccionado = false;
+            jugador.powerUp = null;
+            listaBalas.Add(bala);
         //    jugador.CarSpeed = 10000;
         }
     }
 
 
+}
+
+class BalaHamster{
+
+    public Model modelo;
+    public Effect efectoPwUP;
+    public Vector3 posicion;
+
+    public Vector3 direccion;
+    public Texture2D textura;
+    public float duracion = 0;
+    public Matrix world;
+    private SoundEffect _powerUpSound;
+    public SoundEffectInstance _powerUpSoundInstance;
+
+    public const string ContentFolderEffects = "Effects/";
+
+    public BalaHamster(GraphicsDevice graphicsDevice, ContentManager content, Vector3 direccion, Vector3 posInicial){
+    
+        modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
+        efectoPwUP = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+        textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
+
+        posicion = posInicial;
+        this.direccion = direccion;
+
+        foreach (var mesh in modelo.Meshes)
+        {
+                // Aquí verificas si el nombre del mesh corresponde a una rueda
+            foreach (var meshPart in mesh.MeshParts)
+            {
+                meshPart.Effect = efectoPwUP;
+            }
+        }
+    }
+
+    public void Update(GameTime gameTime){
+        duracion += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        Matrix rotacionHamster = Matrix.CreateRotationY((float)-direccion.Z);
+
+        posicion += direccion * 1500f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        world = Matrix.CreateScale(0.1f) * rotacionHamster * Matrix.CreateTranslation(posicion);
+    }
+
+    public void Draw(Matrix View, Matrix Projection){
+        efectoPwUP.Parameters["View"].SetValue(View);
+        efectoPwUP.Parameters["Projection"].SetValue(Projection);
+        efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
+
+        var modelMeshesBaseTransforms = new Matrix[modelo.Bones.Count];
+        modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+
+        foreach (var mesh in modelo.Meshes)
+        {
+            var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+                // We set the main matrices for each mesh to draw
+            efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+                // Draw the mesh
+            mesh.Draw();
+        }
+    }
 }

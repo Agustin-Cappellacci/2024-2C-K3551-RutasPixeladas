@@ -48,7 +48,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         {
             // Load an effect that will be used to draw the scene
-            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            EfectoTexture = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
             EfectoComun = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
 
             // ESTA INTERESANTE PERO NO HACE NADA
@@ -93,32 +93,34 @@ namespace TGC.MonoGame.TP.Content.Models
             //Caballo1 #8
             //Caballo2 #9
 
+            //#1
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(Torre, textureMetal, 
                 Matrix.CreateRotationY((float)Math.PI / 10) * Matrix.CreateScale(1.5f) * Matrix.CreateTranslation(new Vector3(-1300f, 1f, 700f))));
-            
+            //#2
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(LegoPJ, textureLegoPJ, 
                 Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(0.1f) * Matrix.CreateTranslation(new Vector3(1200f, 2f, 1700f))));
+            //#3
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(Puente, textureMadera2, 
                 Matrix.CreateRotationX((float)Math.PI / -2) * Matrix.CreateRotationY((float)Math.PI / 4) * Matrix.CreateScale(100f) * Matrix.CreateTranslation(new Vector3(360F, 2f, -1700f))));
+            //#4
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(rampaDoble, textureMadera, 
                 Matrix.CreateScale(4f) * Matrix.CreateTranslation(new Vector3(-1400f, 0f, -1000f))));
+            //#5
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(rampaPanza, textureRampa, 
                 Matrix.CreateRotationY((float)Math.PI / 3) * Matrix.CreateScale(300f) * Matrix.CreateTranslation(new Vector3(-1200f, 10f, 0f))));
+            //#6
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(rampa, textureMadera, 
                 Matrix.CreateRotationX(-(float)Math.PI / 2) * Matrix.CreateRotationY((float)Math.PI / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(new Vector3(0f, 0f, 1000f))));
+            //#7
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(carpet, textureCarpet, 
                 Matrix.CreateScale(10f) * Matrix.CreateTranslation(new Vector3(-900f, -1f, -1100f))));
+            //#8
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(caballo1, textureCaballo1, 
                 Matrix.CreateRotationY(-(float)Math.PI * (5 / 4)) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1000f, 730f, 300f))));
+            //#9
             _listaCombinada.Add(new Tuple<Model, Texture2D, Matrix>(caballo2, textureCaballo2, 
                 Matrix.CreateRotationY(-(float)Math.PI / 4) * Matrix.CreateScale(130f) * Matrix.CreateTranslation(new Vector3(1200f, 730f, -100f))));
             
-
-            
-
-
-
-
             // Ponemos efectos a todas las partes
             for (int i = 0; i < _listaCombinada.Count; i++)
             {
@@ -173,6 +175,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 if (_puedeVerse[i]) {
                     var tupla = _listaCombinada[i];
                     var modelMeshesBaseTransforms = new Matrix[tupla.Item1.Bones.Count];
+
                     tupla.Item1.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
                     foreach (var mesh in tupla.Item1.Meshes)
                     {
@@ -306,7 +309,7 @@ namespace TGC.MonoGame.TP.Content.Models
             DrawBox(Matrix.CreateTranslation(-30f, 50f, 900f), new Vector3(1000f, 100f, 900f), viewMatrix, projectionMatrix);
             
         }
-
+    #nullable enable annotations
         private VertexBuffer? _vertexBuffer;
         private IndexBuffer? _indexBuffer;
         private BasicEffect? _effect;
@@ -316,7 +319,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 _effect = new BasicEffect(graphicsDevice);
                 _effect.VertexColorEnabled = true;
             }
-            _effect.World = Matrix.CreateScale(size/2f) * worldMatrix;
+            _effect.World = Matrix.CreateScale(size) * worldMatrix;
             _effect.View = viewMatrix;
             _effect.Projection = projectionMatrix;
             // Crear un efecto básico para dibujar la caja
@@ -438,7 +441,10 @@ namespace TGC.MonoGame.TP.Content.Models
             this.graphicsDevice = graphicsDevice;
 
             // Crear colisiones para el suelo como caja
+
             // Define el tamaño del box (ancho, alto, profundo)
+            
+
             var boxSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
             // Crear el Collidable Box
             var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
@@ -644,7 +650,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Crear el cuerpo estático para la rampa
             var rampaDoble1BodyHandle = simulation.Statics.Add(new StaticDescription(
-                new System.Numerics.Vector3(-1220f, -10f, -1100f), // Posición inicial de la rampa
+                new System.Numerics.Vector3(-1220f, -14f, -1100f), // Posición inicial de la rampa
                 BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(0, 0, (float)Math.PI / 20),
                 rampaDobleShapeIndex
             ));
@@ -782,6 +788,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 puenteParedShapeIndex
             ));
 
+            //_staticHandles
             //Torre #1
             //LegoPJ #2
             //Puente #3
