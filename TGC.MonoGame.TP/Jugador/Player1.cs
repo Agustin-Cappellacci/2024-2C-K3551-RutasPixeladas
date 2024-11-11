@@ -99,7 +99,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public bool isGrounded = false;
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo, BodyHandle bodyHandle)
-        {   
+        {
             contenido = content;
             //carPosition = PositionToNumerics(new Vector3(0f, 500f, 0f));
             //direccionFrontal = Vector3.Forward;

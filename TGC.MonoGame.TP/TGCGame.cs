@@ -244,7 +244,7 @@ namespace TGC.MonoGame.TP
                 }
                 if (listaModelos[i] == TipoAuto.tipoCombate)
                 {
-                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(100, 100, 100), angulosIniciales[i], enemyBodyHandle));
+                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(-100, 100, -1000), angulosIniciales[1], enemyBodyHandle));
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
@@ -509,7 +509,7 @@ namespace TGC.MonoGame.TP
             carControllerContainer.Controller = playerController;
             carCallbacks.ControllerContainer = carControllerContainer;
 
-            var poseEnemigo = new RigidPose(new System.Numerics.Vector3(100f, 100f, 100f), System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[1]));
+            var poseEnemigo = new RigidPose(new System.Numerics.Vector3(-100f, 100f, -1000f), System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
             // ACA SE INICIALIZAN LOS AUTOS DE IA
             bufferPool.Take(CantidadDeAutos - 1, out aiControllers);
             var autoEnemigo = SimpleCar.Create(simulation, properties, poseEnemigo, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
