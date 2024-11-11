@@ -45,6 +45,7 @@ namespace TGC.MonoGame.TP
 
         // Menu
         MainMenu menu;
+        InitialMenu initialMenu;
 
         private bool _isMenuOpen = false;
         private bool _liberarCamara = false;
@@ -107,6 +108,8 @@ namespace TGC.MonoGame.TP
 
         private bool soundIsPaused = false;
         private Song _backgroundMusic;
+        private bool isInitialMenuOpen = true;
+        private bool lastDraw = false;
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -197,7 +200,7 @@ namespace TGC.MonoGame.TP
         {
             
 
-            // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
+            // // Aca es donde deberiamos cargar todos los contenido necesarios antes de iniciar el juego.
             SpriteBatch = new SpriteBatch(GraphicsDevice);
             _backgroundMusic = Content.Load<Song>(ContentFolder3D + "autos/RacingCarA/backgroundmusic");
             MediaPlayer.IsRepeating = true;
@@ -225,7 +228,6 @@ namespace TGC.MonoGame.TP
             SimpleTerrain = new SimpleTerrain(Content, GraphicsDevice);
             Toys = new Toys(Content, simulation, GraphicsDevice);
             Cuarto = new Cuarto(Content, simulation, GraphicsDevice);
-            SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             nitro = new SuperSpeed(Content, autoJugador, new Vector3(0, 0, 0));
             hamster = new Hamster(GraphicsDevice, Content, autoJugador, new Vector3(50, 10, 50));
@@ -236,7 +238,10 @@ namespace TGC.MonoGame.TP
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
 
             menu = new MainMenu(/*autoJugador,*/ SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
+            initialMenu = new InitialMenu(/*autoJugador,*/ Content, SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
             autoJugador.powerUp = hamster;
+            initialMenu.Initialize();
+            initialMenu.LoadContent();
 
             base.LoadContent();
         }
@@ -252,9 +257,17 @@ namespace TGC.MonoGame.TP
             Console.WriteLine("Number of bodies: " + simulation.Bodies.ActiveSet.Count);
             simulation.Timestep(1f / 60f, threadDispatcher);
 
-
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            if (isInitialMenuOpen) {
+                initialMenu.Update(gameTime);
+                isInitialMenuOpen = initialMenu.HandleMenuInput(keyboardState);
+                if (!isInitialMenuOpen) {
+                    lastDraw = true;
+                }
+                base.Update(gameTime);
+                return;
+            }
             // DEBUG
             if (keyboardState.IsKeyDown(Keys.C) & oldState.IsKeyUp(Keys.C))
             {
@@ -328,10 +341,20 @@ namespace TGC.MonoGame.TP
         /// </summary>
         protected override void Draw(GameTime gameTime)
         {
+            
             // Aca deberiamos poner toda la logia de renderizado del juego.
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
+
+            if (isInitialMenuOpen || lastDraw) {
+                if (lastDraw) {
+                    lastDraw = false;
+                }
+                initialMenu.Draw(gameTime, View, Projection);
+                base.Draw(gameTime);
+                return;
+            }
 
 
             Toys.Draw(gameTime, View, Projection);
@@ -354,7 +377,7 @@ namespace TGC.MonoGame.TP
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
 
-            if (_debugColisiones)
+        if (_debugColisiones)
             {
                 // dibujar las cajas de colisiones de todos los objetos
                 // si se quiere dibujar un convexHull hay que usar el mtodo DrawConvexHull (esta medio cursed ese)
@@ -374,7 +397,7 @@ namespace TGC.MonoGame.TP
             {
                 menu.DrawMenuOverlay();
             }
-        
+           
             base.Draw(gameTime);
 
         }
