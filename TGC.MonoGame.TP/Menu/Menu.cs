@@ -38,16 +38,16 @@ namespace TGC.MonoGame.TP.Content.Models
         }
         public bool HandleMenuInput(KeyboardState keyboardState, KeyboardState oldState)
         {
-            if (keyboardState.IsKeyDown(Keys.Down) &&  oldState.IsKeyUp(Keys.Down))
+            if (keyboardState.IsKeyDown(Keys.Down) &  oldState.IsKeyUp(Keys.Down))
             {
                 _selectedIndex = (_selectedIndex + 1) % _menuItems.Length;
             }
-            else if (keyboardState.IsKeyDown(Keys.Up) && oldState.IsKeyUp(Keys.Up))
+            else if (keyboardState.IsKeyDown(Keys.Up) & oldState.IsKeyUp(Keys.Up))
             {
                 _selectedIndex = (_selectedIndex - 1 + _menuItems.Length) % _menuItems.Length;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Enter) && oldState.IsKeyUp(Keys.Enter))
+            if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
             {
                 if (_menuItems[_selectedIndex] == "Resume")
                 {

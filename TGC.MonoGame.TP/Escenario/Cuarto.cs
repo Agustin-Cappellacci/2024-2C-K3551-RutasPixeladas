@@ -254,9 +254,9 @@ namespace TGC.MonoGame.TP.Content.Models
                     // Draw the mesh
                     mesh.Draw();
                 }
-
-                // Cama
-                if (_puedeVerse[1])
+            }
+            // Cama
+            if (_puedeVerse[1])
                 {
                     var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
                     BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
@@ -299,9 +299,10 @@ namespace TGC.MonoGame.TP.Content.Models
                         mesh.Draw();
                     }
 
-                    _puedeVerse.Clear();
+                    
                 }
-            }
+                _puedeVerse.Clear();
+            
         }
 
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)

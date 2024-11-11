@@ -221,22 +221,19 @@ namespace TGC.MonoGame.TP.Content.Models
             SpriteBatch.End();
         }
 
-        public bool HandleMenuInput(KeyboardState keyboardState)
+        public bool HandleMenuInput(KeyboardState keyboardState, KeyboardState oldState)
         {
-            if (keyboardState.IsKeyDown(Keys.Down) && lastPressedKey != Keys.Down)
+            if (keyboardState.IsKeyDown(Keys.Down) && oldState.IsKeyUp( Keys.Down))
             {
-                lastPressedKey = Keys.Down;
                 _selectedIndex = (_selectedIndex + 1) % _menuItems.Length;
             }
-            else if (keyboardState.IsKeyDown(Keys.Up) && lastPressedKey != Keys.Up)
+            else if (keyboardState.IsKeyDown(Keys.Up) && oldState.IsKeyUp(Keys.Up))
             {
-                lastPressedKey = Keys.Up;
                 _selectedIndex = (_selectedIndex - 1 + _menuItems.Length) % _menuItems.Length;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Enter) && lastPressedKey != Keys.Enter)
+            if (keyboardState.IsKeyDown(Keys.Enter) && oldState.IsKeyUp(Keys.Enter))
             {
-                lastPressedKey = Keys.Enter;
                 if (_menuItems[_selectedIndex] == "Start Game")
                 {
                     return false; // Close the menu.
@@ -245,11 +242,6 @@ namespace TGC.MonoGame.TP.Content.Models
                 {
                     game.Exit();
                 }
-            }
-
-            if (!keyboardState.IsKeyDown(Keys.Up) || !keyboardState.IsKeyDown(Keys.Down) || !keyboardState.IsKeyDown(Keys.Enter))
-            {
-                lastPressedKey = Keys.Z;
             }
             return true;
         }

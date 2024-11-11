@@ -291,12 +291,19 @@ namespace TGC.MonoGame.TP
 
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            
+            /*
+             * Eliminar después
+             *  
+             */
+            isInitialMenuOpen = false;
             if (isInitialMenuOpen) {
                 initialMenu.Update(gameTime);
-                isInitialMenuOpen = initialMenu.HandleMenuInput(keyboardState);
+                isInitialMenuOpen = initialMenu.HandleMenuInput(keyboardState, oldState);
                 if (!isInitialMenuOpen) {
                     lastDraw = true;
                 }
+                oldState = keyboardState;
                 base.Update(gameTime);
                 return;
             }
@@ -306,10 +313,6 @@ namespace TGC.MonoGame.TP
                 _debugColisiones = !_debugColisiones;
             }
             // CAMBIO DE CAMARA
-            if (keyboardState.IsKeyDown(Keys.Enter) & oldState.IsKeyUp(Keys.Enter))
-            {
-                _liberarCamara = !_liberarCamara;
-            }
             if (!_liberarCamara)
             {
                 autoJugador.Update(gameTime, simulation);
