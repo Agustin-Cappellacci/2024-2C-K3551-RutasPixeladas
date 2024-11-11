@@ -1,3 +1,4 @@
+using System;
 using System.Runtime.CompilerServices;
 using BepuPhysics;
 using BepuPhysics.Collidables;
@@ -6,10 +7,11 @@ using BepuPhysics.Constraints;
 
 namespace TGC.MonoGame.TP.Content.Models;
 
-struct CarBodyProperties
+public struct CarBodyProperties
 {
     public SubgroupCollisionFilter Filter;
     public float Friction;
+    public bool IsWheel { get; set; } // Nueva propiedad para identificar ruedas.
 }
 
 /// <summary>
@@ -18,6 +20,9 @@ struct CarBodyProperties
 struct CarCallbacks : INarrowPhaseCallbacks
 {
     public CollidableProperty<CarBodyProperties> Properties;
+    public CarControllerContainer ControllerContainer; // Contenedor mutable.
+    public AutoJugadorWrapper AutoJugadorWrapper;
+
     public void Initialize(Simulation simulation)
     {
         Properties.Initialize(simulation);
@@ -49,6 +54,21 @@ struct CarCallbacks : INarrowPhaseCallbacks
             //If two bodies collide, just average the friction.
             pairMaterial.FrictionCoefficient = (pairMaterial.FrictionCoefficient + Properties[pair.B.BodyHandle].Friction) * 0.5f;
         }
+
+        if (pair.B.Mobility != CollidableMobility.Static|| pair.A.Mobility != CollidableMobility.Static)
+        {
+            // Verifica si `pair.A` o `pair.B` son las ruedas
+            //if (IsWheel(pair.A) || IsWheel(pair.B))
+            //{
+            AutoJugadorWrapper.AutoJugador.isGrounded = true;
+            Console.Out.WriteLine("Contacto ruedas con piso");
+            //
+        } else {
+            AutoJugadorWrapper.AutoJugador.isGrounded = false;
+            Console.Out.WriteLine("NO HAY Contacto de ruedas con piso");
+        }
+
+
         pairMaterial.MaximumRecoveryVelocity = 2f;
         pairMaterial.SpringSettings = new SpringSettings(30, 1);
         return true;
@@ -65,4 +85,13 @@ struct CarCallbacks : INarrowPhaseCallbacks
     {
         Properties.Dispose();
     }
+
+    private bool IsWheel(CollidableReference collidable)
+    {
+        // Verificar si el `collidable` es una rueda.
+        return Properties[collidable.BodyHandle].IsWheel;
+    }
+    
+
+
 }

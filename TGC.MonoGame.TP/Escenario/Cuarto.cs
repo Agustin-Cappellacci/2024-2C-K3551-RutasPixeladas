@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -37,24 +38,9 @@ namespace TGC.MonoGame.TP.Content.Models
         // colisiones
         private Simulation simulation;
         private GraphicsDevice graphicsDevice;
-        private StaticHandle pata1Cama;
-        private StaticHandle pata2Cama;
-        private StaticHandle pata3Cama;
-        private StaticHandle pata4Cama;
-        private StaticHandle cama;
-        private StaticHandle respaldoCama;
-        private StaticHandle almohadaCama;
 
-        private StaticHandle pata1Silla;
-        private StaticHandle pata2Silla;
-        private StaticHandle pata3Silla;
-        private StaticHandle pata4Silla;
-        private StaticHandle respaldoSilla;
-        private StaticHandle respaldoPared1Silla;
-        private StaticHandle respaldoPared2Silla;
-        private StaticHandle silla;
-
-
+        List<List<StaticHandle>> _staticHandles;
+        List<bool> _puedeVerse;
 
         // <summary>
         /// Creates a Car Model with a content manager to load resources.
@@ -62,6 +48,10 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="content">The Content Manager to load resources</param>
         public Cuarto(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
         {
+
+            _staticHandles = new List<List<StaticHandle>>() ;
+
+            _puedeVerse = new List<bool>();
             // Load the Car Model
             Model = content.Load<Model>(ContentFolder3D + "escenario/Floor");
             ChairModel = content.Load<Model>(ContentFolder3D + "chair/chair");
@@ -157,6 +147,25 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
+        /// 
+
+        public void Update(BoundingFrustum boundingFrustum)
+        {
+            foreach (var listahandle in _staticHandles)
+            {
+
+                bool seVe = listahandle.Any(handle =>
+                hayChoque(boundingFrustum,
+                simulation.Statics.GetStaticReference(handle).BoundingBox)
+                );
+                _puedeVerse.Add(seVe);
+            }
+        }
+
+        private bool hayChoque(BoundingFrustum boundingFrustum, BepuUtilities.BoundingBox box)
+        {
+            return boundingFrustum.Intersects(new BoundingBox(box.Min, box.Max));
+        }
         public void Draw(GameTime gameTime, Matrix view, Matrix projection)
         {
             Effect.Parameters["View"].SetValue(view);
@@ -192,77 +201,64 @@ namespace TGC.MonoGame.TP.Content.Models
             }
 
             // Silla
-            var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
-            ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
+            if (_puedeVerse[0])
+            { 
+                var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
+                ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
 
             
 
-            foreach (var mesh in ChairModel.Meshes)
-            {
-                EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
-                var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
-                // We set the main matrices for each mesh to draw
-                EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
-                // Draw the mesh
-                mesh.Draw();
+                foreach (var mesh in ChairModel.Meshes)
+                {
+                    EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
+                    var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
+                    // We set the main matrices for each mesh to draw
+                    EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
+                    // Draw the mesh
+                    mesh.Draw();
+                }
             }
 
             // Cama
-            var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
-            BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
-
-            foreach (var mesh in BedModel.Meshes)
+            if (_puedeVerse[1])
             {
-                foreach (var part in mesh.MeshParts)
+                var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
+                BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
+
+                foreach (var mesh in BedModel.Meshes)
                 {
-                    var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
-                    EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
-                    var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
-                    // We set the main matrices for each mesh to draw
-                    EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                    foreach (var part in mesh.MeshParts)
+                    {
+                        var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+                        EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
+                        var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
+                        // We set the main matrices for each mesh to draw
+                        EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                    }
+                    // Draw the mesh
+                    mesh.Draw();
                 }
-                // Draw the mesh
-                mesh.Draw();
             }
-            
+           
+            _puedeVerse.Clear();
         }
 
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
         {
-            // Dibujar la caja de colisión de la cama
-            DrawBox(Matrix.CreateTranslation(1350f, 440f, 680f), new Vector3(1680f, 570f, 3380f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de pata cama
-            DrawBox(Matrix.CreateTranslation(658f, 75f, -888f), new Vector3(315f, 170f, 224f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de pata cama
-            DrawBox(Matrix.CreateTranslation(1919f, 75f, -888f), new Vector3(315f, 170f, 224f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de pata cama
-            DrawBox(Matrix.CreateTranslation(658f, 75f, 2220f), new Vector3(315f, 170f, 294f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de pata cama
-            DrawBox(Matrix.CreateTranslation(1919f, 75f, 2220f), new Vector3(315f, 170f, 294f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de la almohada
-            DrawBox(Matrix.CreateTranslation(1265, 720, 1800), new Vector3(1000f, 150f, 600f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión del respaldo
-            DrawBox(Matrix.CreateTranslation(1298f, 630f, 2220f), new Vector3(1680f, 1000f, 300f), viewMatrix, projectionMatrix);
-
-            // Dibujar la caja de colisión de pata silla
-            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, (float)Math.PI / 12, 0)*Matrix.CreateTranslation(1320f, 250f, -2100f), new Vector3(50f, 500f, 50f), viewMatrix, projectionMatrix);
-             // Dibujar la caja de colisión de pata silla
-            DrawBox(Matrix.CreateFromYawPitchRoll((float)Math.PI / 3, -(float)Math.PI / 12, 0)*Matrix.CreateTranslation(1630f, 250f, -1700f), new Vector3(50f, 500f, 50f), viewMatrix, projectionMatrix);
-             // Dibujar la caja de colisión de pata silla
-            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 3, (float)Math.PI / 12, 0)*Matrix.CreateTranslation(1630f, 250f, -2100f), new Vector3(50f, 500f, 50f), viewMatrix, projectionMatrix);
-             // Dibujar la caja de colisión de pata silla
-            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI / 3, -(float)Math.PI / 12, 0)*Matrix.CreateTranslation(1320f, 250f, -1700f), new Vector3(50f, 500f, 50f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de silla
-            DrawBox(Matrix.CreateTranslation(1498f, 500f, -1920f), new Vector3(400f, 100f, 400f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de respaldo silla
-            DrawBox(Matrix.CreateTranslation(1698f, 600f, -1920f), new Vector3(100f, 400f, 400f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de respaldo silla
-            DrawBox(Matrix.CreateTranslation(1498f, 600f, -2120f), new Vector3(400f, 200f, 100f), viewMatrix, projectionMatrix);
-            // Dibujar la caja de colisión de respaldo silla
-            DrawBox(Matrix.CreateTranslation(1498f, 600f, -1680f), new Vector3(400f, 200f, 100f), viewMatrix, projectionMatrix);
-
+            
+            foreach (var listaHandle in _staticHandles)
+            {
+                foreach (var handle in listaHandle)
+                {
+                    var reference = simulation.Statics.GetStaticReference(handle);
+                    var pose = reference.Pose;
+                    var inpensable = simulation.Shapes.GetShape<Box>(reference.Shape.Index);
+                    DrawBox(Matrix.CreateFromQuaternion(pose.Orientation) * Matrix.CreateTranslation(pose.Position), new Vector3(inpensable.Width, inpensable.Height, inpensable.Length), viewMatrix, projectionMatrix);
+                }
+            }
         }
 
+    #nullable enable annotations
         private VertexBuffer? _vertexBuffer;
         private IndexBuffer? _indexBuffer;
         private BasicEffect? _effect;
@@ -335,14 +331,14 @@ namespace TGC.MonoGame.TP.Content.Models
             this.graphicsDevice = graphicsDevice;
 
             // Crear colisiones
-            
+
             // Define el tamaño del box (ancho, alto, profundo)
             System.Numerics.Vector3 camaSize = new System.Numerics.Vector3(1680f, 570f, 3380f);
             // Crear el Collidable Box
             var camaShape = new Box(camaSize.X, camaSize.Y, camaSize.Z); // Crea la forma del box
             var camaShapeIndex = simulation.Shapes.Add(camaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para la cama
-            cama = simulation.Statics.Add(new StaticDescription(
+            var cama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1350f, 440f, 680f), // Posición inicial del box
                 camaShapeIndex // Fricción
             ));
@@ -354,11 +350,11 @@ namespace TGC.MonoGame.TP.Content.Models
             var pataCamaShape = new Box(pataCamaSize.X, pataCamaSize.Y, pataCamaSize.Z); // Crea la forma del box
             var pataCamaShapeIndex = simulation.Shapes.Add(pataCamaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para las patas de la cama
-            pata1Cama = simulation.Statics.Add(new StaticDescription(
+            var pata1Cama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(658f, 75f, -888f), // Posición inicial de la pata
                 pataCamaShapeIndex // Fricción
             ));
-            pata2Cama = simulation.Statics.Add(new StaticDescription(
+            var pata2Cama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1919f, 75f, -888f), // Posición inicial de la pata
                 pataCamaShapeIndex // Fricción
             ));
@@ -367,11 +363,11 @@ namespace TGC.MonoGame.TP.Content.Models
             // Crear el Collidable Box
             var pata2CamaShape = new Box(pata2CamaSize.X, pata2CamaSize.Y, pata2CamaSize.Z); // Crea la forma del box
             var pata2CamaShapeIndex = simulation.Shapes.Add(pata2CamaShape); // Registra la forma en el sistema de colisiones
-            pata3Cama = simulation.Statics.Add(new StaticDescription(
+            var pata3Cama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(658f, 75f, 2220f), // Posición inicial de la pata
                 pata2CamaShapeIndex // Fricción
             ));
-            pata4Cama = simulation.Statics.Add(new StaticDescription(
+            var pata4Cama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1919f, 75f, 2220f), // Posición inicial de la pata
                 pata2CamaShapeIndex // Fricción
             ));
@@ -382,7 +378,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var respaldoCamaShape = new Box(respaldoCamaSize.X, respaldoCamaSize.Y, respaldoCamaSize.Z); // Crea la forma del box
             var respaldoCamaShapeIndex = simulation.Shapes.Add(respaldoCamaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para la cama
-            respaldoCama = simulation.Statics.Add(new StaticDescription(
+            var respaldoCama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1298f, 630f, 2220f), // Posición inicial del box
                 respaldoCamaShapeIndex // Fricción
             ));
@@ -392,7 +388,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var almohadaShape = new Box(almohadaSize.X, almohadaSize.Y, almohadaSize.Z); // Crea la forma del box
             var almohadaShapeIndex = simulation.Shapes.Add(almohadaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para la cama
-            almohadaCama = simulation.Statics.Add(new StaticDescription(
+            var almohadaCama = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1265, 720, 1800), // Posición inicial del box
                 almohadaShapeIndex // Fricción
             ));
@@ -403,7 +399,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var sillaShape = new Box(sillaSize.X, sillaSize.Y, sillaSize.Z); // Crea la forma del box
             var sillaShapeIndex = simulation.Shapes.Add(sillaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para la cama
-            silla = simulation.Statics.Add(new StaticDescription(
+            var silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1498f, 500f, -1920f), // Posición inicial del box
                 sillaShapeIndex // Fricción
             ));
@@ -414,22 +410,22 @@ namespace TGC.MonoGame.TP.Content.Models
             var pataSillaShape = new Box(pataCamaSize.X, pataCamaSize.Y, pataCamaSize.Z); // Crea la forma del box
             var pataSillaShapeIndex = simulation.Shapes.Add(pataSillaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para las patas de la cama
-            pata1Silla = simulation.Statics.Add(new StaticDescription(
+            var pata1Silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1320f, 250f, -2100f), // Posición inicial de la pata
                 BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 3, (float)Math.PI / 12, 0),
                 pataSillaShapeIndex // Fricción
             ));
-            pata2Silla = simulation.Statics.Add(new StaticDescription(
+            var pata2Silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1630f, 250f, -1700f), // Posición inicial de la pata
                 BepuUtilities.QuaternionEx.CreateFromYawPitchRoll((float)Math.PI / 3, -(float)Math.PI / 12, 0),
                 pataSillaShapeIndex // Fricción
             ));
-            pata3Silla = simulation.Statics.Add(new StaticDescription(
+            var pata3Silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1630f, 250f, -2100f), // Posición inicial de la pata
                 BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 3, (float)Math.PI / 12, 0),
                 pataSillaShapeIndex // Fricción
             ));
-            pata4Silla = simulation.Statics.Add(new StaticDescription(
+            var pata4Silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1320f, 250f, -1700f), // Posición inicial de la pata
                 BepuUtilities.QuaternionEx.CreateFromYawPitchRoll(-(float)Math.PI / 3, -(float)Math.PI / 12, 0),
                 pataSillaShapeIndex // Fricción
@@ -442,7 +438,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var respaldo1SillaShape = new Box(respaldo1SillaSize.X, respaldo1SillaSize.Y, respaldo1SillaSize.Z); // Crea la forma del box
             var respaldo1SillaShapeIndex = simulation.Shapes.Add(respaldo1SillaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para la cama
-            respaldoSilla = simulation.Statics.Add(new StaticDescription(
+            var respaldoSilla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1698f, 600f, -1920f), // Posición inicial del box
                 respaldo1SillaShapeIndex // Fricción
             ));
@@ -452,18 +448,34 @@ namespace TGC.MonoGame.TP.Content.Models
             var respaldoParedSillaShape = new Box(respaldoParedSillaSize.X, respaldoParedSillaSize.Y, respaldoParedSillaSize.Z); // Crea la forma del box
             var respaldoParedSillaShapeIndex = simulation.Shapes.Add(respaldoParedSillaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para la cama
-            respaldoPared1Silla = simulation.Statics.Add(new StaticDescription(
+            var respaldoPared1Silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1498f, 600f, -2120f), // Posición inicial del box
                 respaldoParedSillaShapeIndex // Fricción
             ));
             // Crear el objeto estático para la cama
-            respaldoPared2Silla = simulation.Statics.Add(new StaticDescription(
+            var respaldoPared2Silla = simulation.Statics.Add(new StaticDescription(
                 new System.Numerics.Vector3(1498f, 600f, -1680f), // Posición inicial del box
                 respaldoParedSillaShapeIndex // Fricción
             ));
 
+            // #1 Silla
+            // #2 Cama
 
+            List<StaticHandle> sillaHandle = new List<StaticHandle>()
+            {
+                silla, pata1Silla, pata2Silla,pata3Silla,pata4Silla, respaldoSilla, respaldoPared1Silla, respaldoPared2Silla
+            };
 
+            List<StaticHandle> camaHandle = new List<StaticHandle>()
+            {
+                cama, almohadaCama, respaldoCama, pata1Cama, pata2Cama, pata3Cama, pata4Cama, 
+            };
+
+            
+            _staticHandles.Add(sillaHandle);
+            _staticHandles.Add(camaHandle);
+
+            
         }
 
     }

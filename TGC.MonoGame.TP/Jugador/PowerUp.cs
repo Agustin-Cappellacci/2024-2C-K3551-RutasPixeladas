@@ -23,7 +23,7 @@ using TGC.MonoGame.TP;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
-    abstract class IPowerUp
+    public abstract class IPowerUp
     {
         
     public float balasRestantes = 5;
@@ -459,7 +459,7 @@ class Hamster : IPowerUp
                 }
             }
 
-    //        DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
     
         }
 
