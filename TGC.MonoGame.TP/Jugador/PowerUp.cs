@@ -25,37 +25,38 @@ namespace TGC.MonoGame.TP.Content.Models
 {
     public abstract class IPowerUp
     {
-        
-    public float balasRestantes = 5;
-    public Model modelo;
-    public Effect efectoPwUP;
-    public Jugador jugador;
-    private float rotationSpeed = 1f; // Velocidad de rotación
-    private float verticalSpeed = 0.005f; // Velocidad de movimiento vertical
-    private float maxHeight = 20f; // Altura máxima del movimiento vertical
-    private float currentHeight = 0f;
-    private bool goingUp = true;
-    private SoundEffect _powerUpSound;
-    public SoundEffectInstance _powerUpSoundInstance;
-    private bool isMuted = false;
-    public Matrix world;
-    public Vector3 PosicionInicial;
-    public Texture2D textura;
-    public const string ContentFolderEffects = "Effects/";
-    protected abstract void CargarModelo(ContentManager content);
 
-    
-    public bool Seleccionado = false;
-    public bool AreAABBsTouching = false;
+        public float balasRestantes = 5;
+        public Model modelo;
+        public Effect efectoPwUP;
+        public Jugador jugador;
+        private float rotationSpeed = 1f; // Velocidad de rotación
+        private float verticalSpeed = 0.005f; // Velocidad de movimiento vertical
+        private float maxHeight = 20f; // Altura máxima del movimiento vertical
+        private float currentHeight = 0f;
+        private bool goingUp = true;
+        private SoundEffect _powerUpSound;
+        public SoundEffectInstance _powerUpSoundInstance;
+        private bool isMuted = false;
+        public Matrix world;
+        public Vector3 PosicionInicial;
+        public Texture2D textura;
+        public const string ContentFolderEffects = "Effects/";
+        protected abstract void CargarModelo(ContentManager content);
 
-    public abstract void Update(GameTime gameTime, List<AutoEnemigo> listaAutos);
-        
+
+        public bool Seleccionado = false;
+        public bool AreAABBsTouching = false;
+
+        public abstract void Update(GameTime gameTime, List<AutoEnemigo> listaAutos);
+
 
 
         public abstract void Draw(GameTime gametime, Matrix View, Matrix Projection);
 
 
-        public IPowerUp(ContentManager content, Jugador jugador, Vector3 posInicial) {
+        public IPowerUp(ContentManager content, Jugador jugador, Vector3 posInicial)
+        {
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
@@ -64,7 +65,7 @@ namespace TGC.MonoGame.TP.Content.Models
             _powerUpSoundInstance = _powerUpSound.CreateInstance();
         }
 
-                public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
         {
             var corners = boundingBox.GetCorners();
             var vertices = new VertexPositionColor[24];
@@ -99,7 +100,7 @@ namespace TGC.MonoGame.TP.Content.Models
         }
         public abstract void Apply();
     }
-class SuperSpeed : IPowerUp
+    class SuperSpeed : IPowerUp
     {
         private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
@@ -115,54 +116,55 @@ class SuperSpeed : IPowerUp
             jugador.CarSpeed = 10000;
         }
 
-        public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {}
-        
-        public override void Update(GameTime gameTime, List<AutoEnemigo> listaAutos ){}
+        public override void Draw(GameTime gametime, Matrix View, Matrix Projection) { }
 
-        protected override void CargarModelo(ContentManager content) {
-           /* this.modelo = content.Load<Model>("powerUp/3078-eagle-handgun-3d-model/Eagle");
-            
-            foreach (var mesh in modelo.Meshes)
-            {
-                // Aquí verificas si el nombre del mesh corresponde a una rueda
-                foreach (var meshPart in mesh.MeshParts)
-                {
-                    meshPart.Effect = efectoPwUP;
-                }
-            }*/
+        public override void Update(GameTime gameTime, List<AutoEnemigo> listaAutos) { }
+
+        protected override void CargarModelo(ContentManager content)
+        {
+            /* this.modelo = content.Load<Model>("powerUp/3078-eagle-handgun-3d-model/Eagle");
+
+             foreach (var mesh in modelo.Meshes)
+             {
+                 // Aquí verificas si el nombre del mesh corresponde a una rueda
+                 foreach (var meshPart in mesh.MeshParts)
+                 {
+                     meshPart.Effect = efectoPwUP;
+                 }
+             }*/
         }
 
     }
 
-class Gun : IPowerUp
+    class Gun : IPowerUp
     {
-    private float rotationSpeed = 1f; // Velocidad de rotación
-    private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
-    private float maxHeight = 7f; // Altura máxima del movimiento vertical
-    private float currentHeight = 0f;
-    private bool goingUp = true;
-    private BoundingBox ColisionCaja { get; set; }
+        private float rotationSpeed = 1f; // Velocidad de rotación
+        private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
+        private float maxHeight = 7f; // Altura máxima del movimiento vertical
+        private float currentHeight = 0f;
+        private bool goingUp = true;
+        private BoundingBox ColisionCaja { get; set; }
 
-    private Vector3 posicion;
+        private Vector3 posicion;
 
-    public float balasRestantes = 5;
-    public float radioDeteccion = 5f;
+        public float balasRestantes = 5;
+        public float radioDeteccion = 5f;
 
 
-    private Matrix AimRotation = Matrix.Identity;
+        private Matrix AimRotation = Matrix.Identity;
 
-    private GraphicsDevice graphicsDevice;
+        private GraphicsDevice graphicsDevice;
 
         public Gun(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
-        {   
-            
+        {
+
             this.graphicsDevice = graphicsDevice;
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
 
             BoundingBox BBprimera = BoundingVolumesExtensions.CreateAABBFrom(modelo);
-            BBprimera = new BoundingBox(BBprimera.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BBprimera.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0)); 
+            BBprimera = new BoundingBox(BBprimera.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BBprimera.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0));
 
             Vector3 nuevaDimension = new Vector3(300, 100, 300); // Nuevas dimensiones (anchura, altura, profundidad)
             ColisionCaja = ModificarDimensiones(BBprimera, nuevaDimension);
@@ -171,13 +173,17 @@ class Gun : IPowerUp
 
         public override void Apply()
         {
-            if(balasRestantes>0){
+            if (balasRestantes > 0)
+            {
                 balasRestantes--;
-            } else {
-            Seleccionado = false;
-            jugador.powerUp = null;
             }
-        //    jugador.CarSpeed = 10000;
+            else
+            {
+                Seleccionado = false;
+                jugador.powerUp = null;
+                balasRestantes = 5;
+            }
+            //    jugador.CarSpeed = 10000;
         }
 
         public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
@@ -196,10 +202,11 @@ class Gun : IPowerUp
         }
 
 
-        protected override void CargarModelo(ContentManager content) {
+        protected override void CargarModelo(ContentManager content)
+        {
             this.modelo = content.Load<Model>("poweUp/3078-eagle-handgun-3d-model/Eagle");
             this.textura = content.Load<Texture2D>("poweUp/3078-eagle-handgun-3d-model/Texture/Eagle_02 - Default_AlbedoTransparency");
-            
+
             foreach (var mesh in modelo.Meshes)
             {
                 // Aquí verificas si el nombre del mesh corresponde a una rueda
@@ -238,59 +245,62 @@ class Gun : IPowerUp
                 }
             }
 
-        this.AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
+            this.AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
 
-        if (this.AreAABBsTouching && jugador.powerUp == null  && jugador.tiempoRestante <= 0){
-            jugador.powerUp = this;
-            Seleccionado = true;
-        }
+            if (this.AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0)
+            {
+                jugador.powerUp = this;
+                Seleccionado = true;
+            }
 
-        balasRestantes = 5;
-
-        if (Seleccionado) {
-            bool autoCerca = false;
-            // Ajusta la posición en relación con la rotación y posición del coche
-            /*foreach (var auto in listaAutos)
-                {
-                    Vector3 autoPosicion = new Vector3(0,0,0); //aca iria auto.carposition
-
-                    float distancia = Vector3.Distance(posicion, autoPosicion);
-
-                    if (distancia <= radioDeteccion)
+            if (Seleccionado)
+            {
+                bool autoCerca = false;
+                // Ajusta la posición en relación con la rotación y posición del coche
+                /*foreach (var auto in listaAutos)
                     {
-                        autoCerca = true;
-                        // Calcular la dirección hacia el auto
-                        Vector3 direccionHaciaAuto = Vector3.Normalize(autoPosicion - posicion);
+                        Vector3 autoPosicion = new Vector3(0,0,0); //aca iria auto.carposition
 
-                        // Mantener la rotación del auto y ajustar para que apunte al auto detectado
-                        Microsoft.Xna.Framework.Quaternion rotacionApuntado = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(posicion, direccionHaciaAuto, Vector3.Up));
-                        
-                        // Combina la rotación del coche con la rotación hacia el objetivo
-                        AimRotation = jugador.rotationMatrix * Matrix4x4.CreateFromQuaternion(ToNumericsQuaternion(rotacionApuntado));
+                        float distancia = Vector3.Distance(posicion, autoPosicion);
+
+                        if (distancia <= radioDeteccion)
+                        {
+                            autoCerca = true;
+                            // Calcular la dirección hacia el auto
+                            Vector3 direccionHaciaAuto = Vector3.Normalize(autoPosicion - posicion);
+
+                            // Mantener la rotación del auto y ajustar para que apunte al auto detectado
+                            Microsoft.Xna.Framework.Quaternion rotacionApuntado = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(posicion, direccionHaciaAuto, Vector3.Up));
+
+                            // Combina la rotación del coche con la rotación hacia el objetivo
+                            AimRotation = jugador.rotationMatrix * Matrix4x4.CreateFromQuaternion(ToNumericsQuaternion(rotacionApuntado));
+                        }
                     }
-                }
-            if (!autoCerca){
-                AimRotation = 
-            }*/
-                
-            var offset = new System.Numerics.Vector3(0, 40f, 0); // Altura sobre el techo
-            posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
-            world = Matrix.CreateScale(1.5f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);         
+                if (!autoCerca){
+                    AimRotation = 
+                }*/
 
-        } else {
-            world = Matrix.CreateScale(2f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
-        }   
+                var offset = new System.Numerics.Vector3(0, 40f, 0); // Altura sobre el techo
+                posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
+                world = Matrix.CreateScale(1.5f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
 
-        // Aplicar los movimientos al modelo
-        // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
-        //AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
+            }
+            else
+            {
+                world = Matrix.CreateScale(2f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+            }
+
+            // Aplicar los movimientos al modelo
+            // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
+            //AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
         }
 
         public static System.Numerics.Quaternion ToNumericsQuaternion(Microsoft.Xna.Framework.Quaternion xnaQuaternion)
         {
             return new System.Numerics.Quaternion(xnaQuaternion.X, xnaQuaternion.Y, xnaQuaternion.Z, xnaQuaternion.W);
         }
-        public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
+        public override void Draw(GameTime gametime, Matrix View, Matrix Projection)
+        {
             efectoPwUP.Parameters["View"].SetValue(View);
             efectoPwUP.Parameters["Projection"].SetValue(Projection);
             efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
@@ -303,11 +313,11 @@ class Gun : IPowerUp
             foreach (var mesh in modelo.Meshes)
             {
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-                    // We set the main matrices for each mesh to draw
-                    efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
+                // We set the main matrices for each mesh to draw
+                efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
 
-                    // Draw the mesh
-                    mesh.Draw();
+                // Draw the mesh
+                mesh.Draw();
 
             }
             //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
@@ -315,27 +325,27 @@ class Gun : IPowerUp
 
     }
 
-class Hamster : IPowerUp
+    class Hamster : IPowerUp
     {
-    private float rotationSpeed = 1f; // Velocidad de rotación
-    private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
-    private float maxHeight = 7f; // Altura máxima del movimiento vertical
-    private float currentHeight = 0f;
-    private bool goingUp = true;
+        private float rotationSpeed = 1f; // Velocidad de rotación
+        private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
+        private float maxHeight = 7f; // Altura máxima del movimiento vertical
+        private float currentHeight = 0f;
+        private bool goingUp = true;
 
-    private Vector3 posicion;
+        private Vector3 posicion;
 
-    private GraphicsDevice graphicsDevice;
+        private GraphicsDevice graphicsDevice;
 
-    private BoundingBox ColisionCaja { get; set; }
+        private BoundingBox ColisionCaja { get; set; }
         public Hamster(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
-        {   
+        {
             this.graphicsDevice = graphicsDevice;
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
             BoundingBox BB = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
-            BB = new BoundingBox(BB.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BB.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0));        
+            BB = new BoundingBox(BB.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BB.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0));
             //Seleccionado = true;
             listaBalas = new List<BalaHamster>();
             Vector3 nuevaDimension = new Vector3(50, 30, 50); // Nuevas dimensiones (anchura, altura, profundidad)
@@ -356,7 +366,8 @@ class Hamster : IPowerUp
             return new BoundingBox(nuevoMin, nuevoMax);
         }
 
-        protected override void CargarModelo(ContentManager content) {
+        protected override void CargarModelo(ContentManager content)
+        {
             this.modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
             this.textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
             foreach (var mesh in modelo.Meshes)
@@ -397,42 +408,50 @@ class Hamster : IPowerUp
                 }
             }
 
-        Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
-        AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
+            Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
+            AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
 
-        if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0){
-            jugador.powerUp = this;
-            Seleccionado = true;
-        }
+            if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0)
+            {
+                jugador.powerUp = this;
+                Seleccionado = true;
+            }
 
-        if (Seleccionado) {
-            // Ajusta la posición en relación con la rotación y posición del coche
-            var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
-            posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
-            world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);            
-        } else {
-            world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
-        }
+            if (Seleccionado)
+            {
+                // Ajusta la posición en relación con la rotación y posición del coche
+                var offset = new System.Numerics.Vector3(0, 25f, 0); // Altura sobre el techo
+                posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
+                world = Matrix.CreateScale(0.05f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
+            }
+            else
+            {
+                world = Matrix.CreateScale(0.1f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+            }
 
-        if (listaBalas.Count != 0){
-            Console.WriteLine("count: " + listaBalas.Count);
-            foreach (BalaHamster bala in listaBalas){
+            if (listaBalas.Count != 0)
+            {
+                Console.WriteLine("count: " + listaBalas.Count);
+                foreach (BalaHamster bala in listaBalas)
+                {
                     bala.Update(gameTime);
-                if (bala.duracion > 3){
-                    //listaBalas.Remove(bala);
+                    if (bala.duracion > 3)
+                    {
+                        //listaBalas.Remove(bala);
+                    }
                 }
             }
+
+
+            // Aplicar los movimientos al modelo
+            // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
+
+
+
         }
 
-
-        // Aplicar los movimientos al modelo
-        // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
-
-
-
-        }
-
-        public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
+        public override void Draw(GameTime gametime, Matrix View, Matrix Projection)
+        {
             efectoPwUP.Parameters["View"].SetValue(View);
             efectoPwUP.Parameters["Projection"].SetValue(Projection);
             efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
@@ -445,22 +464,24 @@ class Hamster : IPowerUp
             foreach (var mesh in modelo.Meshes)
             {
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-                    // We set the main matrices for each mesh to draw
+                // We set the main matrices for each mesh to draw
                 efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
 
-                    // Draw the mesh
+                // Draw the mesh
                 mesh.Draw();
             }
 
-            if(listaBalas.Count != 0){
-                foreach(BalaHamster bala in listaBalas){
+            if (listaBalas.Count != 0)
+            {
+                foreach (BalaHamster bala in listaBalas)
+                {
                     bala.Draw(View, Projection);
-                    if(bala.duracion > 3){} 
+                    if (bala.duracion > 3) { }
                 }
             }
 
             DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
-    
+
         }
 
 
@@ -468,19 +489,20 @@ class Hamster : IPowerUp
         List<BalaHamster> listaBalas;
 
         public override void Apply()
-        {   
+        {
             var bala = new BalaHamster(graphicsDevice, jugador.contenido, jugador.rotationMatrix.Backward, jugador.carPosition + jugador.rotationMatrix.Backward * 60f);
             Seleccionado = false;
             jugador.powerUp = null;
             listaBalas.Add(bala);
-        //    jugador.CarSpeed = 10000;
+            //    jugador.CarSpeed = 10000;
         }
     }
 
 
 }
 
-class BalaHamster{
+class BalaHamster
+{
 
     public Model modelo;
     public Effect efectoPwUP;
@@ -495,8 +517,9 @@ class BalaHamster{
 
     public const string ContentFolderEffects = "Effects/";
 
-    public BalaHamster(GraphicsDevice graphicsDevice, ContentManager content, Vector3 direccion, Vector3 posInicial){
-    
+    public BalaHamster(GraphicsDevice graphicsDevice, ContentManager content, Vector3 direccion, Vector3 posInicial)
+    {
+
         this.modelo = content.Load<Model>("poweUp/hamster-3d-model/Humster");
         efectoPwUP = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
         this.textura = content.Load<Texture2D>("poweUp/hamster-3d-model/Hamster_UV");
@@ -506,7 +529,7 @@ class BalaHamster{
 
         foreach (var mesh in modelo.Meshes)
         {
-                // Aquí verificas si el nombre del mesh corresponde a una rueda
+            // Aquí verificas si el nombre del mesh corresponde a una rueda
             foreach (var meshPart in mesh.MeshParts)
             {
                 meshPart.Effect = efectoPwUP;
@@ -514,7 +537,8 @@ class BalaHamster{
         }
     }
 
-    public void Update(GameTime gameTime){
+    public void Update(GameTime gameTime)
+    {
         duracion += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         Matrix rotacionHamster = Matrix.CreateRotationY((float)-direccion.Z);
@@ -524,7 +548,8 @@ class BalaHamster{
         world = Matrix.CreateScale(0.1f) * rotacionHamster * Matrix.CreateTranslation(posicion);
     }
 
-    public void Draw(Matrix View, Matrix Projection){
+    public void Draw(Matrix View, Matrix Projection)
+    {
         efectoPwUP.Parameters["View"].SetValue(View);
         efectoPwUP.Parameters["Projection"].SetValue(Projection);
         efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
@@ -535,9 +560,9 @@ class BalaHamster{
         foreach (var mesh in modelo.Meshes)
         {
             var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
-                // We set the main matrices for each mesh to draw
+            // We set the main matrices for each mesh to draw
             efectoPwUP.Parameters["World"].SetValue(meshWorld * world);
-                // Draw the mesh
+            // Draw the mesh
             mesh.Draw();
         }
     }

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
+//using System.Numerics;
 using System.Text;
 
 namespace TGC.MonoGame.TP.Content.Models
@@ -22,7 +23,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Model Model { get; set; }
         private Model ChairModel { get; set; }
-        private Model BedModel { get; set; }
+        public Model BedModel { get; set; }
         private Effect Effect { get; set; }
         private Effect EffectChair { get; set; }
         private Effect EffectBed { get; set; }
@@ -32,6 +33,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Matrix ChairWorld { get; set; }
         private Matrix BedWorld { get; set; }
 
+        //private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
 
 
@@ -49,7 +51,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public Cuarto(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice)
         {
 
-            _staticHandles = new List<List<StaticHandle>>() ;
+            _staticHandles = new List<List<StaticHandle>>();
 
             _puedeVerse = new List<bool>();
             // Load the Car Model
@@ -59,9 +61,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             // Load an effect that will be used to draw the scene
-            Effect = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            Effect = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
             EffectBed = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
-            EffectChair = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            EffectChair = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
 
             // load texture
 
@@ -100,6 +102,10 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
+            // Set uniforms
+
+
+            // Set uniforms
 
             List<Matrix> positionMatrix = new List<Matrix>()
             {
@@ -132,7 +138,7 @@ namespace TGC.MonoGame.TP.Content.Models
             {
                 WorldMatrices.Add(position * Matrix.CreateTranslation(traslacion) * Matrix.CreateScale(10f));
 
-                traslacion += new Vector3(0f, -0.001f, 0f);
+                traslacion += new Vector3(0f, 0.001f, 0f);
             }
             ChairWorld = Matrix.CreateRotationY(-MathHelper.Pi / 2) * Matrix.CreateScale(10f) * Matrix.CreateTranslation(traslacionChair);
             BedWorld = Matrix.CreateScale(300f) * Matrix.CreateTranslation(traslacionBed);
@@ -147,35 +153,20 @@ namespace TGC.MonoGame.TP.Content.Models
         /// <param name="gameTime">The Game Time for this frame</param>
         /// <param name="view">A view matrix, generally from a camera</param>
         /// <param name="projection">A projection matrix</param>
-        /// 
-
-        public void Update(BoundingFrustum boundingFrustum)
+        public void Draw(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition, Vector3 lightPosition, Vector3 forwardVector)
         {
-            foreach (var listahandle in _staticHandles)
-            {
-
-                bool seVe = listahandle.Any(handle =>
-                hayChoque(boundingFrustum,
-                simulation.Statics.GetStaticReference(handle).BoundingBox)
-                );
-                _puedeVerse.Add(seVe);
-            }
-        }
-
-        private bool hayChoque(BoundingFrustum boundingFrustum, BepuUtilities.BoundingBox box)
-        {
-            return boundingFrustum.Intersects(new BoundingBox(box.Min, box.Max));
-        }
-        public void Draw(GameTime gameTime, Matrix view, Matrix projection)
-        {
+            /*
             Effect.Parameters["View"].SetValue(view);
             Effect.Parameters["Projection"].SetValue(projection);
 
             EffectChair.Parameters["View"].SetValue(view);
             EffectChair.Parameters["Projection"].SetValue(projection);
-
+            
             EffectBed.Parameters["View"].SetValue(view);
             EffectBed.Parameters["Projection"].SetValue(projection);
+            */
+
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             var random = new Random(Seed: 0);
 
@@ -189,63 +180,133 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var worldMatrix in WorldMatrices)
                 {
+
+                    Effect.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    Effect.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                    Effect.Parameters["KAmbient"].SetValue(0.7f);
+                    Effect.Parameters["KDiffuse"].SetValue(0.8f);
+                    Effect.Parameters["KSpecular"].SetValue(0.8f);
+                    Effect.Parameters["shininess"].SetValue(50.0f);
+
+                    //var lightPosition2 = new Vector3(0, 2000, 0);
+
+                    Effect.Parameters["lightPosition"].SetValue(lightPosition);
+                    Effect.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                    Effect.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                    Effect.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+
                     Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                     // We set the main matrices for each mesh to draw
                     Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
+                    // InverseTransposeWorld is used to rotate normals
+
+                    Effect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorld)));
+
+                    // WorldViewProjection is used to transform from model space to clip space
+                    Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * worldMatrix * view * projection);
 
                     // Draw the mesh
                     mesh.Draw();
 
-               
+
                 }
             }
 
             // Silla
             if (_puedeVerse[0])
-            { 
+            {
                 var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
                 ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
 
-            
+
 
                 foreach (var mesh in ChairModel.Meshes)
                 {
+
+                    EffectChair.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    EffectChair.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                    EffectChair.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                    EffectChair.Parameters["KAmbient"].SetValue(0.7f);
+                    EffectChair.Parameters["KDiffuse"].SetValue(0.8f);
+                    EffectChair.Parameters["KSpecular"].SetValue(0.5f);
+                    EffectChair.Parameters["shininess"].SetValue(2.0f);
+
+                    EffectChair.Parameters["lightPosition"].SetValue(lightPosition);
+                    EffectChair.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                    Effect.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                    Effect.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+
                     EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
                     var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
                     // We set the main matrices for each mesh to draw
                     EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
+                    // InverseTransposeWorld is used to rotate normals
+                    EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorldChair)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    EffectChair.Parameters["WorldViewProjection"].SetValue(meshWorldChair * ChairWorld * view * projection);
+
+
                     // Draw the mesh
                     mesh.Draw();
                 }
-            }
 
-            // Cama
-            if (_puedeVerse[1])
-            {
-                var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
-                BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
-
-                foreach (var mesh in BedModel.Meshes)
+                // Cama
+                if (_puedeVerse[1])
                 {
-                    foreach (var part in mesh.MeshParts)
+                    var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
+                    BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
+
+                    foreach (var mesh in BedModel.Meshes)
                     {
-                        var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
-                        EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
-                        var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
-                        // We set the main matrices for each mesh to draw
-                        EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                        foreach (var part in mesh.MeshParts)
+                        {
+                            var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+
+                            EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
+
+                            var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
+                            /*// We set the main matrices for each mesh to draw
+                            EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                            */
+
+                            EffectBed.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                            EffectBed.Parameters["diffColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                            EffectBed.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                            EffectBed.Parameters["KAmbient"].SetValue(0.3f);
+                            EffectBed.Parameters["KDiffuse"].SetValue(0.8f);
+                            EffectBed.Parameters["KSpecular"].SetValue(0.1f);
+                            EffectBed.Parameters["shininess"].SetValue(1.0f);
+
+                            EffectBed.Parameters["lightPosition"].SetValue(lightPosition);
+                            EffectBed.Parameters["eyePosition"].SetValue(cameraPosition);
+
+                            EffectBed.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                            EffectBed.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+                            // We set the main matrices for each mesh to draw
+                            EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                            // InverseTransposeWorld is used to rotate normals
+                            EffectBed.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorldBed)));
+                            // WorldViewProjection is used to transform from model space to clip space
+                            EffectBed.Parameters["WorldViewProjection"].SetValue(meshWorldBed * BedWorld * view * projection);
+                        }
+                        // Draw the mesh
+                        mesh.Draw();
                     }
-                    // Draw the mesh
-                    mesh.Draw();
+
+                    _puedeVerse.Clear();
                 }
             }
-           
-            _puedeVerse.Clear();
         }
 
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)
         {
-            
+
             foreach (var listaHandle in _staticHandles)
             {
                 foreach (var handle in listaHandle)
@@ -258,37 +319,39 @@ namespace TGC.MonoGame.TP.Content.Models
             }
         }
 
-    #nullable enable annotations
+#nullable enable annotations
         private VertexBuffer? _vertexBuffer;
         private IndexBuffer? _indexBuffer;
         private BasicEffect? _effect;
         public void DrawBox(Matrix worldMatrix, Vector3 size, Matrix viewMatrix, Matrix projectionMatrix)
         {
-            if (_effect == null){
+            if (_effect == null)
+            {
                 _effect = new BasicEffect(graphicsDevice);
                 _effect.VertexColorEnabled = true;
             }
-            _effect.World = Matrix.CreateScale(size/2f) * worldMatrix;
+            _effect.World = Matrix.CreateScale(size / 2f) * worldMatrix;
             _effect.View = viewMatrix;
             _effect.Projection = projectionMatrix;
             // Crear un efecto básico para dibujar la caja
-            
+
 
             // Definir los vértices de una caja (un cubo unitario que escalaremos)
-            if (_vertexBuffer == null){
+            if (_vertexBuffer == null)
+            {
                 VertexPositionColor[] vertices = new VertexPositionColor[8];
                 vertices[0] = new VertexPositionColor(new Vector3(-1, 1, 1), Microsoft.Xna.Framework.Color.Red);   // Front top left
-                vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1),  Microsoft.Xna.Framework.Color.Red);    // Front top right
-                vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1),  Microsoft.Xna.Framework.Color.Red);  // Front bottom left
-                vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1),  Microsoft.Xna.Framework.Color.Red);   // Front bottom right
-                vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1),  Microsoft.Xna.Framework.Color.Red);  // Back top left
-                vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1),  Microsoft.Xna.Framework.Color.Red);   // Back top right
-                vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1),  Microsoft.Xna.Framework.Color.Red); // Back bottom left
-                vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1),  Microsoft.Xna.Framework.Color.Red);  // Back bottom right 
+                vertices[1] = new VertexPositionColor(new Vector3(1, 1, 1), Microsoft.Xna.Framework.Color.Red);    // Front top right
+                vertices[2] = new VertexPositionColor(new Vector3(-1, -1, 1), Microsoft.Xna.Framework.Color.Red);  // Front bottom left
+                vertices[3] = new VertexPositionColor(new Vector3(1, -1, 1), Microsoft.Xna.Framework.Color.Red);   // Front bottom right
+                vertices[4] = new VertexPositionColor(new Vector3(-1, 1, -1), Microsoft.Xna.Framework.Color.Red);  // Back top left
+                vertices[5] = new VertexPositionColor(new Vector3(1, 1, -1), Microsoft.Xna.Framework.Color.Red);   // Back top right
+                vertices[6] = new VertexPositionColor(new Vector3(-1, -1, -1), Microsoft.Xna.Framework.Color.Red); // Back bottom left
+                vertices[7] = new VertexPositionColor(new Vector3(1, -1, -1), Microsoft.Xna.Framework.Color.Red);  // Back bottom right 
                 _vertexBuffer = new VertexBuffer(graphicsDevice, typeof(VertexPositionColor), 8, BufferUsage.None);
                 _vertexBuffer.SetData(vertices);
             }
-        
+
 
             // Escalar la caja en función del tamaño dado
             /*for (int i = 0; i < vertices.Length; i++)
@@ -297,8 +360,9 @@ namespace TGC.MonoGame.TP.Content.Models
             }*/
 
             // Definir los índices que forman las líneas de la caja
-            
-            if (_indexBuffer == null){
+
+            if (_indexBuffer == null)
+            {
                 ushort[] indices = new ushort[]
                 {
             0, 1, 1, 3, 3, 2, 2, 0,  // Front face
@@ -323,6 +387,23 @@ namespace TGC.MonoGame.TP.Content.Models
                     _indexBuffer.IndexCount / 2
                 );
             }
+        }
+
+        public void Update(BoundingFrustum boundingFrustum)
+        {
+            foreach (var listahandle in _staticHandles)
+            {
+
+                bool seVe = listahandle.Any(handle =>
+                hayChoque(boundingFrustum,
+                simulation.Statics.GetStaticReference(handle).BoundingBox)
+                );
+                _puedeVerse.Add(seVe);
+            }
+        }
+        private bool hayChoque(BoundingFrustum boundingFrustum, BepuUtilities.BoundingBox box)
+        {
+            return boundingFrustum.Intersects(new BoundingBox(box.Min, box.Max));
         }
 
         private void inicializadorColisionables(Simulation simulation, GraphicsDevice graphicsDevice)
@@ -468,14 +549,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
             List<StaticHandle> camaHandle = new List<StaticHandle>()
             {
-                cama, almohadaCama, respaldoCama, pata1Cama, pata2Cama, pata3Cama, pata4Cama, 
+                cama, almohadaCama, respaldoCama, pata1Cama, pata2Cama, pata3Cama, pata4Cama,
             };
 
-            
+
             _staticHandles.Add(sillaHandle);
             _staticHandles.Add(camaHandle);
 
-            
+
         }
 
     }

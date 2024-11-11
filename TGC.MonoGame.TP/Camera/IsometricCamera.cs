@@ -17,6 +17,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private const float AngleThreshold = 0.85f;
 
+        public Vector3 CameraPosition;
+
         public Matrix Projection { get; private set; }
 
         public Matrix View { get; private set; }
@@ -86,6 +88,8 @@ namespace TGC.MonoGame.TP.Content.Models
             var offsetedPosition = followedPosition
                 + Vector3.Left * AxisDistanceToTarget
                 + Vector3.Up * AxisDistanceToTarget;
+
+            CameraPosition = offsetedPosition;
 
             // Calculo el vector Arriba actualizado
             // Nota: No se puede usar el vector Arriba por defecto (0, 1, 0)

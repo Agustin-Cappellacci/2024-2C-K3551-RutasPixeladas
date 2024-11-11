@@ -81,6 +81,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private float vida = 200;
 
+        private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
+
         Texture2D texturaAuto;
         Texture2D texturaRueda;
 
@@ -93,10 +95,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public float tiempoRestante = 0f;
         float tiempoEnfriamiento = 0.5f;
+        public Vector3 forwardVector;
 
         public ContentManager contenido;
+        private RenderTargetCube EnvironmentMapRenderTarget { get; set; }
+        private StaticCamera CubeMapCamera { get; set; }
 
         public bool isGrounded = false;
+        private const int EnvironmentmapSize = 2048;
 
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo, BodyHandle bodyHandle)
         {   
@@ -109,7 +115,9 @@ namespace TGC.MonoGame.TP.Content.Models
             _engineSoundInstance.IsLooped = true;
             _engineSoundInstance.Play();
             //effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "Player1");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "BlinnPhong");
+            //effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
@@ -147,6 +155,14 @@ namespace TGC.MonoGame.TP.Content.Models
             this.playerController = playerController;
 
             carBodyHandle = bodyHandle;
+
+            // Create a render target for the scene
+            EnvironmentMapRenderTarget = new RenderTargetCube(graphicsDevice, EnvironmentmapSize, false,
+                SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.DiscardContents);
+            graphicsDevice.BlendState = BlendState.Opaque;
+
+            CubeMapCamera = new StaticCamera(1f, carPosition, Vector3.UnitX, Vector3.Up);
+            CubeMapCamera.BuildProjection(1f, 1f, 3000f, MathHelper.PiOver2);
 
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
@@ -292,23 +308,86 @@ namespace TGC.MonoGame.TP.Content.Models
             // Crea un nuevo BoundingBox a partir de las esquinas transformadas
             ColisionCaja = BoundingBox.CreateFromPoints(esquinas);
 
+            forwardVector = rotationMatrix.Forward;
+
+            CubeMapCamera.Position = carPosition;
+
             Console.WriteLine("posicion del auto: " + carPosition);
         }
 
-        public void Draw(Matrix View, Matrix Projection)
+        public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition)
         {
             var random = new Random(Seed: 0);
             var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
-            effectAuto.Parameters["View"].SetValue(View);
-            effectAuto.Parameters["Projection"].SetValue(Projection);
+            // effectAuto.Parameters["View"].SetValue(View);
+            //effectAuto.Parameters["Projection"].SetValue(Projection);
+            /*
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
+            // Draw to our cubemap from the robot position
+            for (var face = CubeMapFace.PositiveX; face <= CubeMapFace.NegativeZ; face++)
+            {
+                // Set the render target as our cubemap face, we are drawing the scene in this texture
+                graphicsDevice.SetRenderTarget(EnvironmentMapRenderTarget, face);
+                graphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
+
+                SetCubemapCameraForOrientation(face);
+                CubeMapCamera.BuildView();
+
+                // Draw our scene. Do not draw our tank as it would be occluded by itself 
+                // (if it has backface culling on)
+                cama.Draw(Matrix.Identity, CubeMapCamera.View, CubeMapCamera.Projection);
+            }
+
+            // Set the render target as null, we are drawing on the screen!
+            graphicsDevice.SetRenderTarget(null);
+            graphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
 
 
+            // Draw our scene with the default effect and default camera
+            cama.Draw(Matrix.Identity, View, Projection);
+            */
             foreach (ModelMesh mesh in restoAuto)
             {
-                effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
+                Vector3 lightPosition = new Vector3(-1000, 3000, 1000); // Luz en una posición elevada en el espacio
+
+                //effectAuto.Parameters["View"].SetValue(View);
+                //effectAuto.Parameters["Projection"].SetValue(Projection);
+                
+                //effectAuto.Parameters["lightPosition"].SetValue(lightPosition);
+                //effectAuto.Parameters["LightViewProjection"].SetValue(lightViewProjection);
+                //effectAuto.Parameters["ShadowMap"].SetValue(shadowRenderTarget);
+
+                //effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(color);
+                //effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                /*
+                effectAuto.Parameters["environmentMap"].SetValue(EnvironmentMapRenderTarget);
+                */
+                effectAuto.Parameters["ambientColor"].SetValue(new Vector3(0.25f, 0.0f, 0.0f));
+                effectAuto.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                effectAuto.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                effectAuto.Parameters["KAmbient"].SetValue(0.7f);
+                effectAuto.Parameters["KDiffuse"].SetValue(0.5f);
+                effectAuto.Parameters["KSpecular"].SetValue(0.3f);
+                effectAuto.Parameters["shininess"].SetValue(50.0f);
+
+                effectAuto.Parameters["lightPosition"].SetValue(lightPosition);
+                
+                effectAuto.Parameters["eyePosition"].SetValue(cameraPosition);
+                effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
+
+                //effectAuto.Parameters["lightDirection"].SetValue(forwardVector); // Dirección hacia adelante
+                //effectAuto.Parameters["cutoffAngle"].SetValue(MathHelper.ToRadians(30f));
+                //effectAuto.Parameters["baseTexture"].SetValue(texturaAuto);
+                // We set the main matrices for each mesh to draw
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                // InverseTransposeWorld is used to rotate normals
+                effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(carWorld)));
+                // WorldViewProjection is used to transform from model space to clip space
+                effectAuto.Parameters["WorldViewProjection"].SetValue(mesh.ParentBone.Transform * carWorld * View * Projection);
+
                 mesh.Draw();
             }
 
@@ -319,10 +398,18 @@ namespace TGC.MonoGame.TP.Content.Models
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
                     effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
+                    // InverseTransposeWorld is used to rotate normals
+                    effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * carWorld)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    effectAuto.Parameters["WorldViewProjection"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld * View * Projection);
                 }
                 else
                 {
                     effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld);
+                    // InverseTransposeWorld is used to rotate normals
+                    effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(Matrix.CreateRotationX(wheelRotationAngle) * carWorld)));
+                    // WorldViewProjection is used to transform from model space to clip space
+                    effectAuto.Parameters["WorldViewProjection"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld * View * Projection);
                 }
                 rueda.Draw();
             }
@@ -485,7 +572,49 @@ namespace TGC.MonoGame.TP.Content.Models
             }
         }
 
+        private void SetCubemapCameraForOrientation(CubeMapFace face)
+        {
+            switch (face)
+            {
+                default:
+                case CubeMapFace.PositiveX:
+                    CubeMapCamera.FrontDirection = -Vector3.UnitX;
+                    CubeMapCamera.UpDirection = Vector3.Down;
+                    break;
 
+                case CubeMapFace.NegativeX:
+                    CubeMapCamera.FrontDirection = Vector3.UnitX;
+                    CubeMapCamera.UpDirection = Vector3.Down;
+                    break;
 
+                case CubeMapFace.PositiveY:
+                    CubeMapCamera.FrontDirection = Vector3.Down;
+                    CubeMapCamera.UpDirection = Vector3.UnitZ;
+                    break;
+
+                case CubeMapFace.NegativeY:
+                    CubeMapCamera.FrontDirection = Vector3.Up;
+                    CubeMapCamera.UpDirection = -Vector3.UnitZ;
+                    break;
+
+                case CubeMapFace.PositiveZ:
+                    CubeMapCamera.FrontDirection = -Vector3.UnitZ;
+                    CubeMapCamera.UpDirection = Vector3.Down;
+                    break;
+
+                case CubeMapFace.NegativeZ:
+                    CubeMapCamera.FrontDirection = Vector3.UnitZ;
+                    CubeMapCamera.UpDirection = Vector3.Down;
+                    break;
+            }
+        }
+        /*
+        /// <inheritdoc />
+        protected override void UnloadContent()
+        {
+            base.UnloadContent();
+            EnvironmentMapRenderTarget.Dispose();
+        }
+        */
     }
 }

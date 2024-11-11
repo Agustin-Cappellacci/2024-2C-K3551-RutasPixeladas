@@ -127,7 +127,7 @@ namespace TGC.MonoGame.TP.Content.Models
             : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2, carBodyHandle) //Ajustar ángulo si es necesario
         {
 
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "diffuseColor2");
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
 

@@ -128,6 +128,10 @@ namespace TGC.MonoGame.TP
         private Song _backgroundMusic;
         private bool isInitialMenuOpen = true;
         private bool lastDraw = false;
+
+        private Microsoft.Xna.Framework.Vector3 lightPosition;
+        private Microsoft.Xna.Framework.Vector3 lightDirection; // La dirección de la luz (hacia adelante)
+
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -370,6 +374,9 @@ namespace TGC.MonoGame.TP
             arma3.Update(gameTime, listaAutos);
             hamster3.Update(gameTime, listaAutos);
 
+            lightPosition = Microsoft.Xna.Framework.Vector3.Transform(new Microsoft.Xna.Framework.Vector3(0, 0, 0), autoJugador.carWorld);
+            lightDirection = autoJugador.forwardVector;
+
             base.Update(gameTime);
         }
 
@@ -395,11 +402,13 @@ namespace TGC.MonoGame.TP
             }
 
 
-            Toys.Draw(gameTime, View, Projection);
-            autoJugador.Draw(View, Projection);
-            ToyCity.Draw(gameTime, View, Projection);
+            Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
+            
+            ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
             SimpleTerrain.Draw(gameTime, View, Projection);
-            Cuarto.Draw(gameTime, View, Projection);
+            Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
+
+            autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
             foreach (var auto in listaAutos){
                 auto.Draw(gameTime, View, Projection);
             }
