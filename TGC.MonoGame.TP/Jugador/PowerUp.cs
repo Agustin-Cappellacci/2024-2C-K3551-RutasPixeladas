@@ -18,11 +18,15 @@ using TGC.MonoGame.Samples.Collisions;
 using System.Runtime.Serialization;
 using System.Diagnostics.Contracts;
 using TGC.MonoGame.TP.Content.Models;
+using System.Xml.Linq;
+using TGC.MonoGame.TP;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
     abstract class IPowerUp
     {
+        
+    public float balasRestantes = 5;
     public Model modelo;
     public Effect efectoPwUP;
     public Jugador jugador;
@@ -44,7 +48,7 @@ namespace TGC.MonoGame.TP.Content.Models
     public bool Seleccionado = false;
     public bool AreAABBsTouching = false;
 
-    public abstract void Update(GameTime gameTime);
+    public abstract void Update(GameTime gameTime, List<AutoEnemigo> listaAutos);
         
 
 
@@ -59,9 +63,43 @@ namespace TGC.MonoGame.TP.Content.Models
             _powerUpSound = content.Load<SoundEffect>("Models/autos/RacingCarA/powerup");
             _powerUpSoundInstance = _powerUpSound.CreateInstance();
         }
+
+                public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        {
+            var corners = boundingBox.GetCorners();
+            var vertices = new VertexPositionColor[24];
+
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
+
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                            4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                            0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                            };
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
+
+            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            {
+                World = Matrix.Identity,
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
+
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
         public abstract void Apply();
     }
-    class SuperSpeed : IPowerUp
+class SuperSpeed : IPowerUp
     {
         private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
@@ -79,7 +117,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {}
         
-        public override void Update(GameTime gameTime){}
+        public override void Update(GameTime gameTime, List<AutoEnemigo> listaAutos ){}
 
         protected override void CargarModelo(ContentManager content) {
            /* this.modelo = content.Load<Model>("powerUp/3078-eagle-handgun-3d-model/Eagle");
@@ -105,20 +143,58 @@ class Gun : IPowerUp
     private bool goingUp = true;
     private BoundingBox ColisionCaja { get; set; }
 
-        public Gun(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
-        {
+    private Vector3 posicion;
+
+    public float balasRestantes = 5;
+    public float radioDeteccion = 5f;
+
+
+    private Matrix AimRotation = Matrix.Identity;
+
+    private GraphicsDevice graphicsDevice;
+
+        public Gun(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
+        {   
+            
+            this.graphicsDevice = graphicsDevice;
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
 
-            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(modelo);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + posInicial, ColisionCaja.Max + posInicial);
+            BoundingBox BBprimera = BoundingVolumesExtensions.CreateAABBFrom(modelo);
+            BBprimera = new BoundingBox(BBprimera.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BBprimera.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0)); 
+
+            Vector3 nuevaDimension = new Vector3(300, 100, 300); // Nuevas dimensiones (anchura, altura, profundidad)
+            ColisionCaja = ModificarDimensiones(BBprimera, nuevaDimension);
+
         }
 
         public override void Apply()
         {
+            if(balasRestantes>0){
+                balasRestantes--;
+            } else {
+            Seleccionado = false;
+            jugador.powerUp = null;
+            }
         //    jugador.CarSpeed = 10000;
         }
+
+        public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
+        {
+            // Calcular el centro de la caja original
+            Vector3 centro = (cajaOriginal.Min + cajaOriginal.Max) / 2;
+
+            // Calcular los nuevos límites Min y Max en función del centro y las dimensiones deseadas
+            Vector3 nuevoMin = centro - nuevaDimension / 2;
+            nuevoMin = new Vector3(nuevoMin.X, 0, nuevoMin.Z);
+            Vector3 nuevoMax = centro + nuevaDimension / 2;
+            nuevoMax = new Vector3(nuevoMax.X, 100, nuevoMax.Z);
+
+            // Crear una nueva BoundingBox con los nuevos límites
+            return new BoundingBox(nuevoMin, nuevoMax);
+        }
+
 
         protected override void CargarModelo(ContentManager content) {
             this.modelo = content.Load<Model>("poweUp/3078-eagle-handgun-3d-model/Eagle");
@@ -134,7 +210,7 @@ class Gun : IPowerUp
             }
         }
 
-        public override void Update(GameTime gameTime)
+        override public void Update(GameTime gameTime, List<AutoEnemigo> listaAutos)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -161,12 +237,59 @@ class Gun : IPowerUp
                     goingUp = true;
                 }
             }
+
+        this.AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
+
+        if (this.AreAABBsTouching && jugador.powerUp == null  && jugador.tiempoRestante <= 0){
+            jugador.powerUp = this;
+            Seleccionado = true;
+        }
+
+        balasRestantes = 5;
+
+        if (Seleccionado) {
+            bool autoCerca = false;
+            // Ajusta la posición en relación con la rotación y posición del coche
+            /*foreach (var auto in listaAutos)
+                {
+                    Vector3 autoPosicion = new Vector3(0,0,0); //aca iria auto.carposition
+
+                    float distancia = Vector3.Distance(posicion, autoPosicion);
+
+                    if (distancia <= radioDeteccion)
+                    {
+                        autoCerca = true;
+                        // Calcular la dirección hacia el auto
+                        Vector3 direccionHaciaAuto = Vector3.Normalize(autoPosicion - posicion);
+
+                        // Mantener la rotación del auto y ajustar para que apunte al auto detectado
+                        Microsoft.Xna.Framework.Quaternion rotacionApuntado = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(posicion, direccionHaciaAuto, Vector3.Up));
+                        
+                        // Combina la rotación del coche con la rotación hacia el objetivo
+                        AimRotation = jugador.rotationMatrix * Matrix4x4.CreateFromQuaternion(ToNumericsQuaternion(rotacionApuntado));
+                    }
+                }
+            if (!autoCerca){
+                AimRotation = 
+            }*/
+                
+            var offset = new System.Numerics.Vector3(0, 40f, 0); // Altura sobre el techo
+            posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
+            world = Matrix.CreateScale(1.5f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);         
+
+        } else {
+            world = Matrix.CreateScale(2f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
+        }   
+
         // Aplicar los movimientos al modelo
-        world = Matrix.CreateScale(2f) * rotation * Matrix.CreateTranslation(PosicionInicial.X, PosicionInicial.Y + currentHeight, PosicionInicial.Z);
         // Aquí deberías aplicar esta matriz `world` a la transformación del modelo en el juego
         //AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
         }
 
+        public static System.Numerics.Quaternion ToNumericsQuaternion(Microsoft.Xna.Framework.Quaternion xnaQuaternion)
+        {
+            return new System.Numerics.Quaternion(xnaQuaternion.X, xnaQuaternion.Y, xnaQuaternion.Z, xnaQuaternion.W);
+        }
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) {
             efectoPwUP.Parameters["View"].SetValue(View);
             efectoPwUP.Parameters["Projection"].SetValue(Projection);
@@ -187,6 +310,7 @@ class Gun : IPowerUp
                     mesh.Draw();
 
             }
+            //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
         }
 
     }
@@ -210,10 +334,26 @@ class Hamster : IPowerUp
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
-            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);        
-            Seleccionado = true;
+            BoundingBox BB = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
+            BB = new BoundingBox(BB.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BB.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0));        
+            //Seleccionado = true;
             listaBalas = new List<BalaHamster>();
+            Vector3 nuevaDimension = new Vector3(50, 30, 50); // Nuevas dimensiones (anchura, altura, profundidad)
+            ColisionCaja = ModificarDimensiones(BB, nuevaDimension);
+        }
+
+        public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
+        {
+            // Calcular el centro de la caja original
+            Vector3 centro = (cajaOriginal.Min + cajaOriginal.Max) / 2;
+
+            // Calcular los nuevos límites Min y Max en función del centro y las dimensiones deseadas
+            Vector3 nuevoMin = centro - nuevaDimension / 2;
+            nuevoMin = new Vector3(nuevoMin.X, 0, nuevoMin.Z);
+            Vector3 nuevoMax = centro + nuevaDimension / 2;
+
+            // Crear una nueva BoundingBox con los nuevos límites
+            return new BoundingBox(nuevoMin, nuevoMax);
         }
 
         protected override void CargarModelo(ContentManager content) {
@@ -229,7 +369,7 @@ class Hamster : IPowerUp
             }
         }
 
-        public override void Update(GameTime gameTime)
+        override public void Update(GameTime gameTime, List<AutoEnemigo> listaAutos)
         {
             float deltaTime = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
@@ -257,12 +397,10 @@ class Hamster : IPowerUp
                 }
             }
 
-        //ColisionCaja = new BoundingBox(ColisionCaja.Min + PosicionInicial, ColisionCaja.Max + PosicionInicial);
-
         Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
         AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
 
-        if (AreAABBsTouching & jugador.powerUp != null){
+        if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0){
             jugador.powerUp = this;
             Seleccionado = true;
         }
@@ -325,47 +463,15 @@ class Hamster : IPowerUp
     
         }
 
-        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
-{
-    var corners = boundingBox.GetCorners();
-    var vertices = new VertexPositionColor[24];
 
-    // Define color para las líneas del bounding box
-    var color = Color.Red;
-
-    // Asigna los vértices de las líneas de cada borde del bounding box
-    int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
-                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
-                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
-                    };
-
-    for (int i = 0; i < indices.Length; i++)
-    {
-        vertices[i] = new VertexPositionColor(corners[indices[i]], color);
-    }
-
-    BasicEffect basicEffect = new BasicEffect(graphicsDevice)
-    {
-        World = Matrix.Identity,
-        View = view,
-        Projection = projection,
-        VertexColorEnabled = true
-    };
-
-    foreach (var pass in basicEffect.CurrentTechnique.Passes)
-    {
-        pass.Apply();
-        graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
-    }
-}
 
         List<BalaHamster> listaBalas;
 
         public override void Apply()
         {   
-            Seleccionado = false;
-            //jugador.powerUp = null;
             var bala = new BalaHamster(graphicsDevice, jugador.contenido, jugador.rotationMatrix.Backward, jugador.carPosition + jugador.rotationMatrix.Backward * 60f);
+            Seleccionado = false;
+            jugador.powerUp = null;
             listaBalas.Add(bala);
         //    jugador.CarSpeed = 10000;
         }
@@ -413,7 +519,7 @@ class BalaHamster{
 
         Matrix rotacionHamster = Matrix.CreateRotationY((float)-direccion.Z);
 
-        posicion += direccion * 300f * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        posicion += direccion * 1500f * (float)gameTime.ElapsedGameTime.TotalSeconds;
 
         world = Matrix.CreateScale(0.1f) * rotacionHamster * Matrix.CreateTranslation(posicion);
     }
@@ -436,4 +542,3 @@ class BalaHamster{
         }
     }
 }
-

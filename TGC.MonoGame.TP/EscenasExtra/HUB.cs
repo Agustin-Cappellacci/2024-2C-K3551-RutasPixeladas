@@ -26,6 +26,8 @@ namespace TGC.MonoGame.TP.Content.Models
         // Puedes dibujar el círculo dependiendo del progreso
         // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
         public Rectangle circleRect = new Rectangle(13, 43, 65, 65);
+
+        private float transparencia;
         
         public Hub(ContentManager content) {
             // Imagino que no afecta mucho al espacio así que mejor cargamos todas las texturas.
@@ -39,22 +41,30 @@ namespace TGC.MonoGame.TP.Content.Models
             
             
             texturaItem = texturaNitro;
+            transparencia = 0;
         }
 
         public void Update(Jugador autoJugador)
         {
-            if (autoJugador.power == 0)
+            if (autoJugador.powerUp is Hamster)
             {
                 texturaItem = texturaCohete;
+                transparencia = 1;
             }
-            if (autoJugador.power == 1)
+            if (autoJugador.powerUp is Gun)
             {
                 texturaItem = texturaNitro;
+                transparencia = 1;
             }
-            if (autoJugador.power == 2)
+            if (autoJugador.powerUp is Hamster)
             {
                 texturaItem = texturaArma;
+                transparencia = 1;
             }
+            if (autoJugador.powerUp == null){
+                transparencia = 0;
+            }
+
             /*
             if (autoJugador.power != -1){
                 SpriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
@@ -67,8 +77,9 @@ namespace TGC.MonoGame.TP.Content.Models
             */
         }
 
-        public void Draw(SpriteBatch spriteBatch, GameTime gameTime) {
+        public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Jugador autoJugador) {
             Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
+            Vector2 positionContador = new Vector2(560, 620);  // Posición en la pantalla
             Color textColor = Color.White;      
 
             spriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
@@ -82,10 +93,10 @@ namespace TGC.MonoGame.TP.Content.Models
             // Puedes dibujar el círculo dependiendo del progreso
             // Aquí se asume que el círculo tiene un tamaño de 100x100 píxeles
 
-            // Rectangle circleRect = new Rectangle(13, 43, 65, 65);
-            // SpriteBatch.Draw(Circulo, circleRect, Color.White * (1 - cooldownProgress));
+            //Rectangle circleRect = new Rectangle(13, 43, 65, 65);
+            //spriteBatch.Draw(Circulo, circleRect, Color.White * (1 - autoJugador.tiempoRestante <0?0:autoJugador.tiempoRestante));
 
-            spriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), Color.White);
+            spriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), new Color(0,0,0, transparencia));
 
             // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
             spriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 400, 100), Color.Black * 0.5f);
@@ -97,8 +108,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Mostrar el tiempo transcurrido desde el inicio en pantalla
             string tiempoDesdeInicio = $"Seg:{tiempoTotal:F2}\nFPS:{fps}";
+            string contador = (autoJugador.powerUp is Gun)? $"x{autoJugador.powerUp.balasRestantes}" :"";
 
             spriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
+            spriteBatch.DrawString(myFont, contador, positionContador, textColor);
 
         }
 
