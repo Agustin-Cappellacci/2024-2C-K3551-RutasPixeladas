@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 //using System.Numerics;
+
+//using System.Numerics;
 using System.Text;
 
 namespace TGC.MonoGame.TP.Content.Models
@@ -224,18 +226,19 @@ namespace TGC.MonoGame.TP.Content.Models
 
             foreach (var mesh in ChairModel.Meshes)
             {
-                EffectChair.Parameters["ambientColor"].SetValue(new Vector3(0.75f, 0.75f, 0.75f));
-                EffectChair.Parameters["diffuseColor"].SetValue(new Vector3(0.25f, 0.25f, 0.25f));
+
+                EffectChair.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                EffectChair.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                 EffectChair.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
                 EffectChair.Parameters["KAmbient"].SetValue(0.7f);
-                EffectChair.Parameters["KDiffuse"].SetValue(1.0f);
-                EffectChair.Parameters["KSpecular"].SetValue(5.0f);
-                EffectChair.Parameters["shininess"].SetValue(200.0f);
+                EffectChair.Parameters["KDiffuse"].SetValue(0.8f);
+                EffectChair.Parameters["KSpecular"].SetValue(0.5f);
+                EffectChair.Parameters["shininess"].SetValue(2.0f);
                 
-                lightPosition = new Vector3(0, 2000, 0);
+                var lightPosition2 = new Vector3(2500, 2000, -1500);
 
-                EffectChair.Parameters["lightPosition"].SetValue(lightPosition);
+                EffectChair.Parameters["lightPosition"].SetValue(lightPosition2);
                 EffectChair.Parameters["eyePosition"].SetValue(cameraPosition);
 
                 EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
@@ -243,7 +246,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 // We set the main matrices for each mesh to draw
                 EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
                 // InverseTransposeWorld is used to rotate normals
-                EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(ChairWorld));
+                EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Invert(ChairWorld) * Matrix.CreateRotationY(MathHelper.Pi / 2));
                 // WorldViewProjection is used to transform from model space to clip space
                 EffectChair.Parameters["WorldViewProjection"].SetValue(meshWorldChair * ChairWorld * view * projection);
 

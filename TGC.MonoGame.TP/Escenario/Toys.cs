@@ -182,7 +182,8 @@ namespace TGC.MonoGame.TP.Content.Models
                     tupla.Item1.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
                     foreach (var mesh in tupla.Item1.Meshes)
                     {
-                        
+
+                        var worldFinal2 = modelMeshesBaseTransforms[mesh.ParentBone.Index];
                         var worldFinal = modelMeshesBaseTransforms[mesh.ParentBone.Index] * tupla.Item3;
                         /*EfectoTexture.Parameters["ModelTexture"].SetValue(tupla.Item2);
                         EfectoTexture.Parameters["World"].SetValue(worldFinal);
@@ -203,7 +204,7 @@ namespace TGC.MonoGame.TP.Content.Models
                         EfectoTexture.Parameters["World"].SetValue(Matrix.Identity * tupla.Item3);
 
                         // InverseTransposeWorld is used to rotate normals
-                        EfectoTexture.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(worldFinal)));
+                        EfectoTexture.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(worldFinal2)));
 
                         // WorldViewProjection is used to transform from model space to clip space
                         EfectoTexture.Parameters["WorldViewProjection"].SetValue(Matrix.Identity * tupla.Item3 * view * projection);
