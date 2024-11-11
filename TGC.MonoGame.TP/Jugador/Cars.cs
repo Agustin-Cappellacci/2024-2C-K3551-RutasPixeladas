@@ -161,18 +161,24 @@ namespace TGC.MonoGame.TP.Content.Models
             Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
 
             // Calcular la rotación del auto actual
-            Vector3 forwardVector = Vector3.Transform(Vector3.Forward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
+            Vector3 forwardVector = Vector3.Transform(Vector3.Backward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
             float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
             float crossProduct = Vector3.Cross(forwardVector, directionToTarget).Y;
 
             // Ajustar el ángulo de dirección basado en los productos
             float steeringSum = Math.Clamp(crossProduct, -1f, 1f);
-            float targetSpeedFraction = dotProduct > 0 ? -10f : 10f; // Moverse hacia adelante si está de frente, hacia atrás si no
+
+            // Agregar un rango de ángulo para el movimiento hacia adelante
+            float angleThreshold = 0.7f; // Rango de ángulo para mover hacia adelante
+
+
+            // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
+            float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 0f;
 
             simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
-            rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
+            rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
         }
 
@@ -255,7 +261,6 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public override void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController, Vector3 posicionJugador)
         {
-
             float elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
             // Obtener la referencia del cuerpo del auto en la simulación
@@ -266,21 +271,25 @@ namespace TGC.MonoGame.TP.Content.Models
             Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
 
             // Calcular la rotación del auto actual
-            Vector3 forwardVector = Vector3.Transform(Vector3.Forward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
+            Vector3 forwardVector = Vector3.Transform(Vector3.Backward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
             float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
             float crossProduct = Vector3.Cross(forwardVector, directionToTarget).Y;
 
             // Ajustar el ángulo de dirección basado en los productos
             float steeringSum = Math.Clamp(crossProduct, -1f, 1f);
-            float targetSpeedFraction = dotProduct > 0 ? 10f : -10f; // Moverse hacia adelante si está de frente, hacia atrás si no
 
+            // Agregar un rango de ángulo para el movimiento hacia adelante
+            float angleThreshold = 0.7f; // Rango de ángulo para mover hacia adelante
+
+
+            // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
+            float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 0f;
 
             simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
-            rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation);
+            rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
-
         }
         protected override void CargarModelo(ContentManager content)
         {
