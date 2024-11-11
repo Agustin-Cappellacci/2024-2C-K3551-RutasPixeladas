@@ -173,12 +173,12 @@ namespace TGC.MonoGame.TP.Content.Models
 
             EffectChair.Parameters["View"].SetValue(view);
             EffectChair.Parameters["Projection"].SetValue(projection);
+            
+            EffectBed.Parameters["View"].SetValue(view);
+            EffectBed.Parameters["Projection"].SetValue(projection);
             */
 
             graphicsDevice.DepthStencilState = DepthStencilState.Default;
-
-            //EffectBed.Parameters["View"].SetValue(view);
-            //EffectBed.Parameters["Projection"].SetValue(projection);
 
             var random = new Random(Seed: 0);
 
@@ -192,22 +192,27 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var worldMatrix in WorldMatrices)
                 {
+
                     Effect.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                     Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                     Effect.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
 
-                    Effect.Parameters["KAmbient"].SetValue(0.3f);
+                    Effect.Parameters["KAmbient"].SetValue(0.5f);
                     Effect.Parameters["KDiffuse"].SetValue(0.8f);
-                    Effect.Parameters["KSpecular"].SetValue(0.5f);
+                    Effect.Parameters["KSpecular"].SetValue(0.8f);
                     Effect.Parameters["shininess"].SetValue(50.0f);
 
-                    Effect.Parameters["lightPosition"].SetValue(lightPosition);
+                    var lightPosition2 = new Vector3(0, 2000, 0);
+
+                    Effect.Parameters["lightPosition"].SetValue(lightPosition2);
                     Effect.Parameters["eyePosition"].SetValue(cameraPosition);
                     Effect.Parameters["ModelTexture"].SetValue(textureFloor);
                     // We set the main matrices for each mesh to draw
                     Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
                     // InverseTransposeWorld is used to rotate normals
+
                     Effect.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorld)));
+
                     // WorldViewProjection is used to transform from model space to clip space
                     Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * worldMatrix * view * projection);
 
@@ -222,7 +227,7 @@ namespace TGC.MonoGame.TP.Content.Models
             var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
             ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
 
-            
+
 
             foreach (var mesh in ChairModel.Meshes)
             {
@@ -235,10 +240,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 EffectChair.Parameters["KDiffuse"].SetValue(0.8f);
                 EffectChair.Parameters["KSpecular"].SetValue(0.5f);
                 EffectChair.Parameters["shininess"].SetValue(2.0f);
-                
-                var lightPosition2 = new Vector3(2500, 2000, -1500);
 
-                EffectChair.Parameters["lightPosition"].SetValue(lightPosition2);
+                EffectChair.Parameters["lightPosition"].SetValue(lightPosition);
                 EffectChair.Parameters["eyePosition"].SetValue(cameraPosition);
 
                 EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
@@ -246,7 +249,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 // We set the main matrices for each mesh to draw
                 EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
                 // InverseTransposeWorld is used to rotate normals
-                EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Invert(ChairWorld) * Matrix.CreateRotationY(MathHelper.Pi / 2));
+                EffectChair.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(meshWorldChair)));
                 // WorldViewProjection is used to transform from model space to clip space
                 EffectChair.Parameters["WorldViewProjection"].SetValue(meshWorldChair * ChairWorld * view * projection);
 
