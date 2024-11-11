@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using TGC.MonoGame.TP;
@@ -21,7 +22,6 @@ namespace TGC.MonoGame.TP.Content.Models
     public abstract class AutoEnemigo {
         public const string ContentFolder3D = "Models/";
         public const string ContentFolderEffects = "Effects/";
-        private Model CarModel { get; set; }
         private Effect effectAuto { get; set; }
 
         // Jugabilidad
@@ -48,8 +48,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float CarBrakeForce = 5000f;
         private float CarDeceleration = 500f;
 
-        private float wheelRotationAngle;
-        private float wheelSteeringAngle;
+        protected float wheelRotationAngle;
+        protected float wheelSteeringAngle;
         private float maxWheelSteer = 0.5f;
         private float wheelSteerDelta = 0.1f;
         private float CarRotationY;
@@ -61,15 +61,15 @@ namespace TGC.MonoGame.TP.Content.Models
         SimpleCarController playerControllers;
 
         // como esto es private no se dibujan los autos ya que nunca actualizan el modelo
-        private List<ModelMesh> ruedas;
-        private List<ModelMesh> restoAuto;
+        protected List<ModelMesh> ruedas;
+        protected List<ModelMesh> restoAuto;
         private GraphicsDevice graphicsDevice;
 
         private IPowerUp powerUp;
 
         private float vida = 200;
 
-
+        protected Model CarModel { get; set; }
 
 
 
@@ -82,16 +82,10 @@ namespace TGC.MonoGame.TP.Content.Models
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
 
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "BasicShader");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
             var texture = content.Load<Texture2D>(ContentFolder3D + "autos/RacingCarA/TEX"); // Asegúrate de usar la ruta correcta
             effectAuto.Parameters["ModelTexture"].SetValue(texture);
-
-            /*EffectCar2 = content.Load<Effect>(ContentFolderEffects + "BasicShader");
-            texture = content.Load<Texture2D>(ContentFolder3D + "autos/CombatVehicle/TEX"); // Asegúrate de usar la ruta correcta
-            EffectCar2.Parameters["ModelTexture"].SetValue(texture);
-        */  
-            //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
-        }
+            }
 
         private BodyHandle CrearCuerpoDelAutoEnSimulacion(Simulation simulation, System.Numerics.Vector3 posicionInicial, float anguloInicial)
         {
@@ -109,36 +103,7 @@ namespace TGC.MonoGame.TP.Content.Models
         protected abstract void CargarModelo(ContentManager content);
 
         public abstract void Update(GameTime gameTime, Simulation simulation);
-        public void Draw(GameTime gametime, Matrix View, Matrix Projection) {
-            var random = new Random(Seed: 0);
-            var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
-            var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
-            effectAuto.Parameters["View"].SetValue(View);
-            effectAuto.Parameters["Projection"].SetValue(Projection);
-
-
-            foreach (ModelMesh mesh in restoAuto)
-            {
-                effectAuto.Parameters["DiffuseColor"].SetValue(color);
-                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
-                mesh.Draw();
-            }
-
-            foreach (ModelMesh rueda in ruedas)
-            {
-                effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
-                if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
-                {
-                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
-                }
-                else
-                {
-                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld);
-                }
-                rueda.Draw();
-            }
-
-        }
+        public abstract void Draw(GameTime gametime, Matrix View, Matrix Projection); 
 
         public static System.Numerics.Vector3 PositionToNumerics(Microsoft.Xna.Framework.Vector3 xnaVector3)
         {
@@ -150,24 +115,17 @@ namespace TGC.MonoGame.TP.Content.Models
         private Matrix rotationMatrix;
         private System.Numerics.Vector3 carPosition { get; set; }
         private BodyHandle carBodyHandle;
-        public List<ModelMesh> ruedas;
-        public List<ModelMesh> restoAuto;
         public Effect effectAuto { get; set; }
-        private Model CarModel { get; set; }
+
         float Escala;
         //private List<ModelMesh> ruedas;
         //private List<ModelMesh> restoAuto;
         SimpleCarController playerController;
-        public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
+        public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, Vector3 posicion, float angulo)
             : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2) //Ajustar ángulo si es necesario
         {   
-            this.playerController = playerController;
 
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
-
-            ruedas = new List<ModelMesh>();
-            restoAuto = new List<ModelMesh>();
-
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
 
@@ -228,31 +186,53 @@ namespace TGC.MonoGame.TP.Content.Models
 
             }
         }
+        public override void Draw(GameTime gametime, Matrix View, Matrix Projection)
+        {
+            var random = new Random(Seed: 0);
+            var color = new Microsoft.Xna.Framework.Vector3(1, 0, 0);
+            var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
+            effectAuto.Parameters["View"].SetValue(View);
+            effectAuto.Parameters["Projection"].SetValue(Projection);
+            var modelMeshesBaseTransforms = new Matrix[CarModel.Bones.Count];
+            CarModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+            foreach (ModelMesh mesh in restoAuto)
+            {
+                effectAuto.Parameters["DiffuseColor"]?.SetValue(color);
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                mesh.Draw();
+            }
+
+            foreach (ModelMesh rueda in ruedas)
+            {
+                effectAuto.Parameters["DiffuseColor"]?.SetValue(colorRueda);
+                if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
+                {
+                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * Matrix.CreateRotationY(wheelSteeringAngle) * rueda.ParentBone.Transform * carWorld);
+                }
+                else
+                {
+                    effectAuto.Parameters["World"].SetValue(Matrix.CreateRotationX(wheelRotationAngle) * rueda.ParentBone.Transform * carWorld);
+                }
+                rueda.Draw();
+            }
+        }
     }
 
     class AutoEnemigoCarrera : AutoEnemigo {
         private Matrix rotationMatrix;
         private System.Numerics.Vector3 carPosition { get; set; }
         private BodyHandle carBodyHandle;
-        public List<ModelMesh> ruedas;
-        public List<ModelMesh> restoAuto;
+
         public Effect effectAuto { get; set; }
 
-
-        private Model CarModel { get; set; }
         float Escala;
         //private List<ModelMesh> ruedas;
         //private List<ModelMesh> restoAuto;
         SimpleCarController playerController;
-        public AutoEnemigoCarrera(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo)
+        public AutoEnemigoCarrera(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, Vector3 posicion, float angulo)
             : base(content, simulation, graphicsDevice, posicion, angulo) // Ajustar ángulo si es necesario
         {   
-
-            this.playerController = playerController;
             effectAuto = content.Load<Effect>(ContentFolderEffects + "DiffuseColor");
-
-            ruedas = new List<ModelMesh>();
-            restoAuto = new List<ModelMesh>();
 
             CargarModelo(content);
             Escala = 0.1f + (0.1f - 0.05f) * new Random().NextSingle();
@@ -291,6 +271,11 @@ namespace TGC.MonoGame.TP.Content.Models
                 } else restoAuto.Add(mesh);
 
             }
+        }
+
+        public override void Draw(GameTime gametime, Matrix View, Matrix Projection)
+        {
+            throw new NotImplementedException();
         }
     }
 

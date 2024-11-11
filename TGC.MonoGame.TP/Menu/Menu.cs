@@ -26,7 +26,6 @@ namespace TGC.MonoGame.TP.Content.Models
         // private Jugador autoJugador {get; set;}
         private SpriteBatch SpriteBatch { get; set; }
         private TGCGame game;
-        private Keys lastPressedKey;
 
         public MainMenu(/*Jugador jugador,*/ SpriteBatch spriteBatch, SpriteFont font, GraphicsDeviceManager graphics, GraphicsDevice graphicsDevice, TGCGame game)
         {
@@ -37,22 +36,19 @@ namespace TGC.MonoGame.TP.Content.Models
             this.GraphicsDevice = graphicsDevice;
             this.game = game;
         }
-        public bool HandleMenuInput(KeyboardState keyboardState)
+        public bool HandleMenuInput(KeyboardState keyboardState, KeyboardState oldState)
         {
-            if (keyboardState.IsKeyDown(Keys.Down) && lastPressedKey != Keys.Down)
+            if (keyboardState.IsKeyDown(Keys.Down) &&  oldState.IsKeyUp(Keys.Down))
             {
-                lastPressedKey = Keys.Down;
                 _selectedIndex = (_selectedIndex + 1) % _menuItems.Length;
             }
-            else if (keyboardState.IsKeyDown(Keys.Up) && lastPressedKey != Keys.Up)
+            else if (keyboardState.IsKeyDown(Keys.Up) && oldState.IsKeyUp(Keys.Up))
             {
-                lastPressedKey = Keys.Up;
                 _selectedIndex = (_selectedIndex - 1 + _menuItems.Length) % _menuItems.Length;
             }
 
-            if (keyboardState.IsKeyDown(Keys.Enter) && lastPressedKey != Keys.Enter)
+            if (keyboardState.IsKeyDown(Keys.Enter) && oldState.IsKeyUp(Keys.Enter))
             {
-                lastPressedKey = Keys.Enter;
                 if (_menuItems[_selectedIndex] == "Resume")
                 {
                     return false; // Close the menu.
@@ -68,10 +64,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
-            if (!keyboardState.IsKeyDown(Keys.Up) || !keyboardState.IsKeyDown(Keys.Down) || !keyboardState.IsKeyDown(Keys.Enter))
-            {
-                lastPressedKey = Keys.Z;
-            }
+
             return true;
         }
 
