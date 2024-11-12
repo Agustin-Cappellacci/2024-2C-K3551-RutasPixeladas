@@ -173,7 +173,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
             // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
-            float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 0f;
+            float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 2f;
 
             simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);

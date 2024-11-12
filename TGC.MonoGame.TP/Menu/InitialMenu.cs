@@ -88,7 +88,7 @@ namespace TGC.MonoGame.TP.Content.Models
             _skyBox = new SkyBox(skyBox, skyBoxTexture, skyBoxEffect);
 
             Model = content.Load<Model>("Models/autos/RacingCarA/RacingCar");
-            effectAuto = content.Load<Effect>(ContentFolderEffects + "ModelsTexture");
+            effectAuto = content.Load<Effect>(ContentFolderEffects + "Player1");
 
             ruedas = new List<ModelMesh>();
             restoAuto = new List<ModelMesh>();
@@ -119,21 +119,17 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public void Update(GameTime gameTime)
         {
-            _cameraPosition = _distance * new Vector3((float) Math.Sin(_angle), 0, (float) Math.Cos(_angle));
+            _cameraPosition = _distance * new Vector3((float)Math.Sin(_angle), 0, (float)Math.Cos(_angle));
             _viewVector = Vector3.Transform(_cameraTarget - _cameraPosition, Matrix.CreateRotationY(0));
             _viewVector.Normalize();
 
             _angle += 0.002f;
             _view_sb = Matrix.CreateLookAt(_cameraPosition, _cameraTarget, Vector3.UnitY);
 
-            
             CarWorld = Matrix.CreateRotationY(_angle) * Matrix.CreateScale(0.02f) * Matrix.CreateTranslation(0, -3.5f, -5.5f);
-
-            //game.Gizmos.UpdateViewProjection(_view, _projection);
-
-            //base.Update(gameTime);
         }
 
+        /// <inheritdoc />
         /// <inheritdoc />
         public void Draw(GameTime gameTime, Matrix Projection)
         {
@@ -162,29 +158,59 @@ namespace TGC.MonoGame.TP.Content.Models
             var View = _view;
             Projection = _projection;
 
-            effectAuto.Parameters["View"].SetValue(View);
-            effectAuto.Parameters["Projection"].SetValue(Projection);
+            //effectAuto.Parameters["View"].SetValue(View);
+            //effectAuto.Parameters["Projection"].SetValue(Projection);
 
 
             foreach (ModelMesh mesh in restoAuto)
-            {   
+            {   /*
+         effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
+         //effectAuto.Parameters["DiffuseColor"].SetValue(color);
+         effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
+         */
+
+                Vector3 lightPosition = new Vector3(-1000, 3000, 1000); // Luz en una posiciÃ³n elevada en el espacio
+
+                effectAuto.Parameters["ambientColor"].SetValue(new Vector3(0.75f, 0.75f, 0.75f));
+                effectAuto.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+                effectAuto.Parameters["specularColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
+
+                effectAuto.Parameters["KAmbient"].SetValue(0.7f);
+                effectAuto.Parameters["KDiffuse"].SetValue(0.5f);
+                effectAuto.Parameters["KSpecular"].SetValue(0.3f);
+                effectAuto.Parameters["shininess"].SetValue(50.0f);
+
+                effectAuto.Parameters["lightPosition"].SetValue(lightPosition);
+
+                effectAuto.Parameters["eyePosition"].SetValue(lightPosition);
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
-                //effectAuto.Parameters["DiffuseColor"].SetValue(color);
+
+                // We set the main matrices for each mesh to draw
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
+                // InverseTransposeWorld is used to rotate normals
+                effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(CarWorld)));
+                // WorldViewProjection is used to transform from model space to clip space
+                effectAuto.Parameters["WorldViewProjection"].SetValue(mesh.ParentBone.Transform * CarWorld * View * Projection);
+
                 mesh.Draw();
             }
 
             foreach (ModelMesh rueda in ruedas)
-            {   
+            {
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaRueda);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
                     effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * CarWorld);
+                    effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(rueda.ParentBone.Transform * CarWorld)));
+                    effectAuto.Parameters["WorldViewProjection"].SetValue(rueda.ParentBone.Transform * CarWorld * View * Projection);
+
                 }
                 else
                 {
                     effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * CarWorld);
+                    effectAuto.Parameters["InverseTransposeWorld"].SetValue(Matrix.Transpose(Matrix.Invert(rueda.ParentBone.Transform * CarWorld)));
+                    effectAuto.Parameters["WorldViewProjection"].SetValue(rueda.ParentBone.Transform * CarWorld * View * Projection);
                 }
                 rueda.Draw();
             }
@@ -222,7 +248,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public bool HandleMenuInput(KeyboardState keyboardState, KeyboardState oldState)
         {
-            if (keyboardState.IsKeyDown(Keys.Down) && oldState.IsKeyUp( Keys.Down))
+            if (keyboardState.IsKeyDown(Keys.Down) && oldState.IsKeyUp(Keys.Down))
             {
                 _selectedIndex = (_selectedIndex + 1) % _menuItems.Length;
             }

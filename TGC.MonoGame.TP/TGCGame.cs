@@ -50,7 +50,7 @@ namespace TGC.MonoGame.TP
 
         private bool _isMenuOpen = false;
         private bool _liberarCamara = false;
-        private bool _debugColisiones = true;
+        private bool _debugColisiones = false;
 
         // Cámara
         IsometricCamera IsometricCamera { get; set; }
@@ -403,6 +403,8 @@ namespace TGC.MonoGame.TP
                 return;
             }
 
+            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
             
@@ -423,8 +425,6 @@ namespace TGC.MonoGame.TP
             arma3.Draw(gameTime, View, Projection);
             hamster3.Draw(gameTime, View, Projection);
 
-            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
