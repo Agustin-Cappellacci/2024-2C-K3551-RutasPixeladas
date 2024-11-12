@@ -296,7 +296,7 @@ namespace TGC.MonoGame.TP
              * Eliminar después
              *  
              */
-            isInitialMenuOpen = false;
+             
             if (isInitialMenuOpen) {
                 initialMenu.Update(gameTime);
                 isInitialMenuOpen = initialMenu.HandleMenuInput(keyboardState, oldState);
@@ -408,7 +408,7 @@ namespace TGC.MonoGame.TP
             Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
             
             ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
-            SimpleTerrain.Draw(gameTime, View, Projection);
+            //SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
 
             autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
