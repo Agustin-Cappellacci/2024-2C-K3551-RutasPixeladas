@@ -245,11 +245,11 @@ namespace TGC.MonoGame.TP
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
             hamster = new Hamster(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(50, 10, 50));
-            arma = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(300, 24, -603));
+            arma = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(300, 32, -603));
             hamster2 = new Hamster(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-900, 10, 200));
-            arma2 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(800, 24, 0));
+            arma2 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(800, 32, 0));
             hamster3 = new Hamster(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-900, 70, -1050));
-            arma3 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-1100, 24, 503));
+            arma3 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-1100, 32, 503));
 
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
@@ -269,7 +269,6 @@ namespace TGC.MonoGame.TP
 
             menu = new MainMenu(/*autoJugador,*/ SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
             initialMenu = new InitialMenu(/*autoJugador,*/ Content, SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
-            autoJugador.powerUp = hamster;
             initialMenu.Initialize();
             initialMenu.LoadContent();
 
@@ -399,7 +398,7 @@ namespace TGC.MonoGame.TP
                 if (lastDraw) {
                     lastDraw = false;
                 }
-                initialMenu.Draw(gameTime, View, Projection);
+                initialMenu.Draw(gameTime, Projection);
                 base.Draw(gameTime);
                 return;
             }

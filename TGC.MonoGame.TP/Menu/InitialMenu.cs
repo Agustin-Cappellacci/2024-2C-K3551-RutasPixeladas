@@ -29,7 +29,6 @@ namespace TGC.MonoGame.TP.Content.Models
         // private Jugador autoJugador {get; set;}
         private SpriteBatch SpriteBatch { get; set; }
         private TGCGame game;
-        private Keys lastPressedKey;
         private float _angle;
         private Vector3 _cameraPosition;
         private Vector3 _cameraTarget;
@@ -47,7 +46,7 @@ namespace TGC.MonoGame.TP.Content.Models
         Texture2D texturaAuto;
         Texture2D texturaRueda;
         public ContentManager content;
-        public Matrix carWorld { get; set; }
+        public Matrix CarWorld { get; set; }
 
 
         public InitialMenu(/*Jugador jugador,*/ ContentManager content, SpriteBatch spriteBatch, SpriteFont font, GraphicsDeviceManager graphics, GraphicsDevice graphicsDevice, TGCGame game)
@@ -128,7 +127,7 @@ namespace TGC.MonoGame.TP.Content.Models
             _view_sb = Matrix.CreateLookAt(_cameraPosition, _cameraTarget, Vector3.UnitY);
 
             
-            carWorld = Matrix.CreateRotationY(_angle) * Matrix.CreateScale(0.02f) * Matrix.CreateTranslation(0, -3.5f, -5.5f);
+            CarWorld = Matrix.CreateRotationY(_angle) * Matrix.CreateScale(0.02f) * Matrix.CreateTranslation(0, -3.5f, -5.5f);
 
             //game.Gizmos.UpdateViewProjection(_view, _projection);
 
@@ -136,7 +135,7 @@ namespace TGC.MonoGame.TP.Content.Models
         }
 
         /// <inheritdoc />
-        public void Draw(GameTime gameTime, Matrix View, Matrix Projection)
+        public void Draw(GameTime gameTime, Matrix Projection)
         {
             /* 
             var originalRasterizerState = GraphicsDevice.RasterizerState;
@@ -160,7 +159,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             this.GraphicsDevice.RasterizerState = originalRasterizerState;
 
-            View = _view;
+            var View = _view;
             Projection = _projection;
 
             effectAuto.Parameters["View"].SetValue(View);
@@ -171,7 +170,7 @@ namespace TGC.MonoGame.TP.Content.Models
             {   
                 effectAuto.Parameters["ModelTexture"].SetValue(texturaAuto);
                 //effectAuto.Parameters["DiffuseColor"].SetValue(color);
-                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
+                effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * CarWorld);
                 mesh.Draw();
             }
 
@@ -181,11 +180,11 @@ namespace TGC.MonoGame.TP.Content.Models
                 //effectAuto.Parameters["DiffuseColor"].SetValue(colorRueda);
                 if (rueda.Name.Contains("WheelA") || rueda.Name.Contains("WheelB"))
                 {
-                    effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * carWorld);
+                    effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * CarWorld);
                 }
                 else
                 {
-                    effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * carWorld);
+                    effectAuto.Parameters["World"].SetValue(rueda.ParentBone.Transform * CarWorld);
                 }
                 rueda.Draw();
             }

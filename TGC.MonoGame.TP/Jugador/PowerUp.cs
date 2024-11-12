@@ -19,31 +19,32 @@ using System.Runtime.Serialization;
 using System.Diagnostics.Contracts;
 using TGC.MonoGame.TP.Content.Models;
 using System.Xml.Linq;
-using TGC.MonoGame.TP;
 
 namespace TGC.MonoGame.TP.Content.Models
 {
     public abstract class IPowerUp
     {
 
-        public float balasRestantes = 5;
+        
         public Model modelo;
         public Effect efectoPwUP;
         public Jugador jugador;
-        private float rotationSpeed = 1f; // Velocidad de rotación
-        private float verticalSpeed = 0.005f; // Velocidad de movimiento vertical
-        private float maxHeight = 20f; // Altura máxima del movimiento vertical
-        private float currentHeight = 0f;
-        private bool goingUp = true;
+        protected BoundingBox ColisionCaja;
+        protected float rotationSpeed = 1f; // Velocidad de rotación
+        protected float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
+        protected float maxHeight = 20f; // Altura máxima del movimiento vertical
+        protected float currentHeight = 0f;
+        protected bool goingUp = true;
+        public float balasRestantes = 5;
+        protected Vector3 PosicionInicial;
+        protected GraphicsDevice graphicsDevice;
         private SoundEffect _powerUpSound;
         public SoundEffectInstance _powerUpSoundInstance;
         private bool isMuted = false;
         public Matrix world;
-        public Vector3 PosicionInicial;
         public Texture2D textura;
         public const string ContentFolderEffects = "Effects/";
         protected abstract void CargarModelo(ContentManager content);
-
 
         public bool Seleccionado = false;
         public bool AreAABBsTouching = false;
@@ -65,9 +66,9 @@ namespace TGC.MonoGame.TP.Content.Models
             _powerUpSoundInstance = _powerUpSound.CreateInstance();
         }
 
-        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        public void DrawBoundingBox(GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
         {
-            var corners = boundingBox.GetCorners();
+            var corners = ColisionCaja.GetCorners();
             var vertices = new VertexPositionColor[24];
 
             // Define color para las líneas del bounding box
@@ -79,9 +80,9 @@ namespace TGC.MonoGame.TP.Content.Models
                             0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
                             };
 
-            for (int i = 0; i < indices.Length; i++)
+            for (int i = 0; i < corners.Length; i++)
             {
-                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+                vertices[i] = new VertexPositionColor(corners[i], color);
             }
 
             BasicEffect basicEffect = new BasicEffect(graphicsDevice)
@@ -95,14 +96,14 @@ namespace TGC.MonoGame.TP.Content.Models
             foreach (var pass in basicEffect.CurrentTechnique.Passes)
             {
                 pass.Apply();
-                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+                graphicsDevice.DrawUserIndexedPrimitives(PrimitiveType.LineList, vertices, 0, vertices.Length,indices,0, 12);
             }
         }
         public abstract void Apply();
     }
     class SuperSpeed : IPowerUp
     {
-        private BoundingBox ColisionCaja { get; set; }
+        //private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
         {
             this.jugador = jugador;
@@ -138,22 +139,22 @@ namespace TGC.MonoGame.TP.Content.Models
 
     class Gun : IPowerUp
     {
+
+        private Vector3 posicion;
+        /*
+        private BoundingBox ColisionCaja { get; set; }
         private float rotationSpeed = 1f; // Velocidad de rotación
         private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
         private float maxHeight = 7f; // Altura máxima del movimiento vertical
         private float currentHeight = 0f;
         private bool goingUp = true;
-        private BoundingBox ColisionCaja { get; set; }
-
-        private Vector3 posicion;
-
+        private GraphicsDevice graphicsDevice;
         public float balasRestantes = 5;
+        */
+
         public float radioDeteccion = 5f;
-
-
         private Matrix AimRotation = Matrix.Identity;
 
-        private GraphicsDevice graphicsDevice;
 
         public Gun(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
         {
@@ -163,11 +164,7 @@ namespace TGC.MonoGame.TP.Content.Models
             this.PosicionInicial = posInicial;
             CargarModelo(content);
 
-            BoundingBox BBprimera = BoundingVolumesExtensions.CreateAABBFrom(modelo);
-            BBprimera = new BoundingBox(BBprimera.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BBprimera.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0));
-
-            Vector3 nuevaDimension = new Vector3(300, 100, 300); // Nuevas dimensiones (anchura, altura, profundidad)
-            ColisionCaja = ModificarDimensiones(BBprimera, nuevaDimension);
+            ColisionCaja = new BoundingBox((posInicial + new Vector3(-15f, -30f, -20f)), (posInicial) + new Vector3(20f, 40f, 10f));
 
         }
 
@@ -320,36 +317,33 @@ namespace TGC.MonoGame.TP.Content.Models
                 mesh.Draw();
 
             }
-            //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            DrawBoundingBox(graphicsDevice, View, Projection);
         }
 
+       
     }
 
     class Hamster : IPowerUp
     {
+        /*
         private float rotationSpeed = 1f; // Velocidad de rotación
         private float verticalSpeed = 0.5f; // Velocidad de movimiento vertical
         private float maxHeight = 7f; // Altura máxima del movimiento vertical
         private float currentHeight = 0f;
         private bool goingUp = true;
-
-        private Vector3 posicion;
-
         private GraphicsDevice graphicsDevice;
-
         private BoundingBox ColisionCaja { get; set; }
+        */
+        private Vector3 posicion;
         public Hamster(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
         {
             this.graphicsDevice = graphicsDevice;
             this.jugador = jugador;
             this.PosicionInicial = posInicial;
             CargarModelo(content);
-            BoundingBox BB = BoundingVolumesExtensions.CreateAABBFrom(this.modelo);
-            BB = new BoundingBox(BB.Min + PosicionInicial - new Vector3(0, posInicial.Y, 0), BB.Max + PosicionInicial - new Vector3(0, posInicial.Y, 0));
+            ColisionCaja = new BoundingBox((posInicial + new Vector3(-28f, -13f, -28f)), (posInicial + new Vector3(33f, 60f, 32f)));    
             //Seleccionado = true;
             listaBalas = new List<BalaHamster>();
-            Vector3 nuevaDimension = new Vector3(50, 30, 50); // Nuevas dimensiones (anchura, altura, profundidad)
-            ColisionCaja = ModificarDimensiones(BB, nuevaDimension);
         }
 
         public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
@@ -411,7 +405,7 @@ namespace TGC.MonoGame.TP.Content.Models
             Console.WriteLine("AreAABBsTouching: " + AreAABBsTouching);
             AreAABBsTouching = ColisionCaja.Intersects(jugador.ColisionCaja);
 
-            if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0)
+            if (AreAABBsTouching && jugador.powerUp == null && jugador.tiempoRestante <= 0f)
             {
                 jugador.powerUp = this;
                 Seleccionado = true;
@@ -480,7 +474,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
-            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            DrawBoundingBox(graphicsDevice, View, Projection);
 
         }
 

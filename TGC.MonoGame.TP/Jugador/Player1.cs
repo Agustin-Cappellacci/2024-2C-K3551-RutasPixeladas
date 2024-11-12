@@ -16,6 +16,7 @@ using Vector3 = Microsoft.Xna.Framework.Vector3;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
 using TGC.MonoGame.Samples.Collisions;
+using System.Reflection.Metadata;
 
 
 namespace TGC.MonoGame.TP.Content.Models
@@ -37,8 +38,6 @@ namespace TGC.MonoGame.TP.Content.Models
         public Matrix carWorld { get; set; }
 
         private const float carAcceleration = 500f;
-        //    private const float carAcceleratioSpeedMax = 0;
-        //    private const float carAcceleratioSpeedMin = 0;
         private const float carSpeedMax = 1000f;
         private const float carSpeedMin = -700f;
         public float carJumpSpeed { get; set; }
@@ -166,7 +165,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
-            ColisionCaja = BoundingVolumesExtensions.CreateAABBFrom(Model);
+            ColisionCaja = new BoundingBox((new Vector3(-20f, -10f, -13f)), new Vector3(10f, 0f, 13f)); ;
         }
 
         public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
@@ -290,23 +289,9 @@ namespace TGC.MonoGame.TP.Content.Models
             // Actualizar la posición y la matriz de mundo del auto
             carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
             carPosition = carBodyReference.Pose.Position;
-
-            ColisionCaja = new BoundingBox(ColisionCaja.Min + carPosition, ColisionCaja.Max + carPosition);
-
-
+            ColisionCaja = new BoundingBox(carBodyReference.BoundingBox.Min, carBodyReference.BoundingBox.Max);
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation); //PUEDE VENIR DE ACA
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
-
-            Vector3[] esquinas = ColisionCaja.GetCorners();
-
-            // Aplica la transformación a cada esquina
-            for (int i = 0; i < esquinas.Length; i++)
-            {
-                esquinas[i] = Vector3.Transform(esquinas[i], carWorld);
-            }
-
-            // Crea un nuevo BoundingBox a partir de las esquinas transformadas
-            ColisionCaja = BoundingBox.CreateFromPoints(esquinas);
 
             forwardVector = rotationMatrix.Forward;
 
@@ -317,10 +302,13 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition)
         {
+            
+            
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
             var random = new Random(Seed: 0);
             var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
-            // effectAuto.Parameters["View"].SetValue(View);
+            //effectAuto.Parameters["View"].SetValue(View);
             //effectAuto.Parameters["Projection"].SetValue(Projection);
             /*
             graphicsDevice.DepthStencilState = DepthStencilState.Default;
@@ -414,11 +402,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 rueda.Draw();
             }
 
-            Console.WriteLine("colisionCaja:" + ColisionCaja.Max + carPosition);
-
-            // Dibujar las cajas de colisión del auto y las ruedas
-            DrawCollisionBoxes(View, Projection, ColisionCaja);
-            //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            Console.WriteLine("colisionCaja:" + ColisionCaja.Max + carPosition);          
         }
 
 
@@ -442,7 +426,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 vertices[i] = new VertexPositionColor(corners[indices[i]], color);
             }
 
-            BasicEffect basicEffect = new BasicEffect(graphicsDevice)
+            var basicEffect = new BasicEffect(graphicsDevice)
             {
                 World = Matrix.Identity,
                 View = view,
