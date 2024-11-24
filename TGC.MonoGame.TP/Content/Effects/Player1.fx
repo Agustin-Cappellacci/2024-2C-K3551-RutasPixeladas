@@ -27,8 +27,8 @@ sampler2D textureSampler = sampler_state
     Texture = (baseTexture);
     MagFilter = Linear;
     MinFilter = Linear;
-    AddressU = Wrap;
-    AddressV = Wrap;
+    AddressU = Clamp;
+    AddressV = Clamp;
 };
 
 texture environmentMap;

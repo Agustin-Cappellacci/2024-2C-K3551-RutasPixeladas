@@ -310,7 +310,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 // World is used to transform from model space to world space
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
                 // InverseTransposeWorld is used to rotate normals
-                effectAuto.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(carWorld)));
+                effectAuto.Parameters["InverseTransposeWorld"]?.SetValue(Matrix.Transpose(Matrix.Invert(-carWorld)));
 
                 // WorldViewProjection is used to transform from model space to clip space
                 effectAuto.Parameters["WorldViewProjection"].SetValue(mesh.ParentBone.Transform * carWorld * View * Projection);
