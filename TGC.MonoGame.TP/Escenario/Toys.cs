@@ -185,6 +185,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     tupla.Item1.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
                     foreach (var mesh in tupla.Item1.Meshes)
                     {
+                        EfectoTexture.CurrentTechnique = EfectoTexture.Techniques["BasicColorDrawing"];
 
                         var worldFinal2 = modelMeshesBaseTransforms[mesh.ParentBone.Index];
                         var worldFinal = modelMeshesBaseTransforms[mesh.ParentBone.Index] * tupla.Item3;
@@ -241,6 +242,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var mesh in Lego.Meshes)
                 {
+                    EfectoComun.CurrentTechnique = EfectoComun.Techniques["BasicColorDrawing"];
                     var worldFinal = modelLegoMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
                     EfectoComun.Parameters["DiffuseColor"].SetValue(color);
                     //EfectoComun.Parameters["World"].SetValue(worldFinal);
@@ -270,6 +272,67 @@ namespace TGC.MonoGame.TP.Content.Models
             }
 
         }
+
+        public void DrawCube(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition, Vector3 lightPosition, Vector3 forwardVector)
+        {
+            // Set the View and Projection matrices, needed to draw every 3D model
+            //EfectoComun.Parameters["View"].SetValue(view);
+            //EfectoComun.Parameters["Projection"].SetValue(projection);
+
+            // Texturas
+
+            for (var i = 0; i < _listaCombinada.Count; i++)
+            {
+                if (i == 6) { }
+                else
+                {
+                    var tupla = _listaCombinada[i];
+                    var modelMeshesBaseTransforms = new Matrix[tupla.Item1.Bones.Count];
+
+                    tupla.Item1.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+                    foreach (var mesh in tupla.Item1.Meshes)
+                    {
+                        EfectoTexture.CurrentTechnique = EfectoTexture.Techniques["Cubo"];
+                        EfectoTexture.Parameters["ModelTexture"].SetValue(tupla.Item2);
+                        // We set the main matrices for each mesh to draw
+                        EfectoTexture.Parameters["World"].SetValue(Matrix.Identity * tupla.Item3);
+                        // WorldViewProjection is used to transform from model space to clip space
+                        EfectoTexture.Parameters["WorldViewProjection"].SetValue(Matrix.Identity * tupla.Item3 * view * projection);
+
+                        mesh.Draw();
+                    }
+                }
+            }
+
+
+            // Legos
+            var random = new Random(Seed: 0);
+
+            var modelLegoMeshesBaseTransforms = new Matrix[Lego.Bones.Count];
+            Lego.CopyAbsoluteBoneTransformsTo(modelLegoMeshesBaseTransforms);
+
+            for (int j = 0; j < 10; j++)
+            {
+                var traslacion = new Vector3(
+                -1600f + (1500f) * random.NextSingle(),
+                0,
+                -2000f + 200f * random.NextSingle()
+                );
+                var escala = 0.7f + (0.7f - 1f) * random.NextSingle();
+                var color = new Vector3(0.6f, random.NextSingle(), random.NextSingle());
+
+                foreach (var mesh in Lego.Meshes)
+                {
+                    var worldFinal = modelLegoMeshesBaseTransforms[mesh.ParentBone.Index] * Matrix.CreateScale(escala) * Matrix.CreateTranslation(traslacion);
+                    EfectoComun.CurrentTechnique = EfectoComun.Techniques["Cubo"];// We set the main matrices for each mesh to draw
+                    EfectoComun.Parameters["World"].SetValue(worldFinal);// WorldViewProjection is used to transform from model space to clip space
+                    EfectoComun.Parameters["WorldViewProjection"].SetValue(worldFinal * view * projection);
+                    mesh.Draw();
+                }
+            }
+
+        }
+
         // Función para extraer vértices de un modelo 3D (similar a la que se usó en el Jugador)
         private List<System.Numerics.Vector3> ExtractVertices(Model model)
         {
@@ -342,12 +405,13 @@ namespace TGC.MonoGame.TP.Content.Models
             // Dibujar ajedrez
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(-1200f, 2f, 1700f), new Vector3(500f, 100f, 500f)/2f, viewMatrix, projectionMatrix);
             // Dibujar lego
-            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(1200f, 2f, 1700f), new Vector3(150f, 100f, 150f), viewMatrix, projectionMatrix);
+            //DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(1200f, 2f, 1700f), new Vector3(150f, 100f, 150f), viewMatrix, projectionMatrix);
             // Dibujar puente
-            DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,(float)Math.PI /8, (float)Math.PI / -2)*Matrix.CreateTranslation(305f, -200f, -1625f), new Vector3(500f,150f, 400f), viewMatrix, projectionMatrix);
+            /*DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,(float)Math.PI /8, (float)Math.PI / -2)*Matrix.CreateTranslation(305f, -200f, -1625f), new Vector3(500f,150f, 400f), viewMatrix, projectionMatrix);
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,-(float)Math.PI /8, (float)Math.PI / -2)*Matrix.CreateTranslation(435f, -200f, -1755f), new Vector3(500f, 150f, 400f), viewMatrix, projectionMatrix);
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,0, (float)Math.PI / -2)*Matrix.CreateTranslation(320f, 0f, -1775f), new Vector3(300f, 30f, 550f), viewMatrix, projectionMatrix);
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4,0, (float)Math.PI / -2)*Matrix.CreateTranslation(430f, 0f, -1635f), new Vector3(300f, 30f, 550f), viewMatrix, projectionMatrix);
+            */
             
         }// 450 -1665
 

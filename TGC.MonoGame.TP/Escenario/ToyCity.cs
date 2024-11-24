@@ -114,6 +114,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // For each mesh in the model,
             foreach (var mesh in Model.Meshes)
             {
+                Effect.CurrentTechnique = Effect.Techniques["BasicColorDrawing"];
                 // Obtain the world matrix for that mesh (relative to the parent)
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
 
@@ -145,17 +146,35 @@ namespace TGC.MonoGame.TP.Content.Models
                 Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion) * view * projection);
                 // Draw the mesh
                 mesh.Draw();
-                /*
+                
+            }
 
-                // Then for each world matrix
-                foreach (var worldMatrix in WorldMatrices)
-                {
-                    // We set the main matrices for each mesh to draw
-                    Effect.Parameters["World"].SetValue(meshWorld * worldMatrix * Matrix.CreateRotationY(MathHelper.Pi/4) * Matrix.CreateScale(0.08f) * Matrix.CreateTranslation(traslacion));
+        }
 
-                    // Draw the mesh
-                    mesh.Draw();
-                }*/
+        public void DrawCube(GameTime gameTime, Matrix view, Matrix projection)
+        {
+            // Get the base transform for each mesh
+            // These are center-relative matrices that put every mesh of a model in their corresponding location
+            var modelMeshesBaseTransforms = new Matrix[Model.Bones.Count];
+            Model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+
+            var traslacion = new Vector3(-1200f, 0f, 1700f);
+
+            // For each mesh in the model,
+            foreach (var mesh in Model.Meshes)
+            {
+                Effect.CurrentTechnique = Effect.Techniques["Cubo"];
+                // Obtain the world matrix for that mesh (relative to the parent)
+                var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+
+                Effect.Parameters["ModelTexture"].SetValue(texture);
+                // We set the main matrices for each mesh to draw
+                Effect.Parameters["World"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion));
+                 // WorldViewProjection is used to transform from model space to clip space
+                Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * Matrix.Identity * Matrix.CreateRotationY(MathHelper.Pi / 4) * Matrix.CreateScale(0.23f) * Matrix.CreateTranslation(traslacion) * view * projection);
+                // Draw the mesh
+                mesh.Draw();
+                
             }
 
         }

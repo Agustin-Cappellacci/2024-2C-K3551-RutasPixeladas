@@ -180,6 +180,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var worldMatrix in WorldMatrices)
                 {
+                    Effect.CurrentTechnique = Effect.Techniques["BasicColorDrawing"];
 
                     Effect.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                     Effect.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
@@ -225,6 +226,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
                 foreach (var mesh in ChairModel.Meshes)
                 {
+                    EffectChair.CurrentTechnique = EffectChair.Techniques["BasicColorDrawing"];
 
                     EffectChair.Parameters["ambientColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
                     EffectChair.Parameters["diffuseColor"].SetValue(new Vector3(1.0f, 1.0f, 1.0f));
@@ -265,6 +267,7 @@ namespace TGC.MonoGame.TP.Content.Models
                     {
                         foreach (var part in mesh.MeshParts)
                         {
+                            EffectBed.CurrentTechnique = EffectBed.Techniques["BasicColorDrawing"];
                             var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
 
                             EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
@@ -303,6 +306,97 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
                 _puedeVerse.Clear();
             
+        }
+
+        public void DrawCube(GameTime gameTime, Matrix view, Matrix projection, Vector3 cameraPosition, Vector3 lightPosition, Vector3 forwardVector)
+        {
+            /*
+            Effect.Parameters["View"].SetValue(view);
+            Effect.Parameters["Projection"].SetValue(projection);
+
+            EffectChair.Parameters["View"].SetValue(view);
+            EffectChair.Parameters["Projection"].SetValue(projection);
+            
+            EffectBed.Parameters["View"].SetValue(view);
+            EffectBed.Parameters["Projection"].SetValue(projection);
+            */
+
+            graphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+            var random = new Random(Seed: 0);
+            
+            // Piso
+            var modelMeshesBaseTransforms = new Matrix[Model.Bones.Count];
+            Model.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+
+            foreach (var mesh in Model.Meshes)
+            {
+                var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
+
+                foreach (var worldMatrix in WorldMatrices)
+                {
+                    Effect.CurrentTechnique = Effect.Techniques["Cubo"];
+                    
+                    Effect.Parameters["ModelTexture"].SetValue(textureFloor);
+                    // We set the main matrices for each mesh to draw
+                    Effect.Parameters["World"].SetValue(meshWorld * worldMatrix);
+                    // WorldViewProjection is used to transform from model space to clip space
+                    Effect.Parameters["WorldViewProjection"].SetValue(meshWorld * worldMatrix * view * projection);
+
+                    // Draw the mesh
+                    mesh.Draw();
+
+
+                }
+            }
+
+            // Silla
+            var modelMeshesBaseTransformsChair = new Matrix[ChairModel.Bones.Count];
+                ChairModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsChair);
+
+
+
+                foreach (var mesh in ChairModel.Meshes)
+                {
+                    EffectChair.CurrentTechnique = EffectChair.Techniques["Cubo"];
+
+                    EffectChair.Parameters["ModelTexture"].SetValue(textureChair);
+                    var meshWorldChair = modelMeshesBaseTransformsChair[mesh.ParentBone.Index];
+                    // We set the main matrices for each mesh to draw
+                    EffectChair.Parameters["World"].SetValue(meshWorldChair * ChairWorld);
+                    // WorldViewProjection is used to transform from model space to clip space
+                    EffectChair.Parameters["WorldViewProjection"].SetValue(meshWorldChair * ChairWorld * view * projection);
+
+
+                    // Draw the mesh
+                    mesh.Draw();
+                }
+           
+            
+            // Cama
+            var modelMeshesBaseTransformsBed = new Matrix[BedModel.Bones.Count];
+                BedModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransformsBed);
+
+                foreach (var mesh in BedModel.Meshes)
+                {
+                    foreach (var part in mesh.MeshParts)
+                    {
+                    EffectBed.CurrentTechnique = EffectBed.Techniques["Cubo"];
+
+                    var colorAzul = new Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
+
+                    EffectBed.Parameters["DiffuseColor"].SetValue(colorAzul);
+
+                    var meshWorldBed = modelMeshesBaseTransformsBed[mesh.ParentBone.Index];
+                    // We set the main matrices for each mesh to draw
+                    EffectBed.Parameters["World"].SetValue(meshWorldBed * BedWorld);
+                    EffectBed.Parameters["WorldViewProjection"].SetValue(meshWorldBed * BedWorld * view * projection);
+
+                    }
+                    // Draw the mesh
+                    mesh.Draw();
+                }
+
         }
 
         public void DrawCollisionBoxes(Matrix viewMatrix, Matrix projectionMatrix)

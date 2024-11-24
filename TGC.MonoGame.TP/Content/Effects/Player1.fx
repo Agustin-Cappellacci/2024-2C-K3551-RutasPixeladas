@@ -1,4 +1,4 @@
-/*#if OPENGL
+#if OPENGL
 #define SV_POSITION POSITION
 #define VS_SHADERMODEL vs_3_0
 #define PS_SHADERMODEL ps_3_0
@@ -11,7 +11,15 @@ float4x4 WorldViewProjection;
 float4x4 World;
 float4x4 InverseTransposeWorld;
 
-float3 eyePosition;
+float3 ambientColor; // Light's Ambient Color
+float3 diffuseColor; // Light's Diffuse Color
+float3 specularColor; // Light's Specular Color
+float KAmbient;
+float KDiffuse;
+float KSpecular;
+float shininess;
+float3 lightPosition;
+float3 eyePosition; // Camera position
 
 texture baseTexture;
 sampler2D textureSampler = sampler_state
@@ -19,8 +27,8 @@ sampler2D textureSampler = sampler_state
     Texture = (baseTexture);
     MagFilter = Linear;
     MinFilter = Linear;
-    AddressU = Clamp;
-    AddressV = Clamp;
+    AddressU = Wrap;
+    AddressV = Wrap;
 };
 
 texture environmentMap;
@@ -37,7 +45,7 @@ samplerCUBE environmentMapSampler = sampler_state
 struct VertexShaderInput
 {
     float4 Position : POSITION0;
-    float3 Normal : NORMAL;
+    float4 Normal : NORMAL;
     float2 TextureCoordinates : TEXCOORD0;
 };
 
@@ -56,7 +64,7 @@ VertexShaderOutput MainVS(in VertexShaderInput input)
 
     output.Position = mul(input.Position, WorldViewProjection);
     output.WorldPosition = mul(input.Position, World);
-    output.Normal = mul(float4(normalize(input.Normal.xyz), 1.0), InverseTransposeWorld);
+    output.Normal = mul(input.Normal, InverseTransposeWorld); //mul(float4(normalize(input.Normal.xyz), 1.0), InverseTransposeWorld);
     output.TextureCoordinates = input.TextureCoordinates;
 	
     return output;
@@ -78,11 +86,34 @@ float4 EnvironmentMapPS(VertexShaderOutput input) : COLOR
     float3 reflection = reflect(view, normal);
     float3 reflectionColor = texCUBE(environmentMapSampler, reflection).rgb;
 
-    float fresnel = saturate((1.0 - dot(normal, view)));
+    float fresnel = 1 * saturate((1.0 - dot(normal, view)));
 
     return float4(lerp(baseColor, reflectionColor, fresnel), 1);
 }
 
+float4 MenuInicialPS(VertexShaderOutput input) : COLOR
+{
+    float4 texelColor = tex2D(textureSampler, input.TextureCoordinates.xy);
+    
+    // Base vectors
+    float3 lightDirection = normalize(lightPosition - input.WorldPosition.xyz);
+    float3 viewDirection = normalize(eyePosition - input.WorldPosition.xyz);
+    float3 halfVector = normalize(lightDirection + viewDirection);
+
+	// Calculate the diffuse light
+    float NdotL = saturate(dot(input.Normal.xyz, lightDirection));
+    float3 diffuseLight = KDiffuse * diffuseColor * NdotL;
+
+	// Calculate the specular light
+    float NdotH = dot(input.Normal.xyz, halfVector);
+    float3 specularLight = sign(NdotL) * KSpecular * specularColor * pow(saturate(NdotH), shininess);
+    
+    // Final calculation
+    float4 finalColor = float4(saturate(ambientColor * KAmbient + diffuseLight) * texelColor.rgb + specularLight, texelColor.a);
+	
+    return finalColor;
+
+}
 
 technique EnvironmentMap
 {
@@ -91,8 +122,18 @@ technique EnvironmentMap
         VertexShader = compile VS_SHADERMODEL MainVS();
         PixelShader = compile PS_SHADERMODEL EnvironmentMapPS();
     }
-};*/
+};
 
+technique MenuInicial
+{
+    pass P0
+    {
+        VertexShader = compile VS_SHADERMODEL MainVS();
+        PixelShader = compile PS_SHADERMODEL MenuInicialPS();
+    }
+};
+
+/*
 #if OPENGL
 #define SV_POSITION POSITION
 #define VS_SHADERMODEL vs_3_0
@@ -187,4 +228,4 @@ technique BasicColorDrawing
         VertexShader = compile VS_SHADERMODEL MainVS();
         PixelShader = compile PS_SHADERMODEL MainPS();
     }
-};
+};*/

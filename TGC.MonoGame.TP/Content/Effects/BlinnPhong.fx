@@ -90,6 +90,14 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 	return finalColor;
 }
 
+float4 CubePS(VertexShaderOutput input) : COLOR
+{
+    float3 color = tex2D(textureSampler, input.TextureCoordinates.xy).rgb;
+    
+    return float4(color, 1);
+
+}
+
 
 technique BasicColorDrawing
 {
@@ -98,4 +106,13 @@ technique BasicColorDrawing
 		VertexShader = compile VS_SHADERMODEL MainVS();
 		PixelShader = compile PS_SHADERMODEL MainPS();
 	}
+};
+
+technique Cubo
+{
+    pass P0
+    {
+        VertexShader = compile VS_SHADERMODEL MainVS();
+        PixelShader = compile PS_SHADERMODEL CubePS();
+    }
 };

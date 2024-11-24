@@ -14,7 +14,7 @@ using BepuPhysics.Collidables;
 using BepuUtilities;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
-using System.Numerics;
+//using System.Numerics;
 
 
 namespace TGC.MonoGame.TP
@@ -132,11 +132,15 @@ namespace TGC.MonoGame.TP
         private Microsoft.Xna.Framework.Vector3 lightPosition;
         private Microsoft.Xna.Framework.Vector3 lightDirection; // La dirección de la luz (hacia adelante)
 
+        private RenderTargetCube EnvironmentMapRenderTarget { get; set; }
+        private StaticCamera CubeMapCamera { get; set; }
+
+        private const int EnvironmentmapSize = 2048;
+
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
-
             // Consejo: Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
 
 
@@ -155,7 +159,6 @@ namespace TGC.MonoGame.TP
         protected override void Initialize()
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-
             // Empezamos con la lógicas del auto
             CantidadDeAutos = 2;    //tiene que ser par
 
@@ -208,7 +211,8 @@ namespace TGC.MonoGame.TP
             // para optimizar
             _boundingFrustum = new BoundingFrustum(IsometricCamera.View * IsometricCamera.Projection);
 
-
+            CubeMapCamera = new StaticCamera(1f, Vector3.UnitX * -500f, Vector3.UnitX, Vector3.Up);
+            CubeMapCamera.BuildProjection(1f, 1f, 3000f, Microsoft.Xna.Framework.MathHelper.PiOver2);
             // INICIALIZO LOGICA DE BEPU
             iniciarSimulacion();
 
@@ -272,6 +276,11 @@ namespace TGC.MonoGame.TP
             initialMenu.Initialize();
             initialMenu.LoadContent();
 
+            // Create a render target for the scene
+            EnvironmentMapRenderTarget = new RenderTargetCube(GraphicsDevice, EnvironmentmapSize, false,
+                SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.DiscardContents);
+            GraphicsDevice.BlendState = BlendState.Opaque;
+
             base.LoadContent();
         }
 
@@ -290,12 +299,13 @@ namespace TGC.MonoGame.TP
 
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+
             
             /*
              * Eliminar después
              *  
              */
-             
+
             if (isInitialMenuOpen) {
                 initialMenu.Update(gameTime);
                 isInitialMenuOpen = initialMenu.HandleMenuInput(keyboardState, oldState);
@@ -379,6 +389,8 @@ namespace TGC.MonoGame.TP
             lightPosition = Microsoft.Xna.Framework.Vector3.Transform(new Microsoft.Xna.Framework.Vector3(0, 0, 0), autoJugador.carWorld);
             lightDirection = autoJugador.forwardVector;
 
+            CubeMapCamera.Position = autoJugador.carPosition;
+
             base.Update(gameTime);
         }
 
@@ -402,17 +414,51 @@ namespace TGC.MonoGame.TP
                 base.Draw(gameTime);
                 return;
             }
-
+            
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            //GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+            #region Pass 1-6
+
             GraphicsDevice.DepthStencilState = DepthStencilState.Default;
+
+            // Draw to our cubemap from the robot position
+            for (var face = CubeMapFace.PositiveX; face <= CubeMapFace.NegativeZ; face++)
+            {
+                // Set the render target as our cubemap face, we are drawing the scene in this texture
+                GraphicsDevice.SetRenderTarget(EnvironmentMapRenderTarget, face);
+                GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
+
+                SetCubemapCameraForOrientation(face);
+                CubeMapCamera.BuildView();
+
+                // Draw our scene. Do not draw our tank as it would be occluded by itself 
+                // (if it has backface culling on)
+                //Scene.Draw(Matrix.Identity, CubeMapCamera.View, CubeMapCamera.Projection);
+                Toys.DrawCube(gameTime, CubeMapCamera.View, CubeMapCamera.Projection, autoJugador.carPosition, lightPosition, lightDirection);
+
+                ToyCity.DrawCube(gameTime, CubeMapCamera.View, CubeMapCamera.Projection);
+
+                Cuarto.DrawCube(gameTime, CubeMapCamera.View, CubeMapCamera.Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
+
+            }
+
+            #endregion
+
+            #region Pass 7
+
+            // Set the render target as null, we are drawing on the screen!
+            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.BlendState = BlendState.Opaque;
+            GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
             Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
             
             ToyCity.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
             //SimpleTerrain.Draw(gameTime, View, Projection);
             Cuarto.Draw(gameTime, View, Projection, IsometricCamera.CameraPosition, lightPosition, lightDirection);
-
-            autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition);
+            
+            autoJugador.Draw(View, Projection, IsometricCamera.CameraPosition, EnvironmentMapRenderTarget);
             foreach (var auto in listaAutos){
                 auto.Draw(gameTime, View, Projection);
             }
@@ -425,7 +471,7 @@ namespace TGC.MonoGame.TP
             arma3.Draw(gameTime, View, Projection);
             hamster3.Draw(gameTime, View, Projection);
 
-
+            #endregion
 
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
 
@@ -469,6 +515,9 @@ namespace TGC.MonoGame.TP
             simulation.Dispose();
             threadDispatcher.Dispose();
             bufferPool.Clear();
+
+            EnvironmentMapRenderTarget.Dispose();
+
             base.UnloadContent();
         }
 
@@ -609,6 +658,41 @@ namespace TGC.MonoGame.TP
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
         */
+        private void SetCubemapCameraForOrientation(CubeMapFace face)
+        {
+            switch (face)
+            {
+                default:
+                case CubeMapFace.PositiveX:
+                    CubeMapCamera.FrontDirection = -Vector3.UnitX;
+                    CubeMapCamera.UpDirection = Vector3.Up;
+                    break;
 
+                case CubeMapFace.NegativeX:
+                    CubeMapCamera.FrontDirection = Vector3.UnitX;
+                    CubeMapCamera.UpDirection = Vector3.Up;
+                    break;
+
+                case CubeMapFace.PositiveY:
+                    CubeMapCamera.FrontDirection = Vector3.Up;
+                    CubeMapCamera.UpDirection = Vector3.UnitZ;
+                    break;
+
+                case CubeMapFace.NegativeY:
+                    CubeMapCamera.FrontDirection = Vector3.Down;
+                    CubeMapCamera.UpDirection = -Vector3.UnitZ;
+                    break;
+
+                case CubeMapFace.PositiveZ:
+                    CubeMapCamera.FrontDirection = -Vector3.UnitZ;
+                    CubeMapCamera.UpDirection = Vector3.Up;
+                    break;
+
+                case CubeMapFace.NegativeZ:
+                    CubeMapCamera.FrontDirection = Vector3.UnitZ;
+                    CubeMapCamera.UpDirection = Vector3.Up;
+                    break;
+            }
+        }
     }
 }

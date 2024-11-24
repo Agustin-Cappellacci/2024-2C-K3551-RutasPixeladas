@@ -120,6 +120,12 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 
 }
 
+float4 CubePS(VertexShaderOutput input) : COLOR
+{
+    return float4(DiffuseColor, 1.0);
+
+}
+
 technique BasicColorDrawing
 {
 	pass P0
@@ -127,4 +133,13 @@ technique BasicColorDrawing
 		VertexShader = compile VS_SHADERMODEL MainVS();
 		PixelShader = compile PS_SHADERMODEL MainPS();
 	}
+};
+
+technique Cubo
+{
+    pass P0
+    {
+        VertexShader = compile VS_SHADERMODEL MainVS();
+        PixelShader = compile PS_SHADERMODEL CubePS();
+    }
 };
