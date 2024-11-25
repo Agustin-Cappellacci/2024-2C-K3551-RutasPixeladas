@@ -42,8 +42,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.3f;
 
 
-        private System.Numerics.Vector3 carPosition { get; set; }
-        public float CarSpeed { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
+        public Vector3 CarSpeed { get; set; }
+        public BepuPhysics.BodyVelocity velocity;
         private const float CarMaxSpeed = 500f;
         public float CarAcceleration { get; set; }
         private const float CarBrakeForce = 5000f;
@@ -64,13 +65,14 @@ namespace TGC.MonoGame.TP.Content.Models
         // como esto es private no se dibujan los autos ya que nunca actualizan el modelo
         protected List<ModelMesh> ruedas;
         protected List<ModelMesh> restoAuto;
-        private GraphicsDevice graphicsDevice;
+        public GraphicsDevice graphicsDevice;
 
         private IPowerUp powerUp;
 
-        private float vida = 200;
+        public float vida = 200;
 
         protected Model CarModel { get; set; }
+        public BoundingBox ColisionCaja { get; set; }
 
 
 
@@ -112,12 +114,28 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
+
+
+        private DateTime ultimoDanio = DateTime.MinValue; // Rastrea el tiempo del último daño
+        private const int intervaloDanioMs = 1000;
+        public void recibirDanio(int danio)
+        {
+            if ((DateTime.Now - ultimoDanio).TotalMilliseconds >= intervaloDanioMs)
+            {
+                ultimoDanio = DateTime.Now; // Actualiza el tiempo del último daño
+                vida = Math.Max(vida - danio, 0);
+                if (vida == 0)
+                {
+                    //destrozado
+                }
+            }
+        }
     }
 
     class AutoEnemigoCombate : AutoEnemigo
     {
         private Matrix rotationMatrix;
-        private System.Numerics.Vector3 carPosition { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
         public Effect effectAuto { get; set; }
 
         float Escala;
@@ -126,7 +144,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, Vector3 posicion, float angulo, BodyHandle carBodyHandle)
             : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2, carBodyHandle) //Ajustar ángulo si es necesario
         {
-
+            this.graphicsDevice = graphicsDevice;
             effectAuto = content.Load<Effect>(ContentFolderEffects + "diffuseColor2");
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
@@ -160,6 +178,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Vector hacia el objetivo
             Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
 
+
             // Calcular la rotación del auto actual
             Vector3 forwardVector = Vector3.Transform(Vector3.Backward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
             float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
@@ -180,6 +199,9 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
+            ColisionCaja = new BoundingBox(carBodyReference.BoundingBox.Min, carBodyReference.BoundingBox.Max);
+            CarSpeed = carBodyReference.Velocity.Linear;
+            velocity = carBodyReference.Velocity;
         }
 
         protected override void CargarModelo(ContentManager content)
@@ -223,6 +245,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 mesh.Draw();
             }
 
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+
             foreach (ModelMesh rueda in ruedas)
             {
                 effectAuto.Parameters["DiffuseColor"]?.SetValue(colorRueda);
@@ -237,12 +261,48 @@ namespace TGC.MonoGame.TP.Content.Models
                 rueda.Draw();
             }
         }
+
+                public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        {
+            var corners = boundingBox.GetCorners();
+            var vertices = new VertexPositionColor[24];
+
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
+
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                    };
+
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
+
+            var basicEffect = new BasicEffect(graphicsDevice)
+            {
+                World = Matrix.Identity,
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
+
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
+
     }
 
     class AutoEnemigoCarrera : AutoEnemigo
     {
         private Matrix rotationMatrix;
-        private System.Numerics.Vector3 carPosition { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
 
         public Effect effectAuto { get; set; }
 
@@ -290,6 +350,9 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
+            ColisionCaja = new BoundingBox(carBodyReference.BoundingBox.Min, carBodyReference.BoundingBox.Max);
+            CarSpeed = carBodyReference.Velocity.Linear;
+            velocity = carBodyReference.Velocity;
         }
         protected override void CargarModelo(ContentManager content)
         {

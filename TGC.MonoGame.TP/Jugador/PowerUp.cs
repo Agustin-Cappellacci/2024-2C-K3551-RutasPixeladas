@@ -114,7 +114,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public override void Apply()
         {
             _powerUpSoundInstance.Play();
-            jugador.CarSpeed = 10000;
+            //jugador.CarSpeed = 10000;
         }
 
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) { }
