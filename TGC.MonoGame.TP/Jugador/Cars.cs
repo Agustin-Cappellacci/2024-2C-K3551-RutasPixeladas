@@ -137,6 +137,15 @@ namespace TGC.MonoGame.TP.Content.Models
         private Matrix rotationMatrix;
         public System.Numerics.Vector3 carPosition { get; set; }
         public Effect effectAuto { get; set; }
+        public BodyHandle carBodyHandleCombat;
+
+        private Random random = new Random();
+        private float timeSinceLastRandomChange = 0f;
+        private float randomSteering = 0f;
+        private float randomSpeed = 0f;
+        private float randomChangeInterval = 2f; 
+
+
 
         float Escala;
         //private List<ModelMesh> ruedas;
@@ -148,6 +157,8 @@ namespace TGC.MonoGame.TP.Content.Models
             effectAuto = content.Load<Effect>(ContentFolderEffects + "diffuseColor2");
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
+            this.carBodyHandleCombat = carBodyHandle;
+
 
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
         }
@@ -170,46 +181,68 @@ namespace TGC.MonoGame.TP.Content.Models
         public override void Update(GameTime gameTime, Simulation simulation, SimpleCarController simpleCarController, Vector3 posicionJugador)
         {
             float elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            timeSinceLastRandomChange += elapsedTime;
 
             // Obtener la referencia del cuerpo del auto en la simulación
-            var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
+            var carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandleCombat);
             carBodyReference.Awake = true;
 
             // Vector hacia el objetivo
-            Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
+            float distanceToPlayer = Vector3.Distance(posicionJugador, carBodyReference.Pose.Position);
+            if (distanceToPlayer < 1000f) {
+                Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
 
 
-            // Calcular la rotación del auto actual
-            Vector3 forwardVector = Vector3.Transform(Vector3.Backward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
-            float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
-            float crossProduct = Vector3.Cross(forwardVector, directionToTarget).Y;
+                // Calcular la rotación del auto actual
+                Vector3 forwardVector = Vector3.Transform(Vector3.Backward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
+                float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
+                float crossProduct = Vector3.Cross(forwardVector, directionToTarget).Y;
 
-            // Ajustar el ángulo de dirección basado en los productos
-            float steeringSum = Math.Clamp(crossProduct, -1f, 1f);
+                // Ajustar el ángulo de dirección basado en los productos
+                float steeringSum = Math.Clamp(crossProduct, -1f, 1f);
 
-            // Agregar un rango de ángulo para el movimiento hacia adelante
-            float angleThreshold = 0.7f; // Rango de ángulo para mover hacia adelante
+                // Agregar un rango de ángulo para el movimiento hacia adelante
+                float angleThreshold = 0.7f; // Rango de ángulo para mover hacia adelante
 
-            bool isFlipped = rotationMatrix.Up.Y < 0; // Si Y es negativo, el auto está al revés
+                bool isFlipped = rotationMatrix.Up.Y < 0; // Si Y es negativo, el auto está al revés
+                if (isFlipped)
+                {
+                // Rota el auto para enderezarlo
+                    carBodyReference.Pose.Orientation = System.Numerics.Quaternion.Identity;
+                    carBodyReference.Pose.Position = new System.Numerics.Vector3(
+                    carBodyReference.Pose.Position.X,
+                        carBodyReference.Pose.Position.Y + 1, // Ajusta la altura si es necesario
+                        carBodyReference.Pose.Position.Z
+                    );
+                }
+                // Si está volcado y se presiona "R"
 
-            // Si está volcado y se presiona "R"
-            if (isFlipped)
-            {
-               // Rota el auto para enderezarlo
-                  carBodyReference.Pose.Orientation = System.Numerics.Quaternion.Identity;
-                  carBodyReference.Pose.Position = new System.Numerics.Vector3(
-                   carBodyReference.Pose.Position.X,
-                    carBodyReference.Pose.Position.Y + 1, // Ajusta la altura si es necesario
-                    carBodyReference.Pose.Position.Z
-                );
+
+                // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
+                float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 2f;
+
+                simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
+            } else {
+                // **Random Movement**
+
+                // Change direction at set intervals
+                if (timeSinceLastRandomChange >= randomChangeInterval)
+                {
+                    // Generate random steering between -1 and 1
+                    randomSteering = (float)(random.NextDouble() * 2 - 1);
+
+                    // Generate random speed between 0 and 10
+                    randomSpeed = (float)(random.NextDouble() * 10f);
+
+                    // Reset the timer
+                    timeSinceLastRandomChange = 0f;
+                }
+
+                // Update the car controller with random values
+                simpleCarController.Update(simulation, 1 / 60f, randomSteering, randomSpeed, false);
+
             }
-
-
-            // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
-            float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 2f;
-
-            simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
-            carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandle);
+            carBodyReference = simulation.Bodies.GetBodyReference(carBodyHandleCombat);
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
