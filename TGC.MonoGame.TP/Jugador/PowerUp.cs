@@ -449,7 +449,7 @@ namespace TGC.MonoGame.TP.Content.Models
             efectoPwUP.Parameters["View"].SetValue(View);
             efectoPwUP.Parameters["Projection"].SetValue(Projection);
             efectoPwUP.Parameters["ModelTexture"].SetValue(textura);
-
+            
             var random = new Random(Seed: 0);
 
             var modelMeshesBaseTransforms = new Matrix[modelo.Bones.Count];
@@ -457,6 +457,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             foreach (var mesh in modelo.Meshes)
             {
+                foreach (var part in mesh.MeshParts)
+                    part.Effect = efectoPwUP;
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
                 // We set the main matrices for each mesh to draw
                 efectoPwUP.Parameters["World"].SetValue(meshWorld * world);

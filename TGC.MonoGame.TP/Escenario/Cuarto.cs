@@ -22,13 +22,13 @@ namespace TGC.MonoGame.TP.Content.Models
         public const string ContentFolderEffects = "Effects/";
 
         private Model Model { get; set; }
-        private Model ChairModel { get; set; }
+        public Model ChairModel { get; set; }
         public Model BedModel { get; set; }
         private Effect Effect { get; set; }
-        private Effect EffectChair { get; set; }
+        public Effect EffectChair { get; set; }
         private Effect EffectBed { get; set; }
         private Texture2D textureFloor { get; set; }
-        private Texture2D textureChair { get; set; }
+        public Texture2D textureChair { get; set; }
         private List<Matrix> WorldMatrices { get; set; }
         private Matrix ChairWorld { get; set; }
         private Matrix BedWorld { get; set; }

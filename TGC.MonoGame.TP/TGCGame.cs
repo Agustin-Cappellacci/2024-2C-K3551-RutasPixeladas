@@ -14,6 +14,7 @@ using BepuPhysics.Collidables;
 using BepuUtilities;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Media;
+
 //using System.Numerics;
 
 
@@ -65,7 +66,7 @@ namespace TGC.MonoGame.TP
         private Model DeLoreanModel { get; set; }
         private Effect Effect { get; set; }
 
-        // Clases
+        //#regin Clases
         private Jugador autoJugador { get; set; }
         private Toys Toys { get; set; }
         private Cuarto Cuarto { get; set; }
@@ -137,6 +138,22 @@ namespace TGC.MonoGame.TP
 
         private const int EnvironmentmapSize = 2048;
 
+
+        #region Variables Post Porcesado
+        private const int PassCount = 2;
+
+        private Effect _effect;
+        private Effect _blurEffect;
+
+        private RenderTarget2D _firstPassBloomRenderTarget;
+
+        private FullScreenQuad _fullScreenQuad;
+
+        private RenderTarget2D _mainSceneRenderTarget;
+
+        private RenderTarget2D _secondPassBloomRenderTarget;
+
+        #endregion
         public TGCGame()
         {
             // Maneja la configuracion y la administracion del dispositivo grafico.
@@ -159,7 +176,7 @@ namespace TGC.MonoGame.TP
         protected override void Initialize()
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
-            // Empezamos con la lógicas del auto
+            #region Logica Autos
             CantidadDeAutos = 2;    //tiene que ser par
 
             traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
@@ -167,7 +184,7 @@ namespace TGC.MonoGame.TP
 
             listaModelos = new List<TipoAuto>();
             listaAutos = new List<AutoEnemigo>();
-
+            #endregion
             // Apago el backface culling.
             var rasterizerState = new RasterizerState();
             rasterizerState.CullMode = CullMode.CullCounterClockwiseFace;
@@ -183,12 +200,10 @@ namespace TGC.MonoGame.TP
             IsometricCamera = new IsometricCamera(Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight);
 
             // Configuramos nuestras matrices de la escena.
-            // Primero los autos
+            #region Autos Enemigos
             int tessellation = 2;
             if (CantidadDeAutos % tessellation != 0) // Aquí tienes que tener cuidado y asegurarte que sea divisible por el número de tesselation.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
-
-
 
             for (int i = 0; i < CantidadDeAutos / tessellation; i++)
             {
@@ -196,7 +211,6 @@ namespace TGC.MonoGame.TP
                 listaModelos.Add(TipoAuto.tipoCombate);
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
-
 
             // mezclar posiciones
             var random = new Random(0);
@@ -207,19 +221,21 @@ namespace TGC.MonoGame.TP
                 listaModelos[i] = listaModelos[j];
                 listaModelos[j] = temp;
             }
-
+            #endregion
             // para optimizar
             _boundingFrustum = new BoundingFrustum(IsometricCamera.View * IsometricCamera.Projection);
 
             CubeMapCamera = new StaticCamera(1f, Vector3.UnitX * -500f, Vector3.UnitX, Vector3.Up);
             CubeMapCamera.BuildProjection(1f, 1f, 3000f, Microsoft.Xna.Framework.MathHelper.PiOver2);
             // INICIALIZO LOGICA DE BEPU
+
+            
+
             iniciarSimulacion();
 
 
             base.Initialize();
         }
-
         /// <summary>
         ///     Se llama una sola vez, al principio cuando se ejecuta el ejemplo, despues de Initialize.
         ///     Escribir aqui el codigo de inicializacion: cargar modelos, texturas, estructuras de optimizacion, el procesamiento
@@ -231,12 +247,13 @@ namespace TGC.MonoGame.TP
             
             SpriteBatch = new SpriteBatch(GraphicsDevice);
 
-
+            #region Music
             _backgroundMusic = Content.Load<Song>(ContentFolder3D + "autos/RacingCarA/backgroundmusic");
             MediaPlayer.IsRepeating = true;
             MediaPlayer.Play(_backgroundMusic);
+            #endregion
 
-            // Cargo Clases
+            #region Cargo Clases
             Hub = new Hub(Content);
             //Logo = new Logo(Content);
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, carControllerContainer.Controller, traslacionesIniciales[0], angulosIniciales[0], playerBodyHandle);
@@ -254,7 +271,6 @@ namespace TGC.MonoGame.TP
             arma2 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(800, 32, 0));
             hamster3 = new Hamster(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-900, 70, -1050));
             arma3 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-1100, 32, 503));
-
             for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
                 if (listaModelos[i] == TipoAuto.tipoCarrera)
@@ -267,6 +283,7 @@ namespace TGC.MonoGame.TP
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
+            #endregion
 
             // Cargo un efecto basico propio declarado en el Content pipeline.
             // En el juego no pueden usar BasicEffect de MG, deben usar siempre efectos propios.
@@ -275,15 +292,41 @@ namespace TGC.MonoGame.TP
             initialMenu = new InitialMenu(/*autoJugador,*/ Content, SpriteBatch, Content.Load<SpriteFont>(ContentFolder3D + "menu/File"), Graphics, GraphicsDevice, this);
             initialMenu.Initialize();
             initialMenu.LoadContent();
+            loadBloom();
 
-            // Create a render target for the scene
+            // Create a render target for the menu scene
             EnvironmentMapRenderTarget = new RenderTargetCube(GraphicsDevice, EnvironmentmapSize, false,
                 SurfaceFormat.Color, DepthFormat.Depth24, 0, RenderTargetUsage.DiscardContents);
-            GraphicsDevice.BlendState = BlendState.Opaque;
 
             base.LoadContent();
         }
+        protected void loadBloom()
+        {
+            // Load the base bloom pass effect
+            _effect = Content.Load<Effect>(ContentFolderEffects + "Bloom");
 
+            // Load the blur effect to blur the bloom texture
+            _blurEffect = Content.Load<Effect>(ContentFolderEffects + "GaussianBlur");
+            _blurEffect.Parameters["screenSize"]
+                .SetValue(new Vector2(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height));
+
+            // Create a full screen quad to post-process
+            _fullScreenQuad = new FullScreenQuad(GraphicsDevice);
+
+            // Create render targets. 
+            // MainRenderTarget is used to store the scene color
+            // BloomRenderTarget is used to store the bloom color and switches with MultipassBloomRenderTarget
+            // depending on the pass count, to blur the bloom color
+            _mainSceneRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
+                RenderTargetUsage.DiscardContents);
+            _firstPassBloomRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
+                RenderTargetUsage.DiscardContents);
+            _secondPassBloomRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.None, 0,
+                RenderTargetUsage.DiscardContents);
+        }
         /// <summary>
         ///     Se llama en cada frame.
         ///     Se debe escribir toda la logica de computo del modelo, asi como tambien verificar entradas del usuario y reacciones
@@ -299,12 +342,6 @@ namespace TGC.MonoGame.TP
 
             var keyboardState = Keyboard.GetState();
             var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-
-            
-            /*
-             * Eliminar después
-             *  
-             */
 
             if (isInitialMenuOpen) {
                 initialMenu.Update(gameTime);
@@ -352,6 +389,7 @@ namespace TGC.MonoGame.TP
 
             if (keyboardState.IsKeyDown(Keys.P) && !oldState.IsKeyDown(Keys.P))
             {
+                
                 soundIsPaused = !soundIsPaused;
                 if (soundIsPaused)
                     MediaPlayer.Pause();
@@ -367,17 +405,11 @@ namespace TGC.MonoGame.TP
             }
 
 
-            Toys.Update(_boundingFrustum);
 
             foreach (var Auto in listaAutos)
             {
                 Auto.Update(gameTime, simulation, enemyController, posicionJugador);
             }
-
-
-            Cuarto.Update(_boundingFrustum);
-
-            oldState = keyboardState;
 
             arma.Update(gameTime, listaAutos);
             hamster.Update(gameTime, listaAutos);
@@ -386,10 +418,15 @@ namespace TGC.MonoGame.TP
             arma3.Update(gameTime, listaAutos);
             hamster3.Update(gameTime, listaAutos);
 
+            Cuarto.Update(_boundingFrustum);
+            Toys.Update(_boundingFrustum);
+
             lightPosition = Microsoft.Xna.Framework.Vector3.Transform(new Microsoft.Xna.Framework.Vector3(0, 0, 0), autoJugador.carWorld);
             lightDirection = autoJugador.forwardVector;
 
             CubeMapCamera.Position = autoJugador.carPosition;
+            
+            oldState = keyboardState;
 
             base.Update(gameTime);
         }
@@ -416,7 +453,6 @@ namespace TGC.MonoGame.TP
             }
             
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
-            //GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
             #region Pass 1-6
 
@@ -448,9 +484,10 @@ namespace TGC.MonoGame.TP
             #region Pass 7
 
             // Set the render target as null, we are drawing on the screen!
-            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.SetRenderTarget(_mainSceneRenderTarget);
             GraphicsDevice.BlendState = BlendState.Opaque;
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.CornflowerBlue, 1f, 0);
 
             Toys.Draw(gameTime, View, Projection, autoJugador.carPosition, lightPosition, lightDirection);
             
@@ -462,7 +499,7 @@ namespace TGC.MonoGame.TP
             foreach (var auto in listaAutos){
                 auto.Draw(gameTime, View, Projection);
             }
-//            Logo.Draw(gameTime, View, Projection);
+            //Logo.Draw(gameTime, View, Projection);
             
             arma.Draw(gameTime, View, Projection);
             hamster.Draw(gameTime, View, Projection);
@@ -472,16 +509,95 @@ namespace TGC.MonoGame.TP
             hamster3.Draw(gameTime, View, Projection);
 
             #endregion
+            
+            #region Pass 8 Bloom
 
+            // Set the render target as our bloomRenderTarget, we are drawing the bloom color into this texture
+            GraphicsDevice.SetRenderTarget(_firstPassBloomRenderTarget);
+            GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+
+            _effect.CurrentTechnique = _effect.Techniques["BloomPass"];
+            _effect.Parameters["baseTexture"].SetValue(hamster.textura);
+
+            // We get the base transform for each mesh
+            var modelMeshesBaseTransforms = new Microsoft.Xna.Framework.Matrix[hamster.modelo.Bones.Count];
+            hamster.modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+            foreach (var modelMesh in hamster.modelo.Meshes)
+            {
+                foreach (var part in modelMesh.MeshParts)
+                    part.Effect = _effect;
+
+                // We set the main matrices for each mesh to draw
+                var worldMatrix = modelMeshesBaseTransforms[modelMesh.ParentBone.Index];
+
+                // WorldViewProjection is used to transform from model space to clip space
+                _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * hamster.world * View * Projection);
+
+                // Once we set these matrices we draw
+                modelMesh.Draw();
+            }
+
+            #endregion
+            #region Multipass Bloom
+
+            // Now we apply a blur effect to the bloom texture
+            // Note that we apply this a number of times and we switch
+            // the render target with the source texture
+            // Basically, this applies the blur effect N times
+            _blurEffect.CurrentTechnique = _blurEffect.Techniques["Blur"];
+
+            var bloomTexture = _firstPassBloomRenderTarget;
+            var finalBloomRenderTarget = _secondPassBloomRenderTarget;
+
+            for (var index = 0; index < PassCount; index++)
+            {
+                //Exchange(ref SecondaPassBloomRenderTarget, ref FirstPassBloomRenderTarget);
+
+                // Set the render target as null, we are drawing into the screen now!
+                GraphicsDevice.SetRenderTarget(finalBloomRenderTarget);
+                GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+
+                _blurEffect.Parameters["baseTexture"].SetValue(bloomTexture);
+                _fullScreenQuad.Draw(_blurEffect);
+
+                if (index != PassCount - 1)
+                {
+                    var auxiliar = bloomTexture;
+                    bloomTexture = finalBloomRenderTarget;
+                    finalBloomRenderTarget = auxiliar;
+                }
+            }
+
+            #endregion
+            #region Final Pass
+
+            // Set the depth configuration as none, as we don't use depth in this pass
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
 
-        if (_debugColisiones)
+            // Set the render target as null, we are drawing into the screen now!
+            GraphicsDevice.SetRenderTarget(null);
+            GraphicsDevice.Clear(Color.Black);
+
+            // Set the technique to our blur technique
+            // Then draw a texture into a full-screen quad
+            // using our rendertarget as texture
+            _effect.CurrentTechnique = _effect.Techniques["Integrate"];
+            _effect.Parameters["baseTexture"].SetValue(_mainSceneRenderTarget);
+            _effect.Parameters["bloomTexture"].SetValue(finalBloomRenderTarget);
+            _fullScreenQuad.Draw(_effect);
+
+            #endregion
+            
+            /* 
+            #region Hub and Colitions
+            GraphicsDevice.DepthStencilState = DepthStencilState.None;
+            if (_debugColisiones)
             {
                 // dibujar las cajas de colisiones de todos los objetos
                 // si se quiere dibujar un convexHull hay que usar el mtodo DrawConvexHull (esta medio cursed ese)
                 Toys.DrawCollisionBoxes(View, Projection);
                 Cuarto.DrawCollisionBoxes(View, Projection);
-            }
+            } // caja de colisiones
 
             //Podríamos hacer un método para SpriteBatch de ser necesario.
             SpriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend);
@@ -490,7 +606,7 @@ namespace TGC.MonoGame.TP
 
             SpriteBatch.End();
 
-
+            #endregion*/
             if (_isMenuOpen)
             {
                 menu.DrawMenuOverlay();
@@ -641,23 +757,6 @@ namespace TGC.MonoGame.TP
 
 
         }
-
-
-        /*
-            // CARGAR LISTA DE AUTOS CON SUS INSTANCIAS
-            for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
-            {
-                if (listaModelos[i] == TipoAuto.tipoCarrera)
-                {
-                    listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
-                }
-                if (listaModelos[i] == TipoAuto.tipoCombate)
-                {
-                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, traslacionesIniciales[i], angulosIniciales[i]));
-                }
-                //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
-            }
-        */
         private void SetCubemapCameraForOrientation(CubeMapFace face)
         {
             switch (face)

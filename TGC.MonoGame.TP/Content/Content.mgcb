@@ -25,6 +25,12 @@
 /processorParam:DebugMode=Auto
 /build:Effects/BlinnPhong.fx
 
+#begin Effects/Bloom.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/Bloom.fx
+
 #begin Effects/CityShader.fx
 /importer:EffectImporter
 /processor:EffectProcessor
@@ -42,6 +48,12 @@
 /processor:EffectProcessor
 /processorParam:DebugMode=Auto
 /build:Effects/diffuseColor2.fx
+
+#begin Effects/GaussianBlur.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:Effects/GaussianBlur.fx
 
 #begin Effects/ModelsTexture.fx
 /importer:EffectImporter
