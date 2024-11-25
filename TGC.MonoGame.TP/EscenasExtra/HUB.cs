@@ -82,8 +82,8 @@ namespace TGC.MonoGame.TP.Content.Models
             Vector2 positionContador = new Vector2(15, 60);  // Posición en la pantalla
             Color textColor = Color.White;      
 
-            int proporcion = (int) autoJugador.vida/200;
-            int longitud = 200 * proporcion;
+            float proporcion = autoJugador.vida/200 ;
+            int longitud = (int) (200 * proporcion);
 
             spriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
             spriteBatch.Draw(texturaBarraVida, new Rectangle(12, 12, longitud, 20), Color.White);

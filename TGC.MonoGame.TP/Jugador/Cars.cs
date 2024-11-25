@@ -65,7 +65,7 @@ namespace TGC.MonoGame.TP.Content.Models
         // como esto es private no se dibujan los autos ya que nunca actualizan el modelo
         protected List<ModelMesh> ruedas;
         protected List<ModelMesh> restoAuto;
-        private GraphicsDevice graphicsDevice;
+        public GraphicsDevice graphicsDevice;
 
         private IPowerUp powerUp;
 
@@ -115,12 +115,19 @@ namespace TGC.MonoGame.TP.Content.Models
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
 
+
+        private DateTime ultimoDanio = DateTime.MinValue; // Rastrea el tiempo del último daño
+        private const int intervaloDanioMs = 1000;
         public void recibirDanio(int danio)
         {
-            vida = Math.Max(vida - danio, 0);
-            if (vida == 0)
+            if ((DateTime.Now - ultimoDanio).TotalMilliseconds >= intervaloDanioMs)
             {
-                //destrozado
+                ultimoDanio = DateTime.Now; // Actualiza el tiempo del último daño
+                vida = Math.Max(vida - danio, 0);
+                if (vida == 0)
+                {
+                    //destrozado
+                }
             }
         }
     }
@@ -137,7 +144,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public AutoEnemigoCombate(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, Vector3 posicion, float angulo, BodyHandle carBodyHandle)
             : base(content, simulation, graphicsDevice, posicion, angulo + (float)Math.PI / 2, carBodyHandle) //Ajustar ángulo si es necesario
         {
-
+            this.graphicsDevice = graphicsDevice;
             effectAuto = content.Load<Effect>(ContentFolderEffects + "diffuseColor2");
             CargarModelo(content);
             Escala = 0.004f + (0.004f - 0.001f) * new Random().NextSingle();
@@ -238,6 +245,8 @@ namespace TGC.MonoGame.TP.Content.Models
                 mesh.Draw();
             }
 
+            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+
             foreach (ModelMesh rueda in ruedas)
             {
                 effectAuto.Parameters["DiffuseColor"]?.SetValue(colorRueda);
@@ -252,6 +261,42 @@ namespace TGC.MonoGame.TP.Content.Models
                 rueda.Draw();
             }
         }
+
+                public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        {
+            var corners = boundingBox.GetCorners();
+            var vertices = new VertexPositionColor[24];
+
+            // Define color para las líneas del bounding box
+            var color = Color.Red;
+
+            // Asigna los vértices de las líneas de cada borde del bounding box
+            int[] indices = { 0, 1, 1, 2, 2, 3, 3, 0, // Bottom face
+                      4, 5, 5, 6, 6, 7, 7, 4, // Top face
+                      0, 4, 1, 5, 2, 6, 3, 7  // Vertical edges
+                    };
+
+
+            for (int i = 0; i < indices.Length; i++)
+            {
+                vertices[i] = new VertexPositionColor(corners[indices[i]], color);
+            }
+
+            var basicEffect = new BasicEffect(graphicsDevice)
+            {
+                World = Matrix.Identity,
+                View = view,
+                Projection = projection,
+                VertexColorEnabled = true
+            };
+
+            foreach (var pass in basicEffect.CurrentTechnique.Passes)
+            {
+                pass.Apply();
+                graphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, vertices, 0, 12);
+            }
+        }
+
     }
 
     class AutoEnemigoCarrera : AutoEnemigo

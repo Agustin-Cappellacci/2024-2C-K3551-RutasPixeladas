@@ -268,8 +268,10 @@ namespace TGC.MonoGame.TP
                     listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice,traslacionesIniciales[i], angulosIniciales[i], enemyBodyHandle));
                 }
                 if (listaModelos[i] == TipoAuto.tipoCombate)
-                {
-                    listaAutos.Add(new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(100, 100, 100), angulosIniciales[0], enemyBodyHandle));
+                {   
+                    var a = new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(100, 100, 100), angulosIniciales[0], enemyBodyHandle);
+                    listaAutos.Add(a);
+                    autoJugadorWrapper.autoEnemigo = a;
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }

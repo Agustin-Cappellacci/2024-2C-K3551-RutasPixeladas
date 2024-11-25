@@ -79,7 +79,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public float cooldownTimer = 0f;   // Contador para el cooldown
         public bool isOnCooldown = false;
 
-        public float vida = 200;
+        public float vida = 200f;
 
         private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
@@ -290,10 +290,19 @@ namespace TGC.MonoGame.TP.Content.Models
             Console.WriteLine("posicion del auto: " + carPosition);
         }
 
-        public void recibirDanio(int danio){
-            vida = Math.Max(vida - danio, 0);
-            if (vida == 0){
-                //destrozado
+        private DateTime ultimoDanio = DateTime.MinValue; // Rastrea el tiempo del último daño
+        private const int intervaloDanioMs = 1000;
+        public void recibirDanio(int danio)
+        {
+            if ((DateTime.Now - ultimoDanio).TotalMilliseconds >= intervaloDanioMs)
+            {
+                ultimoDanio = DateTime.Now; // Actualiza el tiempo del último daño
+                vida = Math.Max(vida - danio, 0);
+                Console.Write("recibi danio : " + danio + "\n");
+                if (vida == 0)
+                {
+                    //destrozado
+                }
             }
         }
 

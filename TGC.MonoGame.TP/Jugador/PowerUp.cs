@@ -101,7 +101,7 @@ namespace TGC.MonoGame.TP.Content.Models
         }
         public abstract void Apply();
     }
-    /*class SuperSpeed : IPowerUp
+    class SuperSpeed : IPowerUp
     {
         //private BoundingBox ColisionCaja { get; set; }
         public SuperSpeed(ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
@@ -114,7 +114,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public override void Apply()
         {
             _powerUpSoundInstance.Play();
-            jugador.CarSpeed = 10000;
+            //jugador.CarSpeed = 10000;
         }
 
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection) { }
@@ -133,9 +133,9 @@ namespace TGC.MonoGame.TP.Content.Models
                      meshPart.Effect = efectoPwUP;
                  }
              }*/
-    //    }
+        }
 
-//    }
+    }
 
     class Gun : IPowerUp
     {
@@ -154,7 +154,6 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public float radioDeteccion = 5f;
         private Matrix AimRotation = Matrix.Identity;
-        private bool autoCerca = false;
 
 
         public Gun(GraphicsDevice graphicsDevice, ContentManager content, Jugador jugador, Vector3 posInicial) : base(content, jugador, posInicial)
@@ -197,7 +196,6 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Crear una nueva BoundingBox con los nuevos límites
             return new BoundingBox(nuevoMin, nuevoMax);
-
         }
 
 
@@ -254,19 +252,19 @@ namespace TGC.MonoGame.TP.Content.Models
 
             if (Seleccionado)
             {
-                autoCerca = false;
+                bool autoCerca = false;
                 // Ajusta la posición en relación con la rotación y posición del coche
-                foreach (var auto in listaAutos)
+                /*foreach (var auto in listaAutos)
                     {
-                         //aca iria auto.carposition
+                        Vector3 autoPosicion = new Vector3(0,0,0); //aca iria auto.carposition
 
-                        float distancia = Vector3.Distance(posicion, auto.carPosition);
+                        float distancia = Vector3.Distance(posicion, autoPosicion);
 
                         if (distancia <= radioDeteccion)
                         {
                             autoCerca = true;
                             // Calcular la dirección hacia el auto
-                            Vector3 direccionHaciaAuto = Vector3.Normalize(auto.carPosition - posicion);
+                            Vector3 direccionHaciaAuto = Vector3.Normalize(autoPosicion - posicion);
 
                             // Mantener la rotación del auto y ajustar para que apunte al auto detectado
                             Microsoft.Xna.Framework.Quaternion rotacionApuntado = Microsoft.Xna.Framework.Quaternion.CreateFromRotationMatrix(Matrix.CreateWorld(posicion, direccionHaciaAuto, Vector3.Up));
@@ -275,14 +273,13 @@ namespace TGC.MonoGame.TP.Content.Models
                             AimRotation = jugador.rotationMatrix * Matrix4x4.CreateFromQuaternion(ToNumericsQuaternion(rotacionApuntado));
                         }
                     }
-
                 if (!autoCerca){
-                    AimRotation = jugador.rotationMatrix;
-                }
+                    AimRotation = 
+                }*/
 
                 var offset = new System.Numerics.Vector3(0, 40f, 0); // Altura sobre el techo
                 posicion = jugador.carPosition + Vector3.Transform(offset, jugador.rotationMatrix); // Usa la rotación del coche
-                world = Matrix.CreateScale(1.5f) * AimRotation * Matrix.CreateTranslation(posicion);
+                world = Matrix.CreateScale(1.5f) * jugador.rotationMatrix * Matrix.CreateTranslation(posicion);
 
             }
             else
