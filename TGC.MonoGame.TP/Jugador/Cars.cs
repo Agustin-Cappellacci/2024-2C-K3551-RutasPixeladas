@@ -190,6 +190,20 @@ namespace TGC.MonoGame.TP.Content.Models
             // Agregar un rango de ángulo para el movimiento hacia adelante
             float angleThreshold = 0.7f; // Rango de ángulo para mover hacia adelante
 
+            bool isFlipped = rotationMatrix.Up.Y < 0; // Si Y es negativo, el auto está al revés
+
+            // Si está volcado y se presiona "R"
+            if (isFlipped)
+            {
+               // Rota el auto para enderezarlo
+                  carBodyReference.Pose.Orientation = System.Numerics.Quaternion.Identity;
+                  carBodyReference.Pose.Position = new System.Numerics.Vector3(
+                   carBodyReference.Pose.Position.X,
+                    carBodyReference.Pose.Position.Y + 1, // Ajusta la altura si es necesario
+                    carBodyReference.Pose.Position.Z
+                );
+            }
+
 
             // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
             float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 2f;

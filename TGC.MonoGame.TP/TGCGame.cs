@@ -734,12 +734,12 @@ namespace TGC.MonoGame.TP
 
             var pose = new RigidPose(traslacionesIniciales[0], System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
             
-            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
+            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2.5f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
             new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
 
             Console.WriteLine("Inertia: " + bodyInertia);
-            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce: 50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+            playerController = new SimpleCarController(auto, forwardSpeed: 58000, forwardForce: 58000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
             playerBodyHandle = auto.Body;
 
@@ -752,9 +752,9 @@ namespace TGC.MonoGame.TP
             var poseEnemigo = new RigidPose(new System.Numerics.Vector3(100f, 100f, 100f), System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
             // ACA SE INICIALIZAN LOS AUTOS DE IA
             bufferPool.Take(CantidadDeAutos - 1, out aiControllers);
-            var autoEnemigo = SimpleCar.Create(simulation, properties, poseEnemigo, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
+            var autoEnemigo = SimpleCar.Create(simulation, properties, poseEnemigo, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2.9f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
+            new SpringSettings(50f, 0.5f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
             enemyController = new SimpleCarController(autoEnemigo, forwardSpeed: 30000, forwardForce: 30000, zoomMultiplier: 3, backwardSpeed: 20000, backwardForce: 20000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
             enemyBodyHandle = autoEnemigo.Body;
