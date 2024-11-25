@@ -152,6 +152,7 @@ namespace TGC.MonoGame.TP
         private RenderTarget2D _mainSceneRenderTarget;
 
         private RenderTarget2D _secondPassBloomRenderTarget;
+        private RenderTarget2D _horizontalRenderTarget;
 
         #endregion
         public TGCGame()
@@ -324,6 +325,9 @@ namespace TGC.MonoGame.TP
                 GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.Depth24Stencil8, 0,
                 RenderTargetUsage.DiscardContents);
             _secondPassBloomRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
+                GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.None, 0,
+                RenderTargetUsage.DiscardContents);
+            _horizontalRenderTarget = new RenderTarget2D(GraphicsDevice, GraphicsDevice.Viewport.Width,
                 GraphicsDevice.Viewport.Height, false, SurfaceFormat.Color, DepthFormat.None, 0,
                 RenderTargetUsage.DiscardContents);
         }
@@ -535,6 +539,10 @@ namespace TGC.MonoGame.TP
 
                 // Once we set these matrices we draw
                 modelMesh.Draw();
+                _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * hamster2.world * View * Projection);
+                modelMesh.Draw();
+                _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * hamster3.world * View * Projection);
+                modelMesh.Draw();
             }
 
             #endregion
@@ -544,9 +552,10 @@ namespace TGC.MonoGame.TP
             // Note that we apply this a number of times and we switch
             // the render target with the source texture
             // Basically, this applies the blur effect N times
-            _blurEffect.CurrentTechnique = _blurEffect.Techniques["Blur"];
+            
 
             var bloomTexture = _firstPassBloomRenderTarget;
+            var horizontalBlur = _horizontalRenderTarget;
             var finalBloomRenderTarget = _secondPassBloomRenderTarget;
 
             for (var index = 0; index < PassCount; index++)
@@ -554,10 +563,16 @@ namespace TGC.MonoGame.TP
                 //Exchange(ref SecondaPassBloomRenderTarget, ref FirstPassBloomRenderTarget);
 
                 // Set the render target as null, we are drawing into the screen now!
+                GraphicsDevice.SetRenderTarget(horizontalBlur);
+                GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
+                _blurEffect.CurrentTechnique = _blurEffect.Techniques["BlurHorizontalTechnique"];
+                _blurEffect.Parameters["baseTexture"].SetValue(bloomTexture);
+                _fullScreenQuad.Draw(_blurEffect);
+
                 GraphicsDevice.SetRenderTarget(finalBloomRenderTarget);
                 GraphicsDevice.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, Color.Black, 1f, 0);
-
-                _blurEffect.Parameters["baseTexture"].SetValue(bloomTexture);
+                _blurEffect.CurrentTechnique = _blurEffect.Techniques["BlurVerticalTechnique"];
+                _blurEffect.Parameters["baseTexture"].SetValue(horizontalBlur);
                 _fullScreenQuad.Draw(_blurEffect);
 
                 if (index != PassCount - 1)
@@ -588,7 +603,7 @@ namespace TGC.MonoGame.TP
 
             #endregion
             
-            /* 
+             
             #region Hub and Colitions
             GraphicsDevice.DepthStencilState = DepthStencilState.None;
             if (_debugColisiones)
@@ -606,7 +621,7 @@ namespace TGC.MonoGame.TP
 
             SpriteBatch.End();
 
-            #endregion*/
+            #endregion
             if (_isMenuOpen)
             {
                 menu.DrawMenuOverlay();
