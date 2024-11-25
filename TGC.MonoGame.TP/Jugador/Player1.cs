@@ -46,7 +46,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
         public System.Numerics.Vector3 carPosition { get; set; }
-        public float CarSpeed { get; set; }
+        public Vector3  CarSpeed { get; set; }
+        public BepuPhysics.BodyVelocity velocity;
         private const float CarMaxSpeed = 500f;
         public float CarAcceleration { get; set; }
         private const float CarBrakeForce = 5000f;
@@ -78,7 +79,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public float cooldownTimer = 0f;   // Contador para el cooldown
         public bool isOnCooldown = false;
 
-        private float vida = 200;
+        public float vida = 200;
 
         private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 
@@ -283,8 +284,17 @@ namespace TGC.MonoGame.TP.Content.Models
             carWorld = rotationMatrix * Matrix.CreateScale(0.2f) * Matrix.CreateTranslation(carPosition);
 
             forwardVector = rotationMatrix.Forward;
+            CarSpeed = carBodyReference.Velocity.Linear;
+            velocity = carBodyReference.Velocity;
 
             Console.WriteLine("posicion del auto: " + carPosition);
+        }
+
+        public void recibirDanio(int danio){
+            vida = Math.Max(vida - danio, 0);
+            if (vida == 0){
+                //destrozado
+            }
         }
 
         public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition, RenderTargetCube EnvironmentMapRenderTarget)

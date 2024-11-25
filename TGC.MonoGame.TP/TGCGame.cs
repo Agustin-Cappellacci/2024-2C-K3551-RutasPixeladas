@@ -86,7 +86,7 @@ namespace TGC.MonoGame.TP
         }
         private int CantidadDeAutos { get; set; }
         public List<TipoAuto> listaModelos { get; set; }
-        public List<AutoEnemigo> listaAutos { get; set; }
+        public static List<AutoEnemigo> listaAutos { get; set; }
         private List<System.Numerics.Vector3> traslacionesIniciales { get; set; }
         private List<float> angulosIniciales { get; set; }
 
@@ -136,6 +136,8 @@ namespace TGC.MonoGame.TP
         private StaticCamera CubeMapCamera { get; set; }
 
         private const int EnvironmentmapSize = 2048;
+
+        public static List<BodyHandle> listaBodyHandle;
 
         public TGCGame()
         {
@@ -213,7 +215,11 @@ namespace TGC.MonoGame.TP
 
             CubeMapCamera = new StaticCamera(1f, Vector3.UnitX * -500f, Vector3.UnitX, Vector3.Up);
             CubeMapCamera.BuildProjection(1f, 1f, 3000f, Microsoft.Xna.Framework.MathHelper.PiOver2);
+
+            listaBodyHandle = new List<BodyHandle>();
             // INICIALIZO LOGICA DE BEPU
+
+            
             iniciarSimulacion();
 
 
@@ -597,7 +603,7 @@ namespace TGC.MonoGame.TP
             const float wheelBaseLength = frontZ - backZ;
 
             var pose = new RigidPose(traslacionesIniciales[0], System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
-
+            
             var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
             new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
@@ -606,6 +612,8 @@ namespace TGC.MonoGame.TP
             playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce: 50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
             playerBodyHandle = auto.Body;
+
+            listaBodyHandle.Add(playerBodyHandle);
 
             // Actualiza el contenedor con el `CarController` después de su creación.
             carControllerContainer.Controller = playerController;
@@ -620,6 +628,8 @@ namespace TGC.MonoGame.TP
             enemyController = new SimpleCarController(autoEnemigo, forwardSpeed: 30000, forwardForce: 30000, zoomMultiplier: 3, backwardSpeed: 20000, backwardForce: 20000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
             enemyBodyHandle = autoEnemigo.Body;
+
+            listaBodyHandle.Add(enemyBodyHandle);
             /* var random = new Random(5);
             
             for (int i = 1; i < CantidadDeAutos; ++i)

@@ -42,8 +42,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private const float carSpinSpeed = 0.3f;
 
 
-        private System.Numerics.Vector3 carPosition { get; set; }
-        public float CarSpeed { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
+        public Vector3 CarSpeed { get; set; }
+        public BepuPhysics.BodyVelocity velocity;
         private const float CarMaxSpeed = 500f;
         public float CarAcceleration { get; set; }
         private const float CarBrakeForce = 5000f;
@@ -68,9 +69,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private IPowerUp powerUp;
 
-        private float vida = 200;
+        public float vida = 200;
 
         protected Model CarModel { get; set; }
+        public BoundingBox ColisionCaja { get; set; }
 
 
 
@@ -112,12 +114,21 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             return new System.Numerics.Vector3(xnaVector3.X, xnaVector3.Y, xnaVector3.Z);
         }
+
+        public void recibirDanio(int danio)
+        {
+            vida = Math.Max(vida - danio, 0);
+            if (vida == 0)
+            {
+                //destrozado
+            }
+        }
     }
 
     class AutoEnemigoCombate : AutoEnemigo
     {
         private Matrix rotationMatrix;
-        private System.Numerics.Vector3 carPosition { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
         public Effect effectAuto { get; set; }
 
         float Escala;
@@ -160,6 +171,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Vector hacia el objetivo
             Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
 
+
             // Calcular la rotación del auto actual
             Vector3 forwardVector = Vector3.Transform(Vector3.Backward, Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation));
             float dotProduct = Vector3.Dot(forwardVector, directionToTarget);
@@ -180,6 +192,9 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
+            ColisionCaja = new BoundingBox(carBodyReference.BoundingBox.Min, carBodyReference.BoundingBox.Max);
+            CarSpeed = carBodyReference.Velocity.Linear;
+            velocity = carBodyReference.Velocity;
         }
 
         protected override void CargarModelo(ContentManager content)
@@ -242,7 +257,7 @@ namespace TGC.MonoGame.TP.Content.Models
     class AutoEnemigoCarrera : AutoEnemigo
     {
         private Matrix rotationMatrix;
-        private System.Numerics.Vector3 carPosition { get; set; }
+        public System.Numerics.Vector3 carPosition { get; set; }
 
         public Effect effectAuto { get; set; }
 
@@ -290,6 +305,9 @@ namespace TGC.MonoGame.TP.Content.Models
             carPosition = carBodyReference.Pose.Position;
             rotationMatrix = Matrix.CreateFromQuaternion(carBodyReference.Pose.Orientation) * Matrix.CreateRotationY(MathHelper.ToRadians(90));
             carWorld = rotationMatrix * Matrix.CreateScale(0.01f) * Matrix.CreateTranslation(carPosition);
+            ColisionCaja = new BoundingBox(carBodyReference.BoundingBox.Min, carBodyReference.BoundingBox.Max);
+            CarSpeed = carBodyReference.Velocity.Linear;
+            velocity = carBodyReference.Velocity;
         }
         protected override void CargarModelo(ContentManager content)
         {

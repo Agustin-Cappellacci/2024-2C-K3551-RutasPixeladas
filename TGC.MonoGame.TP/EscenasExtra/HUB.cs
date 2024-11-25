@@ -79,11 +79,14 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Jugador autoJugador) {
             Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
-            Vector2 positionContador = new Vector2(560, 620);  // Posición en la pantalla
+            Vector2 positionContador = new Vector2(15, 60);  // Posición en la pantalla
             Color textColor = Color.White;      
 
+            int proporcion = (int) autoJugador.vida/200;
+            int longitud = 200 * proporcion;
+
             spriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
-            spriteBatch.Draw(texturaBarraVida, new Rectangle(12, 12, 200, 20), Color.White);
+            spriteBatch.Draw(texturaBarraVida, new Rectangle(12, 12, longitud, 20), Color.White);
             spriteBatch.Draw(texturaCuadroItem, new Rectangle(10, 40, 70, 70), Color.White);
 
             // Puedes dibujar el círculo dependiendo del progreso
