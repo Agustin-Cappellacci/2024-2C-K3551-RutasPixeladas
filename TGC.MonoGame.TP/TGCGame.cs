@@ -458,12 +458,7 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
 
-            #region Muerte jugador
-            if (autoJugador.estaMuerto){
 
-                menu.Muerte();
-            }
-            #endregion
             if (isInitialMenuOpen || lastDraw) {
                 if (lastDraw) {
                     lastDraw = false;
@@ -473,6 +468,7 @@ namespace TGC.MonoGame.TP
                 return;
             }
             
+
             GraphicsDevice.RasterizerState = RasterizerState.CullCounterClockwise;
 
             #region Pass 1-6

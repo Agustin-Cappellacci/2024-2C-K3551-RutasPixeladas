@@ -93,29 +93,6 @@ namespace TGC.MonoGame.TP.Content.Models
             SpriteBatch.End();
         }
 
-                private string  _gameOver = "Game Over";
-
-        public void Muerte (){
-            SpriteBatch.Begin(
-                SpriteSortMode.Immediate,         // Ensure it executes immediately
-                BlendState.AlphaBlend,             // Proper blending for transparency
-                null,                        // No changes to SamplerState or RasterizerState
-                DepthStencilState.None,
-                null,
-                null           // Disable depth testing for the 2D layer
-                );
-            // Draw a semi-transparent background for the menu.
-            var overlay = new Texture2D(GraphicsDevice, 1, 1);
-            overlay.SetData(new[] { Color.Black * 0.5f }); // 50% transparent black.
-            SpriteBatch.Draw(overlay, new Rectangle(0, 0, Graphics.PreferredBackBufferWidth, Graphics.PreferredBackBufferHeight), Color.White);
-
-            // Draw menu items.
-
-            Color color = Color.White;
-            var position = new Vector2(850, 450);
-            SpriteBatch.DrawString(_menuFont, _gameOver, position, color);
-            SpriteBatch.End();
-        }
     }
 
 }

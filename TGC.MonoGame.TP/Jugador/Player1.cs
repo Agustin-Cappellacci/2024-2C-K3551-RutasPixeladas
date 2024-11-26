@@ -80,7 +80,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public float cooldownTimer = 0f;   // Contador para el cooldown
         public bool isOnCooldown = false;
 
-        public float vida = 200f;
+        public float vida = 150f;
 
         private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 

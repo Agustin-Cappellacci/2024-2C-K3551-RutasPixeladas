@@ -77,6 +77,9 @@ namespace TGC.MonoGame.TP.Content.Models
             */
         }
 
+        private Vector2 _posicionGameOver = new Vector2(400,500);
+        private string _gameOver = "Game Over";
+        private string _win = "You Win";
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Jugador autoJugador) {
             Vector2 position = new Vector2(700, 30);  // Posición en la pantalla
             Vector2 positionContador = new Vector2(40, 35);  // Posición en la pantalla
@@ -118,7 +121,16 @@ namespace TGC.MonoGame.TP.Content.Models
             spriteBatch.DrawString(myFont, contadorMuertes, positionContadorBajas, textColor);
             spriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
             spriteBatch.DrawString(myFont, contador, positionContador, textColor);
-
+            if (autoJugador.vida == 0)
+            {
+                spriteBatch.Draw(texturaBarraVida, new Rectangle(0, 0, 4000,4000), Color.Black);
+                spriteBatch.DrawString(myFont, _gameOver, _posicionGameOver, textColor);
+            }
+            if (autoJugador.cantidadBajas == 4 || true)
+            {
+                spriteBatch.Draw(texturaBarraVida, new Rectangle(0, 0, 4000, 4000), Color.Black * 0.4f);
+                spriteBatch.DrawString(myFont, _win, _posicionGameOver, textColor);
+            }
         }
 
     }
