@@ -400,8 +400,6 @@ namespace TGC.MonoGame.TP.Content.Models
             }
             
             
-            // Dibujar la caja de colisión del plano
-            DrawBox(Matrix.CreateTranslation(0, -50, 0), new Vector3(5000f, 100f, 5000f) /2f, viewMatrix, projectionMatrix);
             // Dibujar ajedrez
             DrawBox(Matrix.CreateFromYawPitchRoll(-(float)Math.PI /4, 0, 0)*Matrix.CreateTranslation(-1200f, 2f, 1700f), new Vector3(500f, 100f, 500f)/2f, viewMatrix, projectionMatrix);
             // Dibujar lego
@@ -564,15 +562,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Define el tamaño del box (ancho, alto, profundo)
             
 
-            var boxSize = new System.Numerics.Vector3(5000f, 100f, 5000f);
-            // Crear el Collidable Box
-            var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
-            var boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
-            // Crear el objeto estático para el suelo
-            floorHandle = simulation.Statics.Add(new StaticDescription(
-                new System.Numerics.Vector3(0, -50f, 0), // Posición inicial del box
-                boxShapeIndex // Fricción
-            ));
+
 
 
             // Crear colisiones para la torre eiffel

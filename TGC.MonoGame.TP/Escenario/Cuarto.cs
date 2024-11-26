@@ -124,6 +124,21 @@ namespace TGC.MonoGame.TP.Content.Models
                 Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left * 75f),
                 Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Right *2f* 75f),
                 Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left *2f* 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f + Vector3.Left * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Forward + Vector3.Left * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward + Vector3.Left * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Left * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Forward * 150f + Vector3.Right * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Forward + Vector3.Right * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward + Vector3.Right * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 150f + Vector3.Right * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Left * 2f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Right * 2f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Left * 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Right * 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Left * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Right * 3f* 75f),
+                Matrix.CreateTranslation(Vector3.Backward * 300f + Vector3.Right),
             };
 
 
@@ -507,7 +522,52 @@ namespace TGC.MonoGame.TP.Content.Models
             this.graphicsDevice = graphicsDevice;
 
             // Crear colisiones
+            var boxSize = new System.Numerics.Vector3(5500f, 100f, 6200f);
+            // Crear el Collidable Box
+            var boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
+            var boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            var floor = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(200f, -50f, 700f), // Posición inicial del box
+                boxShapeIndex // Fricción
+            ));
 
+            boxSize = new System.Numerics.Vector3(100f, 600f, 6200f);
+            // Crear el Collidable Box
+            boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
+            boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            var wall1 = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(2900f, 100f, 700f), // Posición inicial del box
+                boxShapeIndex // Fricción
+            ));
+            boxSize = new System.Numerics.Vector3(100f, 600f, 6200f);
+            // Crear el Collidable Box
+            boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
+            boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            var wall2 = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(-2500f, 100f, 700f), // Posición inicial del box
+                boxShapeIndex // Fricción
+            ));
+            boxSize = new System.Numerics.Vector3(5500f, 600f, 100f);
+            // Crear el Collidable Box
+            boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
+            boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            var wall3 = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(200f, 100f, 3900f), // Posición inicial del box
+                boxShapeIndex // Fricción
+            ));
+            boxSize = new System.Numerics.Vector3(5500f, 600f, 100f);
+            // Crear el Collidable Box
+            boxShape = new Box(boxSize.X, boxSize.Y, boxSize.Z); // Crea la forma del box
+            boxShapeIndex = simulation.Shapes.Add(boxShape); // Registra la forma en el sistema de colisiones
+            // Crear el objeto estático para el suelo
+            var wall4 = simulation.Statics.Add(new StaticDescription(
+                new System.Numerics.Vector3(200f, 100f, -2300f), // Posición inicial del box
+                boxShapeIndex // Fricción
+            ));
             // Define el tamaño del box (ancho, alto, profundo)
             System.Numerics.Vector3 camaSize = new System.Numerics.Vector3(1680f, 570f, 3380f);
             // Crear el Collidable Box
@@ -647,10 +707,14 @@ namespace TGC.MonoGame.TP.Content.Models
                 cama, almohadaCama, respaldoCama, pata1Cama, pata2Cama, pata3Cama, pata4Cama,
             };
 
+            List<StaticHandle> floorHandle = new List<StaticHandle>()
+            {
+                floor,wall1,wall2,wall3,wall4
+            };
 
             _staticHandles.Add(sillaHandle);
             _staticHandles.Add(camaHandle);
-
+            _staticHandles.Add(floorHandle);
 
         }
 
