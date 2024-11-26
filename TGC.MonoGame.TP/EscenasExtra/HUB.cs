@@ -87,7 +87,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             Vector2 positionContadorBajas = new Vector2(20, 100);
 
-            float proporcion = autoJugador.vida/200 ;
+            float proporcion = autoJugador.vida/150 ;
             int longitud = (int) (200 * proporcion);
 
             spriteBatch.Draw(texturaBarraVida, new Rectangle(10, 10, 210, 25), Color.Black);
@@ -126,7 +126,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 spriteBatch.Draw(texturaBarraVida, new Rectangle(0, 0, 4000,4000), Color.Black);
                 spriteBatch.DrawString(myFont, _gameOver, _posicionGameOver, textColor);
             }
-            if (autoJugador.cantidadBajas == 4 || true)
+            if (autoJugador.cantidadBajas == 4)
             {
                 spriteBatch.Draw(texturaBarraVida, new Rectangle(0, 0, 4000, 4000), Color.Black * 0.4f);
                 spriteBatch.DrawString(myFont, _win, _posicionGameOver, textColor);
