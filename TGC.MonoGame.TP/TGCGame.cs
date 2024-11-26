@@ -164,7 +164,7 @@ namespace TGC.MonoGame.TP
             // Maneja la configuracion y la administracion del dispositivo grafico.
             Graphics = new GraphicsDeviceManager(this);
             // Consejo: Para que el juego sea pantalla completa se puede usar Graphics IsFullScreen.
-
+            Graphics.ToggleFullScreen();
 
             // Carpeta raiz donde va a estar toda la Media.
             Content.RootDirectory = "Content";
