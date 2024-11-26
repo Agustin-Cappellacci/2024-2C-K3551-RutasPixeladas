@@ -267,6 +267,8 @@ namespace TGC.MonoGame.TP
             autoJugador = new Jugador(Content, simulation, GraphicsDevice, carControllerContainer.Controller, traslacionesIniciales[0], angulosIniciales[0], playerBodyHandle);
             autoJugadorWrapper.AutoJugador = autoJugador;
 
+            autoJugadorWrapper.autoEnemigos = new List<AutoEnemigo>();
+
             ToyCity = new ToyCity(Content);
             SimpleTerrain = new SimpleTerrain(Content, GraphicsDevice);
             Toys = new Toys(Content, simulation, GraphicsDevice);
@@ -289,7 +291,7 @@ namespace TGC.MonoGame.TP
                 {   
                     var a = new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(100, 100, 100), angulosIniciales[0], enemyBodyHandles[i]);
                     listaAutos.Add(a);
-                    autoJugadorWrapper.autoEnemigo = a;
+                    autoJugadorWrapper.autoEnemigos.Add(a);
                 }
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
@@ -456,6 +458,12 @@ namespace TGC.MonoGame.TP
             GraphicsDevice.Clear(Color.CornflowerBlue);
             GraphicsDevice.BlendState = BlendState.Opaque;
 
+            #region Muerte jugador
+            if (autoJugador.estaMuerto){
+
+                menu.Muerte();
+            }
+            #endregion
             if (isInitialMenuOpen || lastDraw) {
                 if (lastDraw) {
                     lastDraw = false;
@@ -740,14 +748,14 @@ namespace TGC.MonoGame.TP
             simulation = Simulation.Create(bufferPool, carCallbacks, new DemoPoseIntegratorCallbacks(new System.Numerics.Vector3(0, -100, 0)), new SolveDescription(8, 1));
 
             var builder = new CompoundBuilder(bufferPool, simulation.Shapes, 2);
-            builder.Add(new Box(10f, 30f, 100f), RigidPose.Identity, 300);
+            builder.Add(new Box(10f, 30f, 100f), RigidPose.Identity, 350);
             builder.Add(new Box(40f, 30f, 50f), new System.Numerics.Vector3(0, 20f, -5f), 1f);
             builder.BuildDynamicCompound(out var children, out var bodyInertia, out _);
             builder.Dispose();
             var bodyShape = new Compound(children);
             var bodyShapeIndex = simulation.Shapes.Add(bodyShape);
             var wheelShape = new Cylinder(5f, 5f);
-            var wheelInertia = wheelShape.ComputeInertia(5f);
+            var wheelInertia = wheelShape.ComputeInertia(10f);
             var wheelShapeIndex = simulation.Shapes.Add(wheelShape);
 
             const float x = 30f;
@@ -759,12 +767,12 @@ namespace TGC.MonoGame.TP
 
             var pose = new RigidPose(traslacionesIniciales[0], System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
             
-            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2.7f,
+            var auto = SimpleCar.Create(simulation, properties, pose, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
             new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-            new SpringSettings(50f, 0.1f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
+            new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
 
             Console.WriteLine("Inertia: " + bodyInertia);
-            playerController = new SimpleCarController(auto, forwardSpeed: 54000, forwardForce: 54000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+            playerController = new SimpleCarController(auto, forwardSpeed: 50000, forwardForce: 50000, zoomMultiplier: 3, backwardSpeed: 30000, backwardForce: 30000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
             wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
             playerBodyHandle = auto.Body;
 
@@ -788,7 +796,7 @@ namespace TGC.MonoGame.TP
                 var autoEnemigo = SimpleCar.Create(simulation, properties, poseEnemigo, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
                 new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
                 new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
-                enemyController = new SimpleCarController(autoEnemigo, forwardSpeed: 20000 + 20000 * randomIndex, forwardForce: 20000 + 20000 * randomIndex, zoomMultiplier: 3, backwardSpeed: 20000, backwardForce: 20000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+                enemyController = new SimpleCarController(autoEnemigo, forwardSpeed: 15000 + 20000 * randomIndex, forwardForce: 15000 + 20000 * randomIndex, zoomMultiplier: 3, backwardSpeed: 20000, backwardForce: 20000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
                 wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
                 enemyBodyHandles.Add(autoEnemigo.Body);
                 enemyControllers.Add(enemyController);

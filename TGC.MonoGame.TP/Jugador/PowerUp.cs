@@ -319,7 +319,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 mesh.Draw();
 
             }
-            DrawBoundingBox(graphicsDevice, View, Projection);
+            //DrawBoundingBox(graphicsDevice, View, Projection);
         }
 
        
@@ -478,7 +478,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 }
             }
 
-            DrawBoundingBox(graphicsDevice, View, Projection);
+            //DrawBoundingBox(graphicsDevice, View, Projection);
 
         }
 

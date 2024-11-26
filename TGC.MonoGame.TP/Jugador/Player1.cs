@@ -31,6 +31,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private Effect effectAuto { get; set; }
 
         // Jugabilidad
+        public bool estaMuerto = false;
         private Microsoft.Xna.Framework.Vector3 direccionFrontal { get; set; }
         private Matrix carRotation = Matrix.CreateRotationY(0f);
         public Matrix rotationMatrix;
@@ -101,6 +102,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public bool isGrounded = false;
 
+        public int cantidadBajas;
+
         public Jugador(ContentManager content, Simulation simulation, GraphicsDevice graphicsDevice, SimpleCarController playerController, Vector3 posicion, float angulo, BodyHandle bodyHandle)
         {   
             contenido = content;
@@ -155,7 +158,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             //carBodyHandle = CrearCuerpoDelAutoEnSimulacion(simulation, PositionToNumerics(posicion), angulo);
 
-            ColisionCaja = new BoundingBox((new Vector3(-20f, -10f, -13f)), new Vector3(10f, 0f, 13f)); ;
+            ColisionCaja = new BoundingBox((new Vector3(-20f, -10f, -13f)), new Vector3(10f, 0f, 13f));
+            cantidadBajas = 0;
         }
 
         public static BoundingBox ModificarDimensiones(BoundingBox cajaOriginal, Vector3 nuevaDimension)
@@ -286,7 +290,7 @@ namespace TGC.MonoGame.TP.Content.Models
             forwardVector = rotationMatrix.Forward;
             CarSpeed = carBodyReference.Velocity.Linear;
             velocity = carBodyReference.Velocity;
-
+            
             Console.WriteLine("posicion del auto: " + carPosition);
         }
 
@@ -301,10 +305,11 @@ namespace TGC.MonoGame.TP.Content.Models
                 Console.Write("recibi danio : " + danio + "\n");
                 if (vida == 0)
                 {
-                    //destrozado
+                    estaMuerto = true;
                 }
             }
         }
+
 
         public void Draw(Matrix View, Matrix Projection, Vector3 cameraPosition, RenderTargetCube EnvironmentMapRenderTarget)
         {
@@ -444,7 +449,7 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Dibujar la caja de colisión del auto usando la matriz de mundo del auto
             //DrawBox(carWorldMatrix, new Vector3(40f, -30f, 100f), viewMatrix, projectionMatrix);
-            DrawBox(carWorldMatrix, colisionCaja.Max - colisionCaja.Min, viewMatrix, projectionMatrix);
+            //DrawBox(carWorldMatrix, colisionCaja.Max - colisionCaja.Min, viewMatrix, projectionMatrix);
             /*
             // Dibujar las cajas de colisión de las ruedas
             foreach (var rueda in ruedas)

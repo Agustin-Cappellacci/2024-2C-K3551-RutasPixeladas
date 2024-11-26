@@ -79,8 +79,10 @@ namespace TGC.MonoGame.TP.Content.Models
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Jugador autoJugador) {
             Vector2 position = new Vector2(700, 30);  // Posición en la pantalla
-            Vector2 positionContador = new Vector2(15, 60);  // Posición en la pantalla
+            Vector2 positionContador = new Vector2(40, 35);  // Posición en la pantalla
             Color textColor = Color.White;      
+
+            Vector2 positionContadorBajas = new Vector2(20, 100);
 
             float proporcion = autoJugador.vida/200 ;
             int longitud = (int) (200 * proporcion);
@@ -111,7 +113,9 @@ namespace TGC.MonoGame.TP.Content.Models
             // Mostrar el tiempo transcurrido desde el inicio en pantalla
             string tiempoDesdeInicio = $"Seg:{tiempoTotal:F2}";
             string contador = (autoJugador.powerUp is Gun)? $"x{autoJugador.powerUp.balasRestantes}" :"";
+            string contadorMuertes= $"Eliminaciones: {autoJugador.cantidadBajas}";
 
+            spriteBatch.DrawString(myFont, contadorMuertes, positionContadorBajas, textColor);
             spriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);
             spriteBatch.DrawString(myFont, contador, positionContador, textColor);
 

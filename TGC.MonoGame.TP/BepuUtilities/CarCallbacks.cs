@@ -53,7 +53,7 @@ struct CarCallbacks : INarrowPhaseCallbacks
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public bool ConfigureContactManifold<TManifold>(int workerIndex, CollidablePair pair, ref TManifold manifold, out PairMaterialProperties pairMaterial) where TManifold : unmanaged, IContactManifold<TManifold>
-    {   
+    {
         var cant = 0;
         pairMaterial.FrictionCoefficient = Properties[pair.A.BodyHandle].Friction;
         if (pair.B.Mobility != CollidableMobility.Static)
@@ -76,47 +76,55 @@ struct CarCallbacks : INarrowPhaseCallbacks
             AutoJugadorWrapper.AutoJugador.isGrounded = false;
             Console.Out.WriteLine("NO HAY Contacto de ruedas con piso");
         }
-        
+
         if (pair.A.BodyHandle == TGCGame.listaBodyHandle[0] || pair.B.BodyHandle == TGCGame.listaBodyHandle[0])
         {
-            for (int i = 1; i < TGCGame.listaBodyHandle.Count; i++)
+            for (int i = 1; i < AutoJugadorWrapper.autoEnemigos.Count; i++)
             {
                 if (pair.A.BodyHandle == TGCGame.listaBodyHandle[i] || pair.B.BodyHandle == TGCGame.listaBodyHandle[i])
-                {   
-                    
-                    Console.Write("choca con" + i );
+                {
+
+                    Console.Write("choca con" + i);
                     var car1 = AutoJugadorWrapper.AutoJugador;
-                    var car2 = AutoJugadorWrapper.autoEnemigo;
-                    var relativeVelocity = Vector3.Distance(car1.CarSpeed, car2.CarSpeed);
+                    var carsEnemigos = AutoJugadorWrapper.autoEnemigos[i];
+                    var relativeVelocity = Vector3.Distance(car1.CarSpeed, carsEnemigos.CarSpeed);
 
-                     Console.Write("relativeVelocity: " + relativeVelocity + "\n"); 
+                    Console.Write("relativeVelocity: " + relativeVelocity + "\n");
 
-                    
-                    if (AutoJugadorWrapper.autoEnemigo.ColisionCaja.Intersects(AutoJugadorWrapper.AutoJugador.ColisionCaja) ){
-                        cant++;
+                    if (!carsEnemigos.estaMuerto)
+                    {
 
-                        if(cant == 1){
-                            if (relativeVelocity >= 1f){
-                                float baseDamage = Math.Min(relativeVelocity, 10);
+                        if (AutoJugadorWrapper.autoEnemigos[i].ColisionCaja.Intersects(AutoJugadorWrapper.AutoJugador.ColisionCaja))
+                        {
+                            cant++;
 
-                                Console.Write("danio: " + baseDamage + "\n"); 
+                            if (cant == 1)
+                            {
+                                if (relativeVelocity >= 1f)
+                                {
+                                    float baseDamage = Math.Min(relativeVelocity, 10);
 
-                                car1.recibirDanio((int)baseDamage);
-                                car2.recibirDanio((int)baseDamage);
+                                    Console.Write("danio: " + baseDamage + "\n");
+
+                                    car1.recibirDanio((int)baseDamage);
+                                    carsEnemigos.recibirDanio(car1, (int)baseDamage);
+                                }
+
                             }
-
                         }
-                    } else {
-                        cant = 0;
+                        else
+                        {
+                            cant = 0;
+                        }
                     }
-                    
+
                     //Calcula el daño base a partir de la velocidad relativa
-                    
+
                 }
             }
 
         }
-        
+
 
         // Calcula la velocidad relativa.
 

@@ -1,6 +1,7 @@
 using BepuPhysics;
 using BepuPhysics.Collidables;
 using BepuPhysics.CollisionDetection;
+using Microsoft.VisualBasic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -69,10 +70,15 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private IPowerUp powerUp;
 
-        public float vida = 200;
+        public float vida = 50;
 
         protected Model CarModel { get; set; }
         public BoundingBox ColisionCaja { get; set; }
+
+        public Vector3 colorAuto = new Vector3(1f, 0f, 0f);
+        public float velocidadIA = 10f;
+
+        public bool estaMuerto = false;
 
 
 
@@ -118,15 +124,18 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private DateTime ultimoDanio = DateTime.MinValue; // Rastrea el tiempo del último daño
         private const int intervaloDanioMs = 1000;
-        public void recibirDanio(int danio)
+        public void recibirDanio(Jugador jugador, int danio)
         {
             if ((DateTime.Now - ultimoDanio).TotalMilliseconds >= intervaloDanioMs)
             {
                 ultimoDanio = DateTime.Now; // Actualiza el tiempo del último daño
                 vida = Math.Max(vida - danio, 0);
                 if (vida == 0)
-                {
-                    //destrozado
+                {   
+                    estaMuerto = true;
+                    jugador.cantidadBajas++;
+                    colorAuto = new Vector3(0, 0, 0);
+                    velocidadIA = 0f;
                 }
             }
         }
@@ -143,7 +152,9 @@ namespace TGC.MonoGame.TP.Content.Models
         private float timeSinceLastRandomChange = 0f;
         private float randomSteering = 0f;
         private float randomSpeed = 0f;
-        private float randomChangeInterval = 2f; 
+        private float randomChangeInterval = 2f;
+
+
 
 
 
@@ -189,7 +200,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Vector hacia el objetivo
             float distanceToPlayer = Vector3.Distance(posicionJugador, carBodyReference.Pose.Position);
-            if (distanceToPlayer < 1000f) {
+            if (distanceToPlayer < 1000f)
+            {
                 Vector3 directionToTarget = Vector3.Normalize(posicionJugador - carBodyReference.Pose.Position);
 
 
@@ -207,7 +219,7 @@ namespace TGC.MonoGame.TP.Content.Models
                 bool isFlipped = rotationMatrix.Up.Y < 0; // Si Y es negativo, el auto está al revés
                 if (isFlipped)
                 {
-                // Rota el auto para enderezarlo
+                    // Rota el auto para enderezarlo
                     carBodyReference.Pose.Orientation = System.Numerics.Quaternion.Identity;
                     carBodyReference.Pose.Position = new System.Numerics.Vector3(
                     carBodyReference.Pose.Position.X,
@@ -219,10 +231,12 @@ namespace TGC.MonoGame.TP.Content.Models
 
 
                 // Si el auto está dentro del rango angular para moverse hacia adelante, mueve el auto
-                float targetSpeedFraction = (dotProduct > angleThreshold) ? 10f : (dotProduct < -angleThreshold) ? -5f : 2f;
+                float targetSpeedFraction = (dotProduct > angleThreshold) ? velocidadIA : (dotProduct < -angleThreshold) ? -velocidadIA / 2 : velocidadIA / 5;
 
-                simpleCarController.Update(simulation, 1 / 60f, steeringSum, targetSpeedFraction, false);
-            } else {
+                simpleCarController.Update(simulation, 1 / 60f, velocidadIA > 0 ? steeringSum : 0, targetSpeedFraction, false);
+            }
+            else
+            {
                 // **Random Movement**
 
                 // Change direction at set intervals
@@ -279,7 +293,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public override void Draw(GameTime gametime, Matrix View, Matrix Projection)
         {
             var random = new Random(Seed: 0);
-            var color = new Microsoft.Xna.Framework.Vector3(1, 0, 0);
+            var color = colorAuto;
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
             effectAuto.Parameters["View"].SetValue(View);
             effectAuto.Parameters["Projection"].SetValue(Projection);
@@ -287,12 +301,12 @@ namespace TGC.MonoGame.TP.Content.Models
             CarModel.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
             foreach (ModelMesh mesh in restoAuto)
             {
-                effectAuto.Parameters["DiffuseColor"]?.SetValue(color);
+                effectAuto.Parameters["DiffuseColor"]?.SetValue(colorAuto);
                 effectAuto.Parameters["World"].SetValue(mesh.ParentBone.Transform * carWorld);
                 mesh.Draw();
             }
 
-            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
 
             foreach (ModelMesh rueda in ruedas)
             {
@@ -309,7 +323,7 @@ namespace TGC.MonoGame.TP.Content.Models
             }
         }
 
-                public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
+        public void DrawBoundingBox(BoundingBox boundingBox, GraphicsDevice graphicsDevice, Matrix view, Matrix projection)
         {
             var corners = boundingBox.GetCorners();
             var vertices = new VertexPositionColor[24];
