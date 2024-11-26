@@ -315,7 +315,7 @@ namespace TGC.MonoGame.TP.Content.Models
         {
             
             
-            DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
+            //DrawBoundingBox(ColisionCaja, graphicsDevice, View, Projection);
             var random = new Random(Seed: 0);
             var color = new Microsoft.Xna.Framework.Vector3(random.NextSingle(), random.NextSingle(), random.NextSingle());
             var colorRueda = new Microsoft.Xna.Framework.Vector3(0, 0, 0);
