@@ -36,7 +36,7 @@ namespace TGC.MonoGame.TP.Content.Models
         private List<List<StaticHandle>> _staticHandles;
         private List<bool> _puedeVerse;
         private StaticHandle ajedrezBodyHandle;
-        private StaticHandle floorHandle;
+        
 
         //private Vector3 lightPosition = new Vector3(1000, 2000, 1000);
 

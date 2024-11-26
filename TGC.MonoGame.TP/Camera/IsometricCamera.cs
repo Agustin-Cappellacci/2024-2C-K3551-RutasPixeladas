@@ -30,7 +30,8 @@ namespace TGC.MonoGame.TP.Content.Models
         private Vector3 PastRightVector { get; set; } = Vector3.Right;
 
         private Matrix isometricRotation =
-        Matrix.CreateRotationY(-MathF.PI / 4) *
+        Matrix.CreateRotationY(-MathF.PI / 4
+            ) *
         Matrix.CreateRotationX(MathF.PI / 6);
         /// <summary>
         /// Crea una FollowCamera que sigue a una matriz de mundo
