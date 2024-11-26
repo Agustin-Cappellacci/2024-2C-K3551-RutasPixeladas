@@ -527,7 +527,7 @@ namespace TGC.MonoGame.TP
 
             _effect.CurrentTechnique = _effect.Techniques["BloomPass"];
             _effect.Parameters["baseTexture"].SetValue(hamster.textura);
-
+            _effect.Parameters["principalColor"].SetValue(new Vector3(0.73f, 0.46f, 0.29f));
             // We get the base transform for each mesh
             var modelMeshesBaseTransforms = new Microsoft.Xna.Framework.Matrix[hamster.modelo.Bones.Count];
             hamster.modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
@@ -538,7 +538,7 @@ namespace TGC.MonoGame.TP
 
                 // We set the main matrices for each mesh to draw
                 var worldMatrix = modelMeshesBaseTransforms[modelMesh.ParentBone.Index];
-
+                
                 // WorldViewProjection is used to transform from model space to clip space
                 _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * hamster.world * View * Projection);
 
@@ -549,7 +549,28 @@ namespace TGC.MonoGame.TP
                 _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * hamster3.world * View * Projection);
                 modelMesh.Draw();
             }
+            _effect.Parameters["baseTexture"].SetValue(arma.textura);
+            _effect.Parameters["principalColor"].SetValue(new Vector3(0.56f, 0.57f, 0.59f));
+            modelMeshesBaseTransforms = new Microsoft.Xna.Framework.Matrix[arma.modelo.Bones.Count];
+            arma.modelo.CopyAbsoluteBoneTransformsTo(modelMeshesBaseTransforms);
+            foreach (var modelMesh in arma.modelo.Meshes)
+            {
+                foreach (var part in modelMesh.MeshParts)
+                    part.Effect = _effect;
 
+                // We set the main matrices for each mesh to draw
+                var worldMatrix = modelMeshesBaseTransforms[modelMesh.ParentBone.Index];
+
+                // WorldViewProjection is used to transform from model space to clip space
+                _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * arma.world * View * Projection);
+
+                // Once we set these matrices we draw
+                modelMesh.Draw();
+                _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * arma2.world * View * Projection);
+                modelMesh.Draw();
+                _effect.Parameters["WorldViewProjection"].SetValue(worldMatrix * arma3.world * View * Projection);
+                modelMesh.Draw();
+            }
             #endregion
             #region Multipass Bloom
 
@@ -557,7 +578,7 @@ namespace TGC.MonoGame.TP
             // Note that we apply this a number of times and we switch
             // the render target with the source texture
             // Basically, this applies the blur effect N times
-            
+
 
             var bloomTexture = _firstPassBloomRenderTarget;
             var horizontalBlur = _horizontalRenderTarget;

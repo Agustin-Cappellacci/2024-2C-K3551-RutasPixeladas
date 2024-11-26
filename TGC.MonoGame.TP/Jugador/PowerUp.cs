@@ -309,6 +309,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             foreach (var mesh in modelo.Meshes)
             {
+                foreach (var part in mesh.MeshParts)
+                    part.Effect = efectoPwUP;
                 var meshWorld = modelMeshesBaseTransforms[mesh.ParentBone.Index];
                 // We set the main matrices for each mesh to draw
                 efectoPwUP.Parameters["World"].SetValue(meshWorld * world);

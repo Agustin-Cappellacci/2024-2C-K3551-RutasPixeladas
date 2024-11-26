@@ -83,8 +83,6 @@ namespace TGC.MonoGame.TP.Content.Models
         public void LoadContent()
         {
             var skyBox = game.Content.Load<Model>("skybox/cube");
-            //var skyBoxTexture = Game.Content.Load<TextureCube>(ContentFolderTextures + "/skyboxes/sunset/sunset");
-            //var skyBoxTexture = Game.Content.Load<TextureCube>(ContentFolderTextures + "/skyboxes/islands/islands");
             var skyBoxTexture = game.Content.Load<TextureCube>(ContentFolderTextures + "skybox/skybox");
             var skyBoxEffect = game.Content.Load<Effect>(ContentFolderEffects + "SkyBox");
             _skyBox = new SkyBox(skyBox, skyBoxTexture, skyBoxEffect);

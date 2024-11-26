@@ -8,7 +8,7 @@
 #endif
 
 float4x4 WorldViewProjection;
-
+float3 principalColor;
 texture baseTexture;
 sampler2D textureSampler = sampler_state
 {
@@ -56,9 +56,9 @@ float4 BloomPS(VertexShaderOutput input) : COLOR
 {
     float4 color = tex2D(textureSampler, input.TextureCoordinates);
     
-    float distanceToTargetColor = distance(color.rgb, float3(0.4, 0.70, 0.20));
+    float distanceToTargetColor = distance(color.rgb, principalColor);
     
-    float filter = step(distanceToTargetColor, 12);
+    float filter = step(distanceToTargetColor, 0.3);
     
     return float4(color.rgb * filter, 1);
 }

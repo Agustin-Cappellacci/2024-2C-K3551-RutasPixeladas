@@ -583,7 +583,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Define el tamaño del box (ancho, alto, profundo)
             System.Numerics.Vector3 pataSillaSize = new System.Numerics.Vector3(50f, 500f, 50f);
             // Crear el Collidable Box
-            var pataSillaShape = new Box(pataCamaSize.X, pataCamaSize.Y, pataCamaSize.Z); // Crea la forma del box
+            var pataSillaShape = new Box(pataCamaSize.X/5, pataCamaSize.Y*3, pataCamaSize.Z/5); // Crea la forma del box
             var pataSillaShapeIndex = simulation.Shapes.Add(pataSillaShape); // Registra la forma en el sistema de colisiones
             // Crear el objeto estático para las patas de la cama
             var pata1Silla = simulation.Statics.Add(new StaticDescription(

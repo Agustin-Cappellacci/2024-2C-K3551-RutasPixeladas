@@ -29,6 +29,9 @@ namespace TGC.MonoGame.TP.Content.Models
 
         private Vector3 PastRightVector { get; set; } = Vector3.Right;
 
+        private Matrix isometricRotation =
+        Matrix.CreateRotationY(-MathF.PI / 4) *
+        Matrix.CreateRotationX(MathF.PI / 6);
         /// <summary>
         /// Crea una FollowCamera que sigue a una matriz de mundo
         /// </summary>
@@ -36,7 +39,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public IsometricCamera(float screenWidth, float screenHeight)
         {
             // Orthographic camera
-            Projection =  Matrix.CreateScale(1f) * Matrix.CreateFromYawPitchRoll(MathF.PI / 6, 0, MathF.PI/ 6)  * Matrix.CreateOrthographic(screenWidth , screenHeight, -1500f, 10000f);
+            Projection = Matrix.CreateOrthographic(screenWidth , screenHeight, -1500f, 10000f);
 
             // Perspective camera
             // Uso 60° como FOV, aspect ratio, pongo las distancias a near plane y far plane en 0.1 y 100000 (mucho) respectivamente
@@ -51,7 +54,7 @@ namespace TGC.MonoGame.TP.Content.Models
         public void Update(GameTime gameTime, Matrix followedWorld)
         {
             // Obtengo el tiempo
-            var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
+            //var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
 
             // Obtengo la posicion de la matriz de mundo que estoy siguiendo
             var followedPosition = followedWorld.Translation;
@@ -86,10 +89,11 @@ namespace TGC.MonoGame.TP.Content.Models
             // Calculo la posicion del a camara
             // tomo la posicion que estoy siguiendo, agrego un offset en los ejes Y y Derecha
             var offsetedPosition = followedPosition
-                + Vector3.Left * AxisDistanceToTarget
-                + Vector3.Up * AxisDistanceToTarget;
+                + Vector3.Up * AxisDistanceToTarget
+                - Vector3.Forward * AxisDistanceToTarget;
 
             CameraPosition = offsetedPosition;
+            var rotatedPosition = Vector3.Transform(offsetedPosition - followedPosition, isometricRotation) + followedPosition;
 
             // Calculo el vector Arriba actualizado
             // Nota: No se puede usar el vector Arriba por defecto (0, 1, 0)
@@ -98,7 +102,7 @@ namespace TGC.MonoGame.TP.Content.Models
             // Calcular el vector Adelante haciendo la resta entre el destino y el origen
             // y luego normalizandolo (Esta operacion es cara!)
             // (La siguiente operacion necesita vectores normalizados)
-            var forward = followedPosition - offsetedPosition;
+            var forward = followedPosition - rotatedPosition;
             forward.Normalize();
 
             // Obtengo el vector Derecha asumiendo que la camara tiene el vector Arriba apuntando hacia arriba
@@ -111,8 +115,8 @@ namespace TGC.MonoGame.TP.Content.Models
 
             // Calculo la matriz de Vista de la camara usando la Posicion, La Posicion a donde esta mirando,
             // y su vector Arriba
-           
-            View = Matrix.CreateLookAt(offsetedPosition, followedPosition, cameraCorrectUp);
+
+            View = Matrix.CreateLookAt(rotatedPosition, followedPosition, cameraCorrectUp);
         }
     }
 }

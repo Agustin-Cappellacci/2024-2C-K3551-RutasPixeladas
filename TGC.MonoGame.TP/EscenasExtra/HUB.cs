@@ -78,7 +78,7 @@ namespace TGC.MonoGame.TP.Content.Models
         }
 
         public void Draw(SpriteBatch spriteBatch, GameTime gameTime, Jugador autoJugador) {
-            Vector2 position = new Vector2(560, 620);  // Posición en la pantalla
+            Vector2 position = new Vector2(700, 30);  // Posición en la pantalla
             Vector2 positionContador = new Vector2(15, 60);  // Posición en la pantalla
             Color textColor = Color.White;      
 
@@ -102,15 +102,14 @@ namespace TGC.MonoGame.TP.Content.Models
             spriteBatch.Draw(texturaItem, new Rectangle(13, 43, 65, 65), new Color(0,0,0, transparencia));
 
             // Puedes usar una técnica para "recortar" o escalar el círculo según el progreso
-            spriteBatch.Draw(texturaBarraVida, new Rectangle(540, 615, 400, 100), Color.Black * 0.5f);
+            spriteBatch.Draw(texturaBarraVida, new Rectangle(666, 19, 200, 75), Color.Black * 0.5f);
 
             // Dibuja texto en la pantalla
             var tiempoTotal = Convert.ToSingle(gameTime.TotalGameTime.TotalSeconds);
-            var elapsedTime = Convert.ToSingle(gameTime.ElapsedGameTime.TotalSeconds);
-            float fps = 1f / elapsedTime;
+
 
             // Mostrar el tiempo transcurrido desde el inicio en pantalla
-            string tiempoDesdeInicio = $"Seg:{tiempoTotal:F2}\nFPS:{fps}";
+            string tiempoDesdeInicio = $"Seg:{tiempoTotal:F2}";
             string contador = (autoJugador.powerUp is Gun)? $"x{autoJugador.powerUp.balasRestantes}" :"";
 
             spriteBatch.DrawString(myFont, tiempoDesdeInicio, position, textColor);

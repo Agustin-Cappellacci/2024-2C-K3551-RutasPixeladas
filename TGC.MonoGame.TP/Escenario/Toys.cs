@@ -924,6 +924,10 @@ namespace TGC.MonoGame.TP.Content.Models
             _staticHandles[2].Add(puenteBase2Handle);
             _staticHandles[2].Add(puentePared1Handle);
             _staticHandles[2].Add(puentePared2Handle);
+            _staticHandles[3].Add(rampaDoble1BodyHandle);
+            _staticHandles[3].Add(rampaDoble2BodyHandle);
+            _staticHandles[4].Add(rampaPanza1BodyHandle);
+            _staticHandles[4].Add(rampaPanza2BodyHandle);
             _staticHandles[5].Add(rampa1BodyHandle);
             _staticHandles[5].Add(rampa2BodyHandle);
             _staticHandles[5].Add(rampa3BodyHandle);
@@ -933,10 +937,6 @@ namespace TGC.MonoGame.TP.Content.Models
             _staticHandles[5].Add(rampa7BodyHandle);
             _staticHandles[5].Add(rampa8BodyHandle);
             _staticHandles[5].Add(rampaParedBodyHandle);
-            _staticHandles[3].Add(rampaDoble1BodyHandle);
-            _staticHandles[3].Add(rampaDoble2BodyHandle);
-            _staticHandles[4].Add(rampaPanza1BodyHandle);
-            _staticHandles[4].Add(rampaPanza2BodyHandle);
             _staticHandles[7].Add(caballo1BodyHandle);
             _staticHandles[8].Add(caballo2BodyHandle);
 
