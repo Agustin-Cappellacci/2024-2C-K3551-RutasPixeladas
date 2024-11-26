@@ -157,6 +157,8 @@ namespace TGC.MonoGame.TP
         #endregion
 
         public static List<BodyHandle> listaBodyHandle;
+        private List<BodyHandle> enemyBodyHandles;
+        private List<SimpleCarController> enemyControllers;
 
 
         public TGCGame()
@@ -182,13 +184,16 @@ namespace TGC.MonoGame.TP
         {
             // La logica de inicializacion que no depende del contenido se recomienda poner en este metodo.
             #region Logica Autos
-            CantidadDeAutos = 2;    //tiene que ser par
+            CantidadDeAutos = 6;    //tiene que ser par
 
             traslacionesIniciales = GenerarPuntosEnCirculo(CantidadDeAutos, 700f);
             angulosIniciales = CalcularAngulosHaciaCentro(traslacionesIniciales);
 
             listaModelos = new List<TipoAuto>();
             listaAutos = new List<AutoEnemigo>();
+            enemyBodyHandles = new List<BodyHandle>();
+            enemyControllers = new List<SimpleCarController>();
+
             #endregion
             // Apago el backface culling.
             var rasterizerState = new RasterizerState();
@@ -210,9 +215,8 @@ namespace TGC.MonoGame.TP
             if (CantidadDeAutos % tessellation != 0) // Aquí tienes que tener cuidado y asegurarte que sea divisible por el número de tesselation.
                 throw new ArgumentOutOfRangeException(nameof(tessellation));
 
-            for (int i = 0; i < CantidadDeAutos / tessellation; i++)
+            for (int i = 0; i < CantidadDeAutos; i++)
             {
-                listaModelos.Add(TipoAuto.tipoCarrera);
                 listaModelos.Add(TipoAuto.tipoCombate);
                 //aca se pueden agregar todos los tipos de auto que querramos, es una forma de identificar en que lugar queda cada uno, para luego instanciar clases.
             }
@@ -275,15 +279,15 @@ namespace TGC.MonoGame.TP
             arma2 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(800, 32, 0));
             hamster3 = new Hamster(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-900, 70, -1050));
             arma3 = new Gun(GraphicsDevice, Content, autoJugador, new System.Numerics.Vector3(-1100, 32, 503));
-            for (int i = 1; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
+            for (int i = 0; i < CantidadDeAutos; i++) //empieza de 1, porque actualmente el autoDeJugador no es de tipoAuto, entonces no lo podemos tratar como tal. Es lo que quiero hablar con kevin
             {
-                if (listaModelos[i] == TipoAuto.tipoCarrera)
+                /*if (listaModelos[i] == TipoAuto.tipoCarrera)
                 {
                     listaAutos.Add(new AutoEnemigoCarrera(Content, simulation, GraphicsDevice,traslacionesIniciales[i], angulosIniciales[i], enemyBodyHandle));
-                }
+                }*/
                 if (listaModelos[i] == TipoAuto.tipoCombate)
                 {   
-                    var a = new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(100, 100, 100), angulosIniciales[0], enemyBodyHandle);
+                    var a = new AutoEnemigoCombate(Content, simulation, GraphicsDevice, new System.Numerics.Vector3(100, 100, 100), angulosIniciales[0], enemyBodyHandles[i]);
                     listaAutos.Add(a);
                     autoJugadorWrapper.autoEnemigo = a;
                 }
@@ -415,9 +419,9 @@ namespace TGC.MonoGame.TP
 
 
 
-            foreach (var Auto in listaAutos)
+            for (int i = 0; i < CantidadDeAutos; i++)
             {
-                Auto.Update(gameTime, simulation, enemyController, posicionJugador);
+                listaAutos[i].Update(gameTime, simulation, enemyControllers[i], posicionJugador);
             }
 
             arma.Update(gameTime, listaAutos);
@@ -770,34 +774,27 @@ namespace TGC.MonoGame.TP
             carControllerContainer.Controller = playerController;
             carCallbacks.ControllerContainer = carControllerContainer;
 
-            var poseEnemigo = new RigidPose(new System.Numerics.Vector3(100f, 100f, 100f), System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
             // ACA SE INICIALIZAN LOS AUTOS DE IA
             bufferPool.Take(CantidadDeAutos - 1, out aiControllers);
-            var autoEnemigo = SimpleCar.Create(simulation, properties, poseEnemigo, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2.9f,
-            new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-            new SpringSettings(50f, 0.5f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
-            enemyController = new SimpleCarController(autoEnemigo, forwardSpeed: 30000, forwardForce: 30000, zoomMultiplier: 3, backwardSpeed: 20000, backwardForce: 20000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
-            wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
-            enemyBodyHandle = autoEnemigo.Body;
 
-            listaBodyHandle.Add(enemyBodyHandle);
-            /* var random = new Random(5);
             
-            for (int i = 1; i < CantidadDeAutos; ++i)
+            var random = new Random(1);
+            float maxRandom = int.MaxValue;
+            for (int i = 0; i < CantidadDeAutos; ++i)
             {
-                var position = traslacionesIniciales[i];
-                var orientation = System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[i]);
-                aiControllers[i] = new SimpleCarController(SimpleCar.Create(simulation, properties, new RigidPose(position, orientation), bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 2f,
-                    new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
-                    new SpringSettings(5, 0.7f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f)),
-                    forwardSpeed: 50, forwardForce: 5, zoomMultiplier: 2, backwardSpeed: 10, backwardForce: 4, idleForce: 0.25f, brakeForce: 7, steeringSpeed: 1.5f, maximumSteeringAngle: MathF.PI * 0.23f,
-                    wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
-
-                //aiControllers[i].LaneOffset = random.NextSingle() * 20 - 10;
-
+                float randomNumber = random.Next();
+                float randomIndex = randomNumber / maxRandom;
+                var poseEnemigo = new RigidPose(new System.Numerics.Vector3(randomIndex * 3500f - 1500f, 100f, randomIndex * 3000f - 1500f), System.Numerics.Quaternion.CreateFromAxisAngle(System.Numerics.Vector3.UnitY, angulosIniciales[0]));
+                var autoEnemigo = SimpleCar.Create(simulation, properties, poseEnemigo, bodyShapeIndex, bodyInertia, 0.5f, wheelShapeIndex, wheelInertia, 3.6f,
+                new System.Numerics.Vector3(-x, y, frontZ), new System.Numerics.Vector3(x, y, frontZ), new System.Numerics.Vector3(-x, y, backZ), new System.Numerics.Vector3(x, y, backZ), new System.Numerics.Vector3(0, -1, 0), 0.25f,
+                new SpringSettings(50f, 0.9f), QuaternionEx.CreateFromAxisAngle(System.Numerics.Vector3.UnitZ, MathF.PI * 0.5f));
+                enemyController = new SimpleCarController(autoEnemigo, forwardSpeed: 20000 + 20000 * randomIndex, forwardForce: 20000 + 20000 * randomIndex, zoomMultiplier: 3, backwardSpeed: 20000, backwardForce: 20000, idleForce: 10000f, brakeForce: 15000f, steeringSpeed: 150f, maximumSteeringAngle: MathF.PI * 0.23f,
+                wheelBaseLength: wheelBaseLength, wheelBaseWidth: wheelBaseWidth, ackermanSteering: 1);
+                enemyBodyHandles.Add(autoEnemigo.Body);
+                enemyControllers.Add(enemyController);
+                listaBodyHandle.Add(enemyBodyHandle);
             }
 
-            }  */
 
 
 
