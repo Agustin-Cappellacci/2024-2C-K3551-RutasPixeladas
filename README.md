@@ -79,4 +79,3 @@ IMAGENES:
 ![image](https://github.com/user-attachments/assets/258c176f-daa4-40b1-bb06-43e57fff20d5)
 
 ![image](https://github.com/user-attachments/assets/05ef3161-6f19-447c-89ed-606374ab3d1c)
-[![Watch the video](https://img.youtube.com/vi/pgEwUC0jvH4/0.jpg)](https://www.youtube.com/playlist?list=PLRM4L32DjvnazuMl8wZlbpEYL5Qh63ulG)
